@@ -1,0 +1,117 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import ParentSignUpForm from "./ParentSignUpForm";
+import ParentLoginForm from "./ParentLoginForm";
+import ParentVerifyEmail from "./ParentVerifyEmail";
+
+type Tab = "signup" | "login";
+type Step = "form" | "verify";
+
+export default function ParentAuthCard() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<Tab>("signup");
+  const [step, setStep] = useState<Step>("form");
+  const [verifyEmail, setVerifyEmail] = useState("");
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setStep("form");
+  };
+
+  return (
+    /*
+     * Figma: 1440×919 frame
+     * Left  W:710  → col 1
+     * Right W:730  → col 2  (1440 − 710)
+     * Form  W:526, at X:815 → ml:105px from right panel left edge
+     */
+    <div
+      className="h-screen"
+      style={{ display: "grid", gridTemplateColumns: "710px 1fr" }}
+    >
+      {/* ── Left: green photo panel ──────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-brand-green">
+        <Link
+          href="/"
+          className="absolute left-8 top-8 z-10 text-lg font-semibold text-white"
+        >
+          SchoolFlow
+        </Link>
+        <Image
+          src="/images/svg/parentchildscreen.svg"
+          alt="Parent and child"
+          fill
+          className="object-cover object-top"
+          priority
+        />
+      </div>
+
+      {/* ── Right: white panel ───────────────────────────────────────── */}
+      <div className="relative overflow-y-auto bg-white">
+
+        {/* Close — top-right of right panel */}
+        <button
+          onClick={() => router.push("/")}
+          className="absolute right-8 top-8 flex h-8 w-8 items-center justify-center rounded-full text-text-body transition-colors hover:bg-surface-subtle"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/*
+         * Padding constrains form to 526px at the Figma viewport (1440px):
+         * right panel (730px) − pl(105px) − pr(99px) = 526px ✓
+         * At wider viewports the form grows proportionally — no dead space.
+         */}
+        <div
+          className="flex flex-col py-14"
+          style={{ paddingLeft: "105px", paddingRight: "99px" }}
+        >
+          {/* Tabs */}
+          <div className="mb-8 flex gap-3">
+            <button
+              onClick={() => handleTabChange("signup")}
+              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+                activeTab === "signup"
+                  ? "bg-brand-green text-white"
+                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+              }`}
+            >
+              Sign up
+            </button>
+            <button
+              onClick={() => handleTabChange("login")}
+              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+                activeTab === "login"
+                  ? "bg-brand-green text-white"
+                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+              }`}
+            >
+              Login
+            </button>
+          </div>
+
+          {activeTab === "signup" && step === "form" && (
+            <ParentSignUpForm
+              onSuccess={(email) => {
+                setVerifyEmail(email);
+                setStep("verify");
+              }}
+            />
+          )}
+
+          {activeTab === "signup" && step === "verify" && (
+            <ParentVerifyEmail email={verifyEmail} />
+          )}
+
+          {activeTab === "login" && <ParentLoginForm />}
+        </div>
+      </div>
+    </div>
+  );
+}

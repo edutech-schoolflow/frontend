@@ -1,0 +1,47 @@
+export type PtaInviteStatus =
+  | "not_invited"
+  | "invite_sent"
+  | "link_clicked"
+  | "in_group"
+  | "left_group";
+
+export interface Parent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+  photoUrl?: string;
+  status: "pending" | "active";
+  createdAt: string;
+}
+
+export interface ParentChild {
+  studentId: string;
+  studentName: string;
+  schoolId: string;
+  schoolName: string;
+  schoolLogoUrl?: string;
+  className: string;
+  outstandingFees: number;
+  hasNewResult: boolean;
+  hasNewMessage: boolean;
+}
+
+export interface PtaInvite {
+  parentId: string;
+  parentName: string;
+  parentPhone: string;
+  status: PtaInviteStatus;
+  invitedAt?: string;
+  clickedAt?: string;
+}
+
+export interface PtaStats {
+  total: number;
+  notInvited: number;
+  invited: number;
+  clicked: number;
+  inGroup: number;
+  leftGroup: number;
+}

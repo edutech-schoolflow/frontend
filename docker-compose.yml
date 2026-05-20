@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  kedco-cms:
+    image: 096427976613.dkr.ecr.us-east-1.amazonaws.com/kedco-cms:latest
+    container_name: kedco-cms
+    ports:
+      - "3000:3111"
+    # env_file:
+    #   - .env
+    restart: unless-stopped
+    # environment:
+    #   - NODE_ENV=production
+    #   - PORT=3000
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: ec2/dev/kedco-cms
+        awslogs-stream: kedco-cms-container
+        awslogs-create-group: "true"
