@@ -59,67 +59,66 @@ export default function ParentVerifyEmail({ email }: Props) {
   };
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-text-heading">
-        Verify your email address
-      </h2>
-      <p className="mt-1 mb-7 text-sm text-text-body">
-        We've sent a code to{" "}
-        <span className="font-medium text-text-heading">{email}</span>. Enter it
-        below.
-      </p>
+    <div className="flex flex-col gap-[45px]">
+      <div className="flex flex-col gap-[48px]">
+        {/* Header */}
+        <div className="flex flex-col gap-[18px]">
+          <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+            Verify your email address
+          </h2>
+          <p className="text-[16px] font-medium text-[#1b1b1b]">
+            We&apos;ve sent a code to your email. Enter it below.
+          </p>
+        </div>
 
-      {/* 6 OTP boxes */}
-      <div className="flex justify-between mb-5">
-        <InputOTP
-          maxLength={6}
-          value={otp}
-          onChange={setOtp}
-          containerClassName="gap-2 w-full justify-between"
-        >
-          <InputOTPGroup className="gap-2">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <InputOTPSlot
-                key={i}
-                index={i}
-                className="h-12 w-12 rounded-xl border border-border-default bg-surface-subtle text-base font-semibold text-text-heading first:rounded-xl first:border last:rounded-xl last:border shadow-none data-[active=true]:border-brand-green data-[active=true]:ring-brand-green/20"
-              />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <p className="mb-3 text-xs text-red-500">{error}</p>
-      )}
-
-      {/* Resend */}
-      <p className="mb-6 text-xs text-text-body text-center">
-        I didn't receive the code.{" "}
-        {countdown > 0 ? (
-          <span className="text-neutral-400">
-            Resend in {countdown}s
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resending}
-            className="font-medium text-brand-green hover:underline disabled:opacity-50"
+        {/* OTP + resend */}
+        <div className="flex flex-col gap-[19px] items-center w-[448px]">
+          <InputOTP
+            maxLength={6}
+            value={otp}
+            onChange={setOtp}
+            containerClassName="gap-[20px] w-full"
           >
-            {resending ? "Sending…" : "Resend"}
-          </button>
-        )}
-      </p>
+            <InputOTPGroup className="gap-[20px]">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <InputOTPSlot
+                  key={i}
+                  index={i}
+                  className="h-[71px] w-[58px] rounded-[5px] border-0 bg-[#eee] text-[16px] font-medium text-[#1b1b1b] shadow-none data-[active=true]:ring-2 data-[active=true]:ring-brand-green"
+                />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+
+          {/* Error */}
+          {error && <p className="w-full text-xs text-red-500">{error}</p>}
+
+          {/* Resend */}
+          <p className="text-[14px] font-normal text-[#1b1b1b] text-center">
+            I didn&apos;t receive the code.{" "}
+            {countdown > 0 ? (
+              <span className="text-[#888]">Resend in {countdown}s</span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="text-brand-green underline hover:opacity-80 disabled:opacity-50"
+              >
+                {resending ? "Sending…" : "Resend"}
+              </button>
+            )}
+          </p>
+        </div>
+      </div>
 
       {/* Verify button */}
       <button
         type="button"
         onClick={handleVerify}
         disabled={otp.length < 6 || submitting}
-        className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold transition-colors
-          disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400
+        className="flex h-[59px] w-full items-center justify-center rounded-[5px] text-[20px] font-normal transition-colors
+          disabled:cursor-not-allowed disabled:bg-[#eee] disabled:text-[#888]
           enabled:bg-brand-green enabled:text-white enabled:hover:opacity-90"
       >
         {submitting ? (

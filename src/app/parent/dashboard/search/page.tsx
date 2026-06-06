@@ -30,7 +30,9 @@ export default function SchoolSearchPage() {
               <p className="text-xs text-grey-text mt-0.5">
                 {MOCK_SCHOOL.city}, {MOCK_SCHOOL.state}
               </p>
-              <p className="text-xs text-grey-text">Nursery · Primary · Secondary</p>
+              <p className="text-xs text-grey-text">
+                Nursery · Primary · Secondary
+              </p>
               <p className="mt-1 text-xs font-medium text-dark-blue">
                 Application Fee: ₦10,000
               </p>

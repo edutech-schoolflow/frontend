@@ -12,9 +12,13 @@ import ParentVerifyEmail from "./ParentVerifyEmail";
 type Tab = "signup" | "login";
 type Step = "form" | "verify";
 
-export default function ParentAuthCard() {
+interface Props {
+  initialTab?: Tab;
+}
+
+export default function ParentAuthCard({ initialTab = "signup" }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("signup");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [step, setStep] = useState<Step>("form");
   const [verifyEmail, setVerifyEmail] = useState("");
 
@@ -38,7 +42,7 @@ export default function ParentAuthCard() {
       <div className="relative overflow-hidden bg-brand-green">
         <Link
           href="/"
-          className="absolute left-8 top-8 z-10 text-lg font-semibold text-white"
+          className="absolute left-[100px] top-[57px] z-10 text-[16px] font-normal text-black"
         >
           SchoolFlow
         </Link>
@@ -53,7 +57,6 @@ export default function ParentAuthCard() {
 
       {/* ── Right: white panel ───────────────────────────────────────── */}
       <div className="relative overflow-y-auto bg-white">
-
         {/* Close — top-right of right panel */}
         <button
           onClick={() => router.push("/")}
@@ -73,23 +76,23 @@ export default function ParentAuthCard() {
           style={{ paddingLeft: "105px", paddingRight: "99px" }}
         >
           {/* Tabs */}
-          <div className="mb-8 flex gap-3">
+          <div className="mb-8 flex gap-[22px]">
             <button
               onClick={() => handleTabChange("signup")}
-              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+              className={`w-[251px] rounded-[10px] p-[10px] text-[16px] font-normal transition-colors ${
                 activeTab === "signup"
                   ? "bg-brand-green text-white"
-                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+                  : "bg-[#eee] text-[#1b1b1b] hover:bg-neutral-200"
               }`}
             >
               Sign up
             </button>
             <button
               onClick={() => handleTabChange("login")}
-              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+              className={`w-[251px] rounded-[10px] p-[10px] text-[16px] font-normal transition-colors ${
                 activeTab === "login"
                   ? "bg-brand-green text-white"
-                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+                  : "bg-[#eee] text-[#1b1b1b] hover:bg-neutral-200"
               }`}
             >
               Login

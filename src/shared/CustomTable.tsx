@@ -71,7 +71,10 @@ const CustomTable = <T,>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-b bg-surface-subtle">
+              <TableRow
+                key={headerGroup.id}
+                className="border-b bg-surface-subtle"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}

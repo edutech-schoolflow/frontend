@@ -8,10 +8,13 @@ export default function KycPage() {
     >
       <div className="space-y-4">
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-          <p className="text-sm font-medium text-amber-700">⚠️ Verification Required</p>
+          <p className="text-sm font-medium text-amber-700">
+            ⚠️ Verification Required
+          </p>
           <p className="text-xs text-amber-600 mt-1">
-            Your school cannot receive payments or appear in parent search results until KYC is approved.
-            This typically takes 2–3 business days.
+            Your school cannot receive payments or appear in parent search
+            results until KYC is approved. This typically takes 2–3 business
+            days.
           </p>
         </div>
 

@@ -14,12 +14,32 @@ export const getStudent = async (id: string): Promise<Student> => {
 };
 
 export const getStudentEnrollments = async (_studentId: string) =>
-  mockResponse([{ id: "enr-001", studentId: "std-001", classId: "cls-001", termId: "term-001", academicYearId: "ay-001" }]);
+  mockResponse([
+    {
+      id: "enr-001",
+      studentId: "std-001",
+      classId: "cls-001",
+      termId: "term-001",
+      academicYearId: "ay-001",
+    },
+  ]);
 
 export const getImports = async () =>
   mockResponse([
-    { id: "imp-001", studentName: "Tolu Adebayo", class: "Primary 1", parentPhone: "+234 809 111 2222", status: "pending" },
-    { id: "imp-002", studentName: "Bisi Ogundimu", class: "JSS 1", parentPhone: "+234 808 333 4444", status: "pending" },
+    {
+      id: "imp-001",
+      studentName: "Tolu Adebayo",
+      class: "Primary 1",
+      parentPhone: "+234 809 111 2222",
+      status: "pending",
+    },
+    {
+      id: "imp-002",
+      studentName: "Bisi Ogundimu",
+      class: "JSS 1",
+      parentPhone: "+234 808 333 4444",
+      status: "pending",
+    },
   ]);
 
 export const approveImport = async (_importId: string) =>

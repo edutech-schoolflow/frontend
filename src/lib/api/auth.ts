@@ -24,7 +24,10 @@ const MOCK_ADMIN_USER: AuthUser = {
   role: "super_admin",
 };
 
-export const loginStaff = async (_payload: { email: string; password: string }) => {
+export const loginStaff = async (_payload: {
+  email: string;
+  password: string;
+}) => {
   return mockResponse(MOCK_SCHOOL_USER);
 };
 
@@ -36,12 +39,17 @@ export const verifyOtp = async (_payload: { phone: string; otp: string }) => {
   return mockResponse(MOCK_PARENT_USER);
 };
 
-export const loginPlatformAdmin = async (_payload: { email: string; password: string }) => {
+export const loginPlatformAdmin = async (_payload: {
+  email: string;
+  password: string;
+}) => {
   return mockResponse(MOCK_ADMIN_USER);
 };
 
 export const registerSchool = async (_payload: unknown) => {
-  return mockResponse({ message: "Registration successful. Check your email." });
+  return mockResponse({
+    message: "Registration successful. Check your email.",
+  });
 };
 
 export const verifyEmail = async (_token: string) => {

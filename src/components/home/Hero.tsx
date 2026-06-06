@@ -13,31 +13,31 @@ export default function Hero() {
      * Hero height: 639px → h-159.75
      */
     <section className="flex w-full h-159.75 overflow-hidden bg-white">
-
       {/* Left — text content, vertically centered in the 639px height */}
       <div className="flex w-[54%] shrink-0 flex-col justify-center pl-25">
-
         <div className="flex flex-col gap-10.25 max-w-136.75">
-          <h1 className="text-[56px] font-semibold leading-[1.1] tracking-tight text-text-heading">
-            Manage<br />
-            school life in<br />
+          <h1 className="text-[80px] font-semibold leading-[1.1] tracking-tight text-text-heading">
+            Manage
+            <br />
+            school life in
+            <br />
             one place
           </h1>
 
-          <p className="text-base leading-relaxed text-text-body">
-            Everything parents and schools need in one<br />
+          <p className="text-[20px] leading-[28px] text-text-body">
+            Everything parents and schools need in one
+            <br />
             secure platform.
           </p>
 
           <Link
             href="/school/register"
-            className="flex w-full items-center justify-center rounded-lg bg-brand-green py-4
-                       text-base font-semibold text-white transition-opacity hover:opacity-90"
+            className="flex h-[59px] w-[400px] items-center justify-center rounded-[5px] bg-brand-green
+                       text-[20px] font-normal text-white transition-opacity hover:opacity-90"
           >
             Get started
           </Link>
         </div>
-
       </div>
 
       {/*
@@ -46,7 +46,7 @@ export default function Hero() {
        * pt-11.75 (47px) = Y:122 from frame − ~75px navbar
        */}
       <div className="hidden flex-1 pt-11.75 lg:block">
-        <div className="relative h-128.75 w-140.75 overflow-hidden bg-brand-mint">
+        <div className="relative h-128.75 w-140.75 overflow-hidden rounded-[5px] bg-brand-mint">
           <Image
             src="/images/svg/happymother.svg"
             alt="Happy mother and child"
@@ -56,7 +56,6 @@ export default function Hero() {
           />
         </div>
       </div>
-
     </section>
   );
 }

@@ -18,7 +18,10 @@ interface FileUploadProps {
 
 const FileUpload = ({
   label,
-  accept = { "image/*": [".png", ".jpg", ".jpeg"], "application/pdf": [".pdf"] },
+  accept = {
+    "image/*": [".png", ".jpg", ".jpeg"],
+    "application/pdf": [".pdf"],
+  },
   maxSizeMB = 5,
   onFileSelected,
   uploading = false,

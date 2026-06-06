@@ -1,17 +1,38 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_APPLICATIONS } from "./mock/data";
-import type { Application } from "@/src/types/application";
+import {
+  MOCK_APPLICATIONS,
+  MOCK_PARENT_APPLICATIONS,
+  MOCK_APPLICATION_PAYMENT_DETAILS,
+} from "./mock/data";
+import type {
+  Application,
+  ApplicationPaymentDetails,
+} from "@/src/types/application";
 
-export const submitApplication = async (_payload: FormData): Promise<Application> =>
-  mockResponse({ ...MOCK_APPLICATIONS[0], id: "app-new", referenceNumber: "GFA-2025-002", status: "pending" });
+export const submitApplication = async (
+  _payload: FormData
+): Promise<Application> =>
+  mockResponse({
+    ...MOCK_APPLICATIONS[0],
+    id: "app-new",
+    referenceNumber: "GFA-2025-002",
+    status: "under_review" as const,
+  });
 
 export const getMyApplications = async (): Promise<Application[]> =>
-  mockResponse(MOCK_APPLICATIONS);
+  mockResponse(MOCK_PARENT_APPLICATIONS);
 
 export const getApplication = async (_id: string): Promise<Application> =>
   mockResponse(MOCK_APPLICATIONS[0]);
 
-export const initiateApplicationFeePayment = async (_applicationId: string): Promise<string> =>
+export const getApplicationPaymentDetails = async (
+  _applicationId: string
+): Promise<ApplicationPaymentDetails> =>
+  mockResponse(MOCK_APPLICATION_PAYMENT_DETAILS);
+
+export const initiateApplicationFeePayment = async (
+  _applicationId: string
+): Promise<string> =>
   mockResponse("https://checkout.opay.com/mock-checkout-url");
 
 // School-side
@@ -20,7 +41,8 @@ export const getSchoolApplications = async (_params?: {
   classId?: string;
   page?: number;
   limit?: number;
-}) => mockResponse({ data: MOCK_APPLICATIONS, total: MOCK_APPLICATIONS.length });
+}) =>
+  mockResponse({ data: MOCK_APPLICATIONS, total: MOCK_APPLICATIONS.length });
 
 export const getSchoolApplication = async (_id: string): Promise<Application> =>
   mockResponse(MOCK_APPLICATIONS[0]);

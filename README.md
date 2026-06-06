@@ -7,20 +7,22 @@ SchoolFlow is a multi-tenant school management SaaS platform built for Nigerian 
 ## What We Are Building
 
 ### The Problem
+
 Nigerian schools still rely heavily on paper, manual fee collection, and WhatsApp groups with no structure. Parents have no single place to track their child's fees, results, or school communications. Schools have no modern tool to manage admissions, student data, and finances together.
 
 ### The Solution
+
 SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com`) and every parent a mobile-friendly dashboard — all powered by a shared platform that handles payments via OPay, automated notifications via WhatsApp, PDF report cards, and more.
 
 ---
 
 ## Three Portals
 
-| Portal | URL Pattern | Users |
-|--------|-------------|-------|
-| **School Portal** | `[subdomain].schoolflow.com` | Principals, teachers, bursars, admin staff |
-| **Parent Portal** | `app.schoolflow.com` | Parents and guardians |
-| **Platform Admin** | `admin.schoolflow.com` | SchoolFlow internal team (separate repo: `cms-frontend`) |
+| Portal             | URL Pattern                  | Users                                                    |
+| ------------------ | ---------------------------- | -------------------------------------------------------- |
+| **School Portal**  | `[subdomain].schoolflow.com` | Principals, teachers, bursars, admin staff               |
+| **Parent Portal**  | `app.schoolflow.com`         | Parents and guardians                                    |
+| **Platform Admin** | `admin.schoolflow.com`       | SchoolFlow internal team (separate repo: `cms-frontend`) |
 
 ---
 
@@ -40,6 +42,7 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
 ## What Has Been Built
 
 ### Homepage (`/`)
+
 - Navbar with Login/Register CTA
 - **Hero section** — split layout with heading, subtext, CTA and mother+child image
 - **Portal Cards** — "As a School" and "As a Parent" entry points
@@ -48,10 +51,12 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
 - **Bottom CTA** — split panel with payfee image and dark green call-to-action
 
 ### School Auth
+
 - **Register** (`/school/register`) — 3-step form: school info → admin account → subdomain selection with live availability check
 - **Login** (`/school/login`) — email + password with mock auth and redirect to dashboard
 
 ### Parent Auth
+
 - **Register / Login** (`/parent/register`) — full-page split layout (green photo panel + white form panel) with:
   - Sign up form: name, email, phone, password, terms checkbox
   - Login form: email + password + forgot password
@@ -59,11 +64,13 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
   - Email OTP verification: 6-digit code boxes, 60-second resend countdown, verify button
 
 ### Design System
+
 - All colors as CSS custom properties in `globals.css` (single source of truth)
 - Key tokens: `brand-green`, `brand-green-dark`, `brand-mint`, `brand-orange`, `text-heading`, `text-body`, `surface-card`, `border-default`
 - All Figma measurements implemented in Tailwind v4 canonical spacing units
 
 ### Mock API Layer (`src/lib/api/`)
+
 - `auth.ts`, `parents.ts`, `students.ts`, `grades.ts`, `fees.ts`, `applications.ts`, `notifications.ts`, `pta.ts`, `attendance.ts`
 - All return typed mock data with 600ms simulated network delay
 
@@ -72,6 +79,7 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
 ## What Is Coming Next
 
 ### School Portal Pages
+
 - Dashboard with stats (students, fees collected, pending applications)
 - Students list and student detail
 - Staff management
@@ -83,6 +91,7 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
 - Settings — onboarding wizard, grading system, admissions config
 
 ### Parent Portal Pages
+
 - Dashboard — linked children, quick stats
 - School search and discovery
 - Child detail — fees, results, attendance, messages
@@ -92,6 +101,7 @@ SchoolFlow gives every school its own branded portal (`schoolname.schoolflow.com
 - Performance trend graph (term-over-term)
 
 ### School KYC & Onboarding
+
 - 4-step KYC form (documents, proprietor info, bank account)
 - Onboarding wizard (logo, classes, academic year, invite proprietor)
 - Getting-started checklist on first login

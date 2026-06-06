@@ -17,12 +17,26 @@ export interface Route {
 
 export const schoolRoutes: Route[] = [
   {
-    icon: <Image src="/icons/dashboard.svg" alt="dashboard" width={20} height={20} />,
+    icon: (
+      <Image
+        src="/icons/dashboard.svg"
+        alt="dashboard"
+        width={20}
+        height={20}
+      />
+    ),
     label: "Dashboard",
     link: "",
   },
   {
-    icon: <Image src="/icons/user-group-v2.svg" alt="students" width={20} height={20} />,
+    icon: (
+      <Image
+        src="/icons/user-group-v2.svg"
+        alt="students"
+        width={20}
+        height={20}
+      />
+    ),
     label: "Students",
     link: null,
     children: [
@@ -36,17 +50,33 @@ export const schoolRoutes: Route[] = [
     link: "staff",
   },
   {
-    icon: <Image src="/icons/folder.svg" alt="applications" width={20} height={20} />,
+    icon: (
+      <Image
+        src="/icons/folder.svg"
+        alt="applications"
+        width={20}
+        height={20}
+      />
+    ),
     label: "Applications",
     link: "applications",
   },
   {
-    icon: <Image src="/icons/calendar.svg" alt="attendance" width={20} height={20} />,
+    icon: (
+      <Image
+        src="/icons/calendar.svg"
+        alt="attendance"
+        width={20}
+        height={20}
+      />
+    ),
     label: "Attendance",
     link: "attendance",
   },
   {
-    icon: <Image src="/icons/pen-paper.svg" alt="grades" width={20} height={20} />,
+    icon: (
+      <Image src="/icons/pen-paper.svg" alt="grades" width={20} height={20} />
+    ),
     label: "Grades & Results",
     link: null,
     children: [
@@ -66,12 +96,21 @@ export const schoolRoutes: Route[] = [
     ],
   },
   {
-    icon: <Image src="/icons/user-group.svg" alt="pta" width={20} height={20} />,
+    icon: (
+      <Image src="/icons/user-group.svg" alt="pta" width={20} height={20} />
+    ),
     label: "PTA Group",
     link: "pta",
   },
   {
-    icon: <Image src="/icons/speaker.svg" alt="announcements" width={20} height={20} />,
+    icon: (
+      <Image
+        src="/icons/speaker.svg"
+        alt="announcements"
+        width={20}
+        height={20}
+      />
+    ),
     label: "Announcements",
     link: "announcements",
   },

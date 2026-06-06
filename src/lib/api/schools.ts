@@ -4,17 +4,23 @@ import {
   MOCK_CLASSES,
   MOCK_ACADEMIC_YEAR,
   MOCK_TERM,
+  MOCK_SCHOOL_LISTINGS,
 } from "./mock/data";
-import type { School, KycSubmission, AdmissionsSettings } from "@/src/types/school";
+import type {
+  School,
+  SchoolListing,
+  KycSubmission,
+  AdmissionsSettings,
+} from "@/src/types/school";
 
 export const getMySchool = async (): Promise<School> =>
   mockResponse(MOCK_SCHOOL);
 
-export const searchSchools = async (_params: {
-  name?: string;
+export const searchSchools = async (_params?: {
+  query?: string;
   state?: string;
   type?: string;
-}): Promise<School[]> => mockResponse([MOCK_SCHOOL]);
+}): Promise<SchoolListing[]> => mockResponse(MOCK_SCHOOL_LISTINGS);
 
 export const getSchoolProfile = async (_subdomain: string): Promise<School> =>
   mockResponse(MOCK_SCHOOL);
@@ -73,7 +79,8 @@ export const getClasses = async () => mockResponse(MOCK_CLASSES);
 
 export const getCurrentTerm = async () => mockResponse(MOCK_TERM);
 
-export const getCurrentAcademicYear = async () => mockResponse(MOCK_ACADEMIC_YEAR);
+export const getCurrentAcademicYear = async () =>
+  mockResponse(MOCK_ACADEMIC_YEAR);
 
 export const getOnboardingProgress = async () =>
   mockResponse({

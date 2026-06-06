@@ -47,6 +47,32 @@ export interface Payment {
   paidAt: string;
 }
 
+export interface ParentFeeSummary {
+  studentId: string;
+  studentName: string;
+  schoolName: string;
+  className: string;
+  termName: string;
+  outstandingFees: number;
+  photoUrl?: string | null;
+}
+
+export interface PaymentHistoryRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentPhotoUrl: string | null;
+  schoolName: string;
+  className: string;
+  termName: string;
+  feeTypes: string[];
+  amount: number;
+  method: "card" | "bank_transfer" | "ussd" | "wallet";
+  reference: string;
+  status: "successful" | "failed" | "pending";
+  paidAt: string;
+}
+
 export interface BursarSummary {
   totalExpected: number;
   totalCollected: number;

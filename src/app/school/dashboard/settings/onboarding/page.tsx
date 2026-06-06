@@ -52,9 +52,12 @@ export default function OnboardingPage() {
         ))}
 
         <div className="mt-6 rounded-xl border border-border-default bg-white p-4 text-center">
-          <p className="text-sm font-medium text-dark-blue">🎉 30-Day Free Trial Active</p>
+          <p className="text-sm font-medium text-dark-blue">
+            🎉 30-Day Free Trial Active
+          </p>
           <p className="mt-1 text-xs text-grey-text">
-            You are on the Starter Plan (up to 100 students). Trial ends in 24 days.
+            You are on the Starter Plan (up to 100 students). Trial ends in 24
+            days.
           </p>
         </div>
       </div>

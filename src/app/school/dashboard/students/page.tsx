@@ -7,9 +7,15 @@ export default function StudentsPage() {
       <PageHeader
         title="Students"
         subtitle="All enrolled students across classes."
-        action={<Button className="bg-brand-green hover:bg-brand-green/90">+ Add Student</Button>}
+        action={
+          <Button className="bg-brand-green hover:bg-brand-green/90">
+            + Add Student
+          </Button>
+        }
       />
-      <p className="text-sm text-grey-text">Student table — connect to mock API in component.</p>
+      <p className="text-sm text-grey-text">
+        Student table — connect to mock API in component.
+      </p>
     </div>
   );
 }

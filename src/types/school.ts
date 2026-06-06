@@ -1,4 +1,8 @@
-export type KycStatus = "not_submitted" | "under_review" | "approved" | "rejected";
+export type KycStatus =
+  | "not_submitted"
+  | "under_review"
+  | "approved"
+  | "rejected";
 export type SchoolStatus = "pending_kyc" | "active" | "suspended";
 export type SchoolVisibility = "hidden" | "public";
 export type SchoolType = "nursery" | "primary" | "secondary" | "combined";
@@ -71,4 +75,15 @@ export interface AdmissionsSettings {
   admissionsOpen: boolean;
   applicationFee: number;
   availableClassIds: string[];
+}
+
+export interface SchoolListing {
+  id: string;
+  name: string;
+  location: string;
+  type: string;
+  applicationFee: number;
+  rating: string;
+  verified: boolean;
+  isRecommended: boolean;
 }

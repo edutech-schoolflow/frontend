@@ -6,8 +6,7 @@ export function middleware(request: NextRequest) {
   // On localhost / 127.0.0.1 — pass all requests through untouched.
   // The path-based routing (/school/*, /parent/*, /platform-admin/*) works
   // directly without subdomain rewriting in local development.
-  const isLocal =
-    host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1");
 
   if (isLocal) {
     return NextResponse.next();
