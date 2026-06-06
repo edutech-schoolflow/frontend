@@ -1,5 +1,5 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_PTA_INVITES } from "./mock/data";
+import { MOCK_PTA_INVITES } from "./mock/schoolData";
 import type { PtaStats } from "@/src/types/parent";
 
 export const setPtaInviteLink = async (_inviteLink: string) =>

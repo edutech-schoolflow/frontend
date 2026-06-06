@@ -63,7 +63,7 @@ export default function EnrolStep3() {
                 Seun Tolu Tinubu
               </p>
               <Link
-                href="/parent/dashboard/enrol"
+                href="/parent/dashboard/enrol/child-info"
                 className="text-[14px] font-medium text-[#ff8d28] hover:underline"
               >
                 Edit

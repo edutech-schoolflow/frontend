@@ -1,13 +1,13 @@
-import AuthCardLayout from "@/src/layout/auth/AuthCardLayout";
+import SchoolAuthLayout from "@/src/layout/auth/SchoolAuthLayout";
 import SchoolRegisterForm from "@/src/components/school/auth/SchoolRegisterForm";
 
 export default function SchoolRegisterPage() {
   return (
-    <AuthCardLayout
+    <SchoolAuthLayout
       title="Register your school"
-      subTitle="Get started on SchoolFlow in 3 simple steps"
+      subtitle="Get started on Oneschoolplatform in 3 simple steps"
     >
       <SchoolRegisterForm />
-    </AuthCardLayout>
+    </SchoolAuthLayout>
   );
 }

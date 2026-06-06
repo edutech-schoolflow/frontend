@@ -2,42 +2,43 @@ import Image from "next/image";
 
 const STEPS = [
   {
-    number: "1",
+    number: "01",
     title: "Sign up",
-    desc: "Create your parent or school account in seconds.",
+    desc: "Create your school or parent account in minutes.",
   },
   {
-    number: "2",
+    number: "02",
     title: "Set up profiles",
-    desc: "Parents add children; schools set up classes, teachers, and schedules.",
+    desc: "Schools add classes and students; parents link to their children.",
   },
   {
-    number: "3",
-    title: "Manage tasks",
-    desc: "Track fees, activities, events, and communications all in one place.",
+    number: "03",
+    title: "Manage everything",
+    desc: "Fees, results, attendance, and communications — all in one place.",
   },
   {
-    number: "4",
+    number: "04",
     title: "Stay updated",
-    desc: "Receive real-time notifications and updates to stay on top of everything.",
+    desc: "Real-time notifications keep everyone informed, always.",
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="w-full bg-white px-25 py-20">
-      <div className="flex flex-col gap-12.5">
-        <h2 className="text-center text-[50px] font-semibold text-text-heading">
-          Get started in 4 easy steps
-        </h2>
+    <section className="w-full bg-white px-6 py-24 md:px-12 lg:px-20 xl:px-28">
+      <div className="mx-auto max-w-[1240px]">
+        <div className="mx-auto max-w-xl text-center">
+          <p className="text-[13px] font-semibold uppercase tracking-widest text-brand-green">
+            How it works
+          </p>
+          <h2 className="mt-3 text-[42px] font-semibold leading-tight tracking-tight text-text-heading">
+            Up and running in 4 steps
+          </h2>
+        </div>
 
-        {/*
-         * Figma: image W:400 H:558 corner-radius:10 | steps W:820 H:558 gap:20
-         * Total content: 400 + 20 gap + 820 = 1240px
-         */}
-        <div className="flex gap-5">
-          {/* Left — W:400 H:558 corner-radius:10 (exact Figma dimensions) */}
-          <div className="relative h-139.5 w-100 shrink-0 overflow-hidden rounded-[10px]">
+        <div className="mt-14 flex gap-8">
+          {/* Image */}
+          <div className="relative hidden h-[500px] w-[360px] shrink-0 overflow-hidden rounded-[12px] lg:block">
             <Image
               src="/images/svg/graduation.svg"
               alt="Students graduating"
@@ -46,27 +47,21 @@ export default function HowItWorks() {
             />
           </div>
 
-          {/*
-           * Right — 2×2 steps grid W:820 H:558 gap:20
-           * Each card: W:400 H:269, padding V:39 H:46, gap:58, corner-radius:10, fill:white
-           * Number circle: large, bg-brand-mint border-brand-green filled
-           */}
-          <div className="grid flex-1 grid-cols-2 gap-5">
+          {/* Steps grid */}
+          <div className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2">
             {STEPS.map((step) => (
               <div
                 key={step.number}
-                className="flex h-[269px] flex-col gap-[58px] rounded-[10px] border border-border-default bg-white py-[46px] px-[39px]"
+                className="flex flex-col justify-between rounded-[12px] border border-border-default bg-white p-7"
               >
-                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[36px] border-2 border-brand-green bg-brand-mint">
-                  <span className="text-[40px] font-medium text-brand-green">
-                    {step.number}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <h3 className="text-2xl font-medium leading-[28px] text-text-heading">
+                <span className="text-[13px] font-semibold text-brand-green">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="text-[20px] font-semibold text-text-heading">
                     {step.title}
                   </h3>
-                  <p className="text-xl font-light leading-[24.5px] text-text-body">
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-text-body">
                     {step.desc}
                   </p>
                 </div>

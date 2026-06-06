@@ -1,21 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Search,
-  MapPin,
-  BookOpen,
-  Banknote,
-  Star,
-  ChevronDown,
-  ChevronUp,
-  Check,
-} from "lucide-react";
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import { searchSchools } from "@/src/lib/api/schools";
 import type { SchoolListing } from "@/src/types/school";
 import WhoToEnrolModal from "./WhoToEnrolModal";
-
-// ─── filter config ────────────────────────────────────────────────────────────
+import FilterChip from "./FilterChip";
+import SchoolGrid from "./SchoolGrid";
 
 type FilterKey = "location" | "type" | "fees";
 
@@ -31,135 +22,8 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   fees: "Filter by school fees",
 };
 
-const STEPS = ["Step 1", "Step 2", "Step 3", "Step 4"];
 const FILTER_KEYS: FilterKey[] = ["location", "type", "fees"];
-
-// ─── filter chip ──────────────────────────────────────────────────────────────
-
-function FilterChip({
-  label,
-  selected,
-  onToggle,
-}: {
-  label: string;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`flex h-[30px] items-center gap-[6px] rounded-[10px] border px-[10px] text-[14px] text-[#1b1b1b] transition-colors whitespace-nowrap ${
-        selected
-          ? "border-[#1ca95c] bg-[#daffeb]"
-          : "border-[#ccc] hover:border-[#aaa]"
-      }`}
-    >
-      {selected ? (
-        <div className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c]">
-          <Check className="h-[10px] w-[10px] text-white" strokeWidth={3} />
-        </div>
-      ) : (
-        <div className="h-[18px] w-[18px] shrink-0 rounded-full border border-[#ccc]" />
-      )}
-      {label}
-    </button>
-  );
-}
-
-// ─── school card ──────────────────────────────────────────────────────────────
-
-function SchoolCard({
-  school,
-  onApply,
-}: {
-  school: SchoolListing;
-  onApply: (school: SchoolListing) => void;
-}) {
-  return (
-    <div className="flex w-[330px] shrink-0 flex-col gap-[22px] rounded-[5px] border border-[#eee] bg-white px-[17px] py-[14px]">
-      <div className="flex flex-col gap-[10px]">
-        <div className="flex items-center gap-[14px]">
-          <p className="text-[18px] font-medium text-[#1b1b1b]">
-            {school.name}
-          </p>
-          {school.verified && (
-            <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[9px] font-bold text-white">
-              ✓
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-[7px]">
-          <div className="flex items-start gap-[7px]">
-            <MapPin className="mt-px h-[13px] w-[13px] shrink-0 text-[#444]" />
-            <p className="text-[14px] text-[#444]">{school.location}</p>
-          </div>
-          <div className="flex items-start gap-[7px]">
-            <BookOpen className="mt-px h-[13px] w-[13px] shrink-0 text-[#444]" />
-            <p className="text-[14px] text-[#444]">{school.type}</p>
-          </div>
-          <div className="flex items-start gap-[7px]">
-            <Banknote className="mt-px h-[13px] w-[13px] shrink-0 text-[#444]" />
-            <p className="text-[14px] text-[#444]">
-              Application fee: ₦{school.applicationFee.toLocaleString()}
-            </p>
-          </div>
-          <div className="flex items-start gap-[7px]">
-            <Star className="mt-px h-[13px] w-[13px] shrink-0 text-[#444]" />
-            <p className="text-[14px] text-[#444]">{school.rating}</p>
-          </div>
-        </div>
-      </div>
-      <div className="flex gap-[10px]">
-        <button
-          type="button"
-          onClick={() => onApply(school)}
-          className="flex h-[34px] w-[138px] items-center justify-center rounded-[5px] bg-[#1ca95c] text-[12px] text-white transition-opacity hover:opacity-90"
-        >
-          Apply now
-        </button>
-        <button
-          type="button"
-          className="flex h-[34px] w-[149px] items-center justify-center rounded-[5px] border border-[#1ca95c] text-[12px] text-[#1ca95c] transition-opacity hover:opacity-80"
-        >
-          View more details
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── school grid ──────────────────────────────────────────────────────────────
-
-function SchoolGrid({
-  schools,
-  onApply,
-}: {
-  schools: SchoolListing[];
-  onApply: (school: SchoolListing) => void;
-}) {
-  if (schools.length === 0) {
-    return (
-      <p className="text-[14px] text-[#888]">No schools match your filters.</p>
-    );
-  }
-  const rows: SchoolListing[][] = [];
-  for (let i = 0; i < schools.length; i += 3)
-    rows.push(schools.slice(i, i + 3));
-  return (
-    <div className="flex flex-col gap-[19px]">
-      {rows.map((row, i) => (
-        <div key={i} className="flex gap-[20px]">
-          {row.map((s) => (
-            <SchoolCard key={s.id} school={s} onApply={onApply} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── main ─────────────────────────────────────────────────────────────────────
+const STEPS = ["Step 1", "Step 2", "Step 3", "Step 4"];
 
 export default function EnrolStep1() {
   const [allSchools, setAllSchools] = useState<SchoolListing[]>([]);
@@ -178,35 +42,37 @@ export default function EnrolStep1() {
     searchSchools().then(setAllSchools);
   }, []);
 
-  const togglePanel = (key: FilterKey) => {
+  const togglePanel = (key: FilterKey) =>
     setOpenFilters((prev) => {
-      const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
-      return next;
+      const s = new Set(prev);
+      if (s.has(key)) {
+        s.delete(key);
+      } else {
+        s.add(key);
+      }
+      return s;
     });
-  };
 
-  const toggleOption = (key: FilterKey, value: string) => {
+  const toggleOption = (key: FilterKey, value: string) =>
     setSelected((prev) => ({
       ...prev,
       [key]: prev[key].includes(value)
         ? prev[key].filter((v) => v !== value)
         : [...prev[key], value],
     }));
-  };
 
-  const applyFilters = (schools: SchoolListing[]): SchoolListing[] =>
-    schools.filter((school) => {
+  const applyFilters = (schools: SchoolListing[]) =>
+    schools.filter((s) => {
       const locOk =
         selected.location.length === 0 ||
-        selected.location.some((loc) => school.location.includes(loc));
+        selected.location.some((loc) => s.location.includes(loc));
       const typeOk =
         selected.type.length === 0 ||
-        selected.type.some((t) => school.type.includes(t));
+        selected.type.some((t) => s.type.includes(t));
       const queryOk =
         !query.trim() ||
-        school.name.toLowerCase().includes(query.toLowerCase()) ||
-        school.location.toLowerCase().includes(query.toLowerCase());
+        s.name.toLowerCase().includes(query.toLowerCase()) ||
+        s.location.toLowerCase().includes(query.toLowerCase());
       return locOk && typeOk && queryOk;
     });
 
@@ -220,7 +86,6 @@ export default function EnrolStep1() {
           <h1 className="text-[24px] font-medium text-[#1b1b1b]">
             Enrol your child
           </h1>
-
           <div className="flex items-center gap-[5px]">
             {STEPS.map((step, i) => (
               <div key={step} className="flex w-[213px] flex-col gap-[7px]">
@@ -235,7 +100,6 @@ export default function EnrolStep1() {
               </div>
             ))}
           </div>
-
           <div className="flex flex-col gap-[14px]">
             <p className="text-[20px] font-normal text-[#1b1b1b]">
               Choose a school
@@ -265,9 +129,7 @@ export default function EnrolStep1() {
                 >
                   <div className="flex w-full items-center justify-between">
                     <span
-                      className={`text-[14px] transition-colors ${
-                        count > 0 ? "font-medium text-[#1ca95c]" : "text-[#888]"
-                      }`}
+                      className={`text-[14px] transition-colors ${count > 0 ? "font-medium text-[#1ca95c]" : "text-[#888]"}`}
                     >
                       {FILTER_LABELS[key]}
                       {count > 0 && ` (${count})`}
@@ -280,7 +142,6 @@ export default function EnrolStep1() {
                   </div>
                   <div className="h-px w-full bg-[#ccc]" />
                 </button>
-
                 {isOpen && (
                   <div className="flex flex-wrap gap-[8px]">
                     {FILTER_OPTIONS[key].map((opt) => (
@@ -304,13 +165,11 @@ export default function EnrolStep1() {
           </p>
           <SchoolGrid schools={recommended} onApply={setSelectedSchool} />
         </div>
-
         <div className="mt-[31px] flex flex-col gap-[15px]">
           <p className="text-[16px] font-normal text-[#666]">Others</p>
           <SchoolGrid schools={others} onApply={setSelectedSchool} />
         </div>
       </div>
-
       {selectedSchool && (
         <WhoToEnrolModal
           school={selectedSchool}

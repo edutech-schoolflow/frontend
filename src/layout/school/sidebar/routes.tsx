@@ -62,16 +62,13 @@ export const schoolRoutes: Route[] = [
     link: "applications",
   },
   {
-    icon: (
-      <Image
-        src="/icons/calendar.svg"
-        alt="attendance"
-        width={20}
-        height={20}
-      />
-    ),
-    label: "Attendance",
-    link: "attendance",
+    icon: <Image src="/icons/receipt.svg" alt="store" width={20} height={20} />,
+    label: "Store",
+    link: null,
+    children: [
+      { label: "Products", link: "store/products" },
+      { label: "Orders", link: "store/orders" },
+    ],
   },
   {
     icon: (

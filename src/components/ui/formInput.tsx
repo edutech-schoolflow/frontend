@@ -123,7 +123,9 @@ const FormInput = ({
               )}
             </div>
           </FormControl>
-          <FormMessage />
+          <div className="min-h-[18px]">
+            <FormMessage />
+          </div>
         </FormItem>
       )}
     />

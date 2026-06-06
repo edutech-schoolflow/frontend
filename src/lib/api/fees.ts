@@ -4,9 +4,11 @@ import {
   MOCK_INVOICE,
   MOCK_PAYMENTS,
   MOCK_BURSAR_SUMMARY,
+} from "./mock/schoolData";
+import {
   MOCK_PARENT_FEE_SUMMARIES,
   MOCK_PARENT_FEE_INVOICES,
-} from "./mock/data";
+} from "./mock/parentData";
 import type { FeeType, ParentFeeSummary, Invoice } from "@/src/types/fee";
 
 export const getParentFeeSummaries = async (): Promise<ParentFeeSummary[]> =>

@@ -488,4 +488,329 @@ Continues from Sprint Plan 1: feature branches off `develop`, merged via PR, aut
 
 ---
 
-_Last updated: 2026-05-08_
+## Sprint 11 — School Store (Weeks 21–22)
+
+**Goal:** Schools can list physical items for sale (books, uniforms, stationery, etc.) and parents can browse, order, and pay through the platform. The school manages fulfilment and tracks what has been collected.
+
+### Context & Rationale
+
+Schools currently handle item sales manually — parents call to ask what books are needed, pay cash at the gate, and queue to collect. This creates cash-handling risk, lost records, and unhappy parents. The Store centralises this: schools publish a catalogue, parents order and pay online, and the school prepares items before the parent arrives. No cash changes hands.
+
+---
+
+### How it works — End to End
+
+**School side:**
+
+1. Bursar or admin opens the Store section and creates product listings.
+2. Each listing is visible to parents of the relevant class(es).
+3. When a parent places an order and pays, the school gets notified immediately.
+4. The orders page shows a fulfilment queue — the bursar marks each order as **Ready** when items are packed, and **Collected** when the parent picks them up.
+5. At the end of term, the school can export a full sales report.
+
+**Parent side:**
+
+1. Parent opens the app and sees a "School Shop" card on their child's dashboard.
+2. They browse available items (filtered automatically to their child's class).
+3. They add items to a cart, review the order, and pay via OPay — same flow as school fees.
+4. They receive a WhatsApp receipt and a notification when their order is ready for collection.
+
+---
+
+### Data Model
+
+```
+store_products       — one row per item listed by a school
+  id, school_id, name, description, category (book | uniform | stationery | other),
+  price NUMERIC(10,2), stock_qty INT, applicable_class_ids UUID[], image_url,
+  is_active BOOL, created_at, updated_at
+
+store_orders         — one row per parent order
+  id, school_id, parent_id, student_id, status (pending_payment | paid | ready | collected | cancelled),
+  total_amount NUMERIC(10,2), opay_reference, receipt_url, notes, created_at
+
+store_order_items    — line items per order
+  id, order_id, product_id, quantity INT, unit_price NUMERIC(10,2), subtotal NUMERIC(10,2)
+```
+
+---
+
+### Backend API
+
+**School — Product Management**
+
+- [ ] `POST /api/store/products` — create a product listing (name, description, category, price, stock_qty, applicable_class_ids, image_url)
+- [ ] `GET /api/store/products` — list all products for the school (filterable by category, class, active status)
+- [ ] `PUT /api/store/products/:id` — update product (price, stock, active/inactive)
+- [ ] `DELETE /api/store/products/:id` — soft-delete (sets `is_active = false`)
+
+**Parent — Browsing & Ordering**
+
+- [ ] `GET /api/parent/store?student_id=` — returns all active products applicable to this student's class
+- [ ] `POST /api/store/orders` — parent submits an order (array of `{ product_id, quantity }`); validates stock; creates order with status `pending_payment`; initiates OPay payment; returns OPay checkout URL
+- [ ] `POST /api/webhooks/opay` (extend existing) — handle store order payments: mark order as `paid`, deduct stock, generate receipt PDF, send WhatsApp confirmation to parent, send notification to school bursar
+- [ ] `GET /api/parent/store/orders?student_id=` — parent's order history for a child
+
+**School — Order Fulfilment**
+
+- [ ] `GET /api/store/orders?status=&class_id=&date=` — list all orders for the school (filterable by status, class, date)
+- [ ] `PUT /api/store/orders/:id/status` — update order status (`ready` or `collected`)
+- [ ] `GET /api/store/orders/export?term_id=` — export full order/sales data as CSV
+
+---
+
+### Frontend
+
+**School — Products Page (`/school/dashboard/store/products`)**
+
+- [ ] Product catalogue table: name, category chip, price, stock, applicable classes, active toggle
+- [ ] "Add Product" modal:
+  - Name, description, category dropdown (Book / Uniform / Stationery / Other)
+  - Price input (₦), stock quantity input
+  - Class multi-select (which classes this product is for)
+  - Image upload (optional — shows placeholder if none)
+  - "Save Product" button
+- [ ] Inline edit: click a row to edit price or stock quantity directly
+- [ ] "Deactivate" button per row (removes from parent view without deleting)
+
+**School — Orders Page (`/school/dashboard/store/orders`)**
+
+- [ ] Status tab bar: All | Paid (pending pack) | Ready | Collected | Cancelled
+- [ ] Order table: order date, parent name, student name, class, item summary, total, status chip, action button
+- [ ] Order detail drawer (click a row):
+  - Line items list: product name, qty, unit price, subtotal
+  - Parent contact (phone number)
+  - "Mark as Ready" button → status becomes `ready`; parent receives WhatsApp notification
+  - "Mark as Collected" button → status becomes `collected`
+- [ ] "Export Sales Report" button → downloads CSV
+
+**Parent — School Shop (child dashboard → "Shop" tab)**
+
+- [ ] Product grid: image (or category icon placeholder), name, price, class badge, "Add to Cart" button
+- [ ] Cart drawer: list of selected items, quantities (increment/decrement), subtotal per item, order total
+- [ ] Order review screen: itemised list, school name, total, "Pay ₦X,XXX" button
+- [ ] OPay payment flow (same PIN → processing → success pattern as fees)
+- [ ] Order history screen: list of past orders with status chips (Paid / Ready for Collection / Collected)
+- [ ] Push notification when order is marked Ready: "Your order at [School Name] is ready for collection"
+
+---
+
+### Key Rules
+
+1. Stock is decremented only on confirmed payment (OPay webhook), not on order creation.
+2. If payment fails or times out, the order is cancelled and stock is restored.
+3. A product with `stock_qty = 0` shows as "Out of Stock" on the parent side and cannot be added to cart.
+4. Store payments go into the same school bank account as fee payments — no separate wallet.
+5. Store sales appear in the bursar's Finance dashboard alongside fee income.
+
+**Definition of Done:** School admin can list products with prices, classes, and stock levels. Parent can browse items for their child's class, place an order, and pay via OPay. School receives an instant notification, packs the order, marks it ready, and records collection. Parent receives a WhatsApp notification when items are ready.
+
+---
+
+## Sprint 12 — Native Accounting Layer (Weeks 23–24)
+
+**Goal:** Give the school bursar a complete, school-native accounting system — income from fees and store sales, school expenses, a term-level P&L, and export to Excel/CSV — so they never need to use a physical accounts book again.
+
+### Context & Rationale
+
+A typical Nigerian school bursar today does the following in a physical book:
+
+- Records every fee payment received per student
+- Tracks what each parent still owes
+- Records school expenses (salaries, electricity, cleaning, supplies)
+- At the end of term, tallies income vs expenses to get the net position
+
+We are not building QuickBooks. We are building the specific accounting workflow a school bursar already does — digitised, automated where possible, and with a clean export when their external accountant needs to review it.
+
+**Why not QuickBooks integration:** QuickBooks costs extra per seat, requires training most Nigerian school bursars have not had, and is designed for general business — not school-specific workflows like term-based billing, fee types per class, and invoice-per-student ledgers. Our native layer is simpler, cheaper, and purpose-built.
+
+**The export IS the integration point.** When the school's accountant needs to prepare annual accounts or file tax returns, they download a CSV and work in whatever tool they prefer.
+
+---
+
+### Accounting Model
+
+Income sources tracked by the platform:
+
+1. **Fee payments** — already recorded in `payments` table (Sprint 10)
+2. **Store sales** — recorded in `store_orders` (Sprint 11)
+3. **Application fees** — recorded in `payments` table (Sprint 7)
+
+New — Expenses:
+
+```
+school_expenses
+  id, school_id, term_id, category ENUM, description TEXT,
+  amount NUMERIC(10,2), expense_date DATE, recorded_by UUID (staff),
+  receipt_url (optional), created_at
+```
+
+Expense categories:
+
+```
+salaries | utilities | maintenance | supplies | transport |
+events | taxes | rent | other
+```
+
+---
+
+### Data Model Additions
+
+```
+school_expenses      — every outgoing recorded by the bursar
+  id, school_id, term_id, category, description, amount,
+  expense_date, recorded_by, receipt_url, created_at
+
+accounting_periods   — defines the financial period for reporting
+  id, school_id, term_id, academic_year_id,
+  total_income NUMERIC generated, total_expenses NUMERIC generated,
+  net_position NUMERIC generated (income − expenses),
+  is_closed BOOL (once closed, no more expense entries allowed)
+```
+
+---
+
+### Backend API
+
+**Expenses**
+
+- [ ] `POST /api/accounting/expenses` — bursar records an expense (category, description, amount, date, optional receipt image)
+- [ ] `GET /api/accounting/expenses?term_id=&category=&date_from=&date_to=` — list expenses with filters
+- [ ] `PUT /api/accounting/expenses/:id` — edit an expense (only if the accounting period is not closed)
+- [ ] `DELETE /api/accounting/expenses/:id` — soft-delete
+
+**Income Summary (aggregated from existing tables)**
+
+- [ ] `GET /api/accounting/income?term_id=` — returns:
+  - Total fee income (sum of all `payments` records for this term)
+  - Total store income (sum of all paid `store_orders` for this term)
+  - Total application fee income
+  - Grand total income
+
+**P&L Report**
+
+- [ ] `GET /api/accounting/pnl?term_id=` — returns:
+  - Income breakdown (fees, store, application fees, subtotals)
+  - Expense breakdown (grouped by category, subtotals)
+  - Net position (income − expenses)
+  - Comparison to previous term (% change in income, % change in expenses)
+
+**Export**
+
+- [ ] `GET /api/accounting/export?term_id=&type=income|expenses|full` — returns a CSV file:
+  - **Income CSV:** date, student name, class, fee type / item, amount, OPay reference
+  - **Expenses CSV:** date, category, description, amount, recorded by
+  - **Full CSV:** both sheets combined with a summary row
+
+**Period Close**
+
+- [ ] `POST /api/accounting/periods/:term_id/close` — marks the accounting period as closed; no new expense entries permitted; sends a summary email to the school admin
+
+---
+
+### Frontend
+
+**Bursar Dashboard — Accounting Tab**
+
+Extend the existing Bursar Dashboard with a new "Accounting" tab alongside the existing payments view.
+
+**Income Panel**
+
+- [ ] Summary cards: Fee Income / Store Income / Application Fees / Total Income (all for the selected term)
+- [ ] Income trend chart: bar chart comparing this term vs last term vs the term before
+- [ ] Income breakdown table: source, number of transactions, total amount
+
+**Expense Tracker**
+
+- [ ] Expenses table: date, category chip, description, amount, recorded by, actions (edit / delete)
+- [ ] "Record Expense" button → modal:
+  - Category dropdown
+  - Description text input
+  - Amount (₦) input
+  - Date picker (defaults to today)
+  - Optional: receipt image upload
+  - "Save Expense" button
+- [ ] Category filter + date range filter above the table
+- [ ] Running total: "Total expenses this term: ₦X,XXX,XXX"
+
+**P&L Summary Page**
+
+- [ ] Term selector at top (defaults to current term)
+- [ ] Two-column layout:
+  - Left: Income breakdown (fee types + store + application fees → total income)
+  - Right: Expense breakdown (grouped by category → total expenses)
+- [ ] Net position banner at the bottom:
+  - Green banner if net positive: "Net surplus: ₦X,XXX,XXX"
+  - Red banner if net negative: "Net deficit: ₦X,XXX,XXX"
+- [ ] Comparison line: "vs last term: income +12%, expenses −5%"
+- [ ] "Export to Excel" button → calls the export endpoint, downloads file
+
+**Close Period**
+
+- [ ] "Close This Term's Accounts" button (restricted to school admin role, not bursar):
+  - Confirmation modal: "Closing the accounts means no more expenses can be added for this term. This cannot be undone."
+  - On confirm: period is closed, button replaced with "Accounts closed on [date]" label
+
+---
+
+### Export Format (Excel / CSV)
+
+**Income sheet columns:**
+`Date | Student Name | Admission No. | Class | Fee Type / Item | Amount (₦) | OPay Reference | Recorded At`
+
+**Expenses sheet columns:**
+`Date | Category | Description | Amount (₦) | Recorded By | Receipt`
+
+**Summary sheet:**
+`Total Income | Total Expenses | Net Position | Term | Academic Year | Exported At`
+
+---
+
+### Key Rules
+
+1. Income figures are derived entirely from the `payments` and `store_orders` tables — the bursar cannot manually enter income. This ensures the accounting record always matches the actual payment data.
+2. Expenses are the only manually entered entries, and they are soft-deleted (never hard-deleted).
+3. A closed accounting period is immutable — no edits, no new entries. This is important for audit integrity.
+4. All monetary values displayed in ₦ with comma formatting (e.g. ₦1,250,000.00).
+5. The export file is named: `[SchoolName]_[Term]_[AcademicYear]_Accounts.csv`
+6. The audit log (existing `audit_logs` table) captures every expense creation, edit, delete, and period close — with the staff member's name and timestamp.
+
+**Definition of Done:** The bursar can record every school expense with a category and date. The P&L page shows total income (auto-calculated from real payment data), total expenses, and the net position for the term — with a comparison to the previous term. The school admin can close the accounts at end of term and download a clean export that an external accountant can work with in Excel.
+
+---
+
+_Last updated: 2026-06-06_
+
+for the OTP, we are gonna use African talking. (backend API).
+
+we have to add a feature for parents to be able to schdule a meetup with teachers.
+
+Application flow
+
+Application detail view — "View details" on the track page goes nowhere
+OPay payment flow — PIN entry screen + real OPay checkout (current Step 4 is a bank transfer mockup)
+Account
+
+Parent invite activation page (/parent/activate?token=xxx) — PIN setup for school-invited parents
+Notifications
+
+Date grouping (Today / Yesterday / This Week)
+Tapping a notification navigates to the relevant screen (fee, result, announcement)
+"Mark All Read" actually works
+Unread count badge on the sidebar bell icon
+Quiet hours toggle in notification preferences (the toggle exists in the plan but isn't in the current NotifSection)
+Report card
+
+PDF download button
+Share via WhatsApp button
+Fees
+
+Checkboxes to select individual fee items to pay
+"Pay Selected (₦X)" and "Pay All (₦X)" buttons
+Fee reminder snooze ("Snooze for 24 hours" on a reminder notification)
+New feature (from your note)
+
+Schedule a meetup with a teacher — form to request a meeting (date, time, reason), teacher responds to approve/reject
+That's roughly 8 areas. The biggest ones are the OPay payment flow and the notifications improvements. The meetup scheduler is net new — not in the sprint plan at all.
+
+Which do you want to tackle first?

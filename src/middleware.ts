@@ -23,9 +23,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if (!subdomain || subdomain === "app" || subdomain === "www") {
+  if (subdomain === "parent") {
     url.pathname = `/parent${pathname}`;
     return NextResponse.rewrite(url);
+  }
+
+  // No subdomain or www — main marketing site, pass through
+  if (!subdomain || subdomain === "www") {
+    return NextResponse.next();
   }
 
   // School subdomain (e.g. greenfield.schoolflow.com)

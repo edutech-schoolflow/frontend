@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, UserRound } from "lucide-react";
@@ -23,12 +24,12 @@ export default function WhoToEnrolModal({
 
   const handleSelect = (childId: string) => {
     router.push(
-      `/parent/dashboard/enrol?childId=${childId}&schoolId=${school.id}`
+      `/parent/dashboard/enrol/child-info?childId=${childId}&schoolId=${school.id}`
     );
   };
 
   const handleNew = () => {
-    router.push(`/parent/dashboard/enrol?schoolId=${school.id}`);
+    router.push(`/parent/dashboard/enrol/child-info?schoolId=${school.id}`);
   };
 
   return (
@@ -64,12 +65,13 @@ export default function WhoToEnrolModal({
                 onClick={() => handleSelect(child.id)}
                 className="flex items-center gap-[14px] rounded-[8px] border border-[#e0e0e0] px-[16px] py-[12px] text-left transition-colors hover:border-[#1ca95c] hover:bg-[#f7fdf9]"
               >
-                <div className="h-[40px] w-[40px] shrink-0 overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
+                <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
                   {child.photoUrl ? (
-                    <img
+                    <Image
                       src={child.photoUrl}
                       alt={fullName}
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">

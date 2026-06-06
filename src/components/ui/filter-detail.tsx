@@ -21,7 +21,7 @@ const FilterDetail = ({ filterValue, setFilterValue }: FilterDetailProps) => {
 
   //deriving active filters
   const filterValuesData = Object.entries(filterValue).filter(
-    ([key, val]) => val !== undefined
+    ([_key, val]) => val !== undefined
   );
 
   const removeFilter = (key: string) => {

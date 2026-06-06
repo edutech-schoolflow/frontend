@@ -1,9 +1,9 @@
 import { mockResponse } from "./mockClient";
+import { MOCK_APPLICATIONS } from "./mock/schoolData";
 import {
-  MOCK_APPLICATIONS,
   MOCK_PARENT_APPLICATIONS,
   MOCK_APPLICATION_PAYMENT_DETAILS,
-} from "./mock/data";
+} from "./mock/parentData";
 import type {
   Application,
   ApplicationPaymentDetails,
@@ -22,8 +22,10 @@ export const submitApplication = async (
 export const getMyApplications = async (): Promise<Application[]> =>
   mockResponse(MOCK_PARENT_APPLICATIONS);
 
-export const getApplication = async (_id: string): Promise<Application> =>
-  mockResponse(MOCK_APPLICATIONS[0]);
+export const getApplication = async (
+  id: string
+): Promise<Application | undefined> =>
+  mockResponse(MOCK_PARENT_APPLICATIONS.find((a) => a.id === id));
 
 export const getApplicationPaymentDetails = async (
   _applicationId: string

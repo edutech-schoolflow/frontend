@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import Logo from "@/src/components/ui/Logo";
 import Image from "next/image";
 import Link from "next/link";
 import ParentSignUpForm from "./ParentSignUpForm";
@@ -20,7 +21,7 @@ export default function ParentAuthCard({ initialTab = "signup" }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [step, setStep] = useState<Step>("form");
-  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyPhone, setVerifyPhone] = useState("");
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -40,11 +41,8 @@ export default function ParentAuthCard({ initialTab = "signup" }: Props) {
     >
       {/* ── Left: green photo panel ──────────────────────────────────── */}
       <div className="relative overflow-hidden bg-brand-green">
-        <Link
-          href="/"
-          className="absolute left-[100px] top-[57px] z-10 text-[16px] font-normal text-black"
-        >
-          SchoolFlow
+        <Link href="/" className="absolute left-[80px] top-[57px] z-10">
+          <Logo size={30} textColor="white" />
         </Link>
         <Image
           src="/images/svg/parentchildscreen.svg"
@@ -101,15 +99,15 @@ export default function ParentAuthCard({ initialTab = "signup" }: Props) {
 
           {activeTab === "signup" && step === "form" && (
             <ParentSignUpForm
-              onSuccess={(email) => {
-                setVerifyEmail(email);
+              onSuccess={(phone) => {
+                setVerifyPhone(phone);
                 setStep("verify");
               }}
             />
           )}
 
           {activeTab === "signup" && step === "verify" && (
-            <ParentVerifyEmail email={verifyEmail} />
+            <ParentVerifyEmail phone={verifyPhone} />
           )}
 
           {activeTab === "login" && <ParentLoginForm />}

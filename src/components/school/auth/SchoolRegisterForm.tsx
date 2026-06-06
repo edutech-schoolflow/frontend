@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
@@ -94,7 +93,6 @@ type AllFormData = Partial<
 >;
 
 export default function SchoolRegisterForm() {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<AllFormData>({});
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(

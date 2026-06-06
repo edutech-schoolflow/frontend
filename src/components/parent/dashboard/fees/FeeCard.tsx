@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { UserRound } from "lucide-react";
 import type { ParentFeeSummary } from "@/src/types/fee";
 import { formatCurrency } from "./feeUtils";
@@ -17,12 +18,13 @@ export default function FeeCard({
     <div className="flex flex-col gap-[16px] rounded-[10px] border border-[#ccc] bg-white px-[20px] py-[18px]">
       {/* Top row: photo + amount/status */}
       <div className="flex items-start justify-between">
-        <div className="h-[52px] w-[52px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
+        <div className="relative h-[52px] w-[52px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
           {summary.photoUrl ? (
-            <img
+            <Image
               src={summary.photoUrl}
               alt={summary.studentName}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

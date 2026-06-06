@@ -4,8 +4,8 @@ import {
   MOCK_CLASSES,
   MOCK_ACADEMIC_YEAR,
   MOCK_TERM,
-  MOCK_SCHOOL_LISTINGS,
-} from "./mock/data";
+} from "./mock/schoolData";
+import { MOCK_SCHOOL_LISTINGS } from "./mock/parentData";
 import type {
   School,
   SchoolListing,
@@ -21,6 +21,11 @@ export const searchSchools = async (_params?: {
   state?: string;
   type?: string;
 }): Promise<SchoolListing[]> => mockResponse(MOCK_SCHOOL_LISTINGS);
+
+export const getSchoolListingById = async (
+  id: string
+): Promise<SchoolListing | undefined> =>
+  mockResponse(MOCK_SCHOOL_LISTINGS.find((s) => s.id === id));
 
 export const getSchoolProfile = async (_subdomain: string): Promise<School> =>
   mockResponse(MOCK_SCHOOL);
@@ -90,3 +95,19 @@ export const getOnboardingProgress = async () =>
     proprietorInvited: false,
     completed: false,
   });
+
+export const saveOnboardingClasses = async (_levels: string[]) =>
+  mockResponse({ message: "Classes saved." });
+
+export const saveAcademicCalendar = async (_payload: {
+  academicYear: string;
+  term: "first" | "second" | "third";
+  startDate: string;
+  endDate: string;
+}) => mockResponse({ message: "Calendar saved." });
+
+export const inviteProprietor = async (_payload: {
+  name: string;
+  email: string;
+  phone: string;
+}) => mockResponse({ message: "Invitation sent." });

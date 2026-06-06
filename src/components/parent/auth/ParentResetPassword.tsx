@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Logo from "@/src/components/ui/Logo";
 import { Loader2, X } from "lucide-react";
 import { z } from "zod";
 
@@ -54,11 +55,8 @@ export default function ParentResetPassword() {
     >
       {/* Left — green photo panel */}
       <div className="relative overflow-hidden bg-brand-green">
-        <Link
-          href="/"
-          className="absolute left-[100px] top-[57px] z-10 text-[16px] font-normal text-black"
-        >
-          SchoolFlow
+        <Link href="/" className="absolute left-[80px] top-[57px] z-10">
+          <Logo size={30} textColor="white" />
         </Link>
         <Image
           src="/images/svg/parentchildscreen.svg"

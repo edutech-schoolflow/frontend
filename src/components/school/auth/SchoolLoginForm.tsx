@@ -74,7 +74,7 @@ export default function SchoolLoginForm() {
       </form>
 
       <p className="mt-6 text-center text-sm text-text-body">
-        New to SchoolFlow?{" "}
+        New to Oneschoolplatform?{" "}
         <Link
           href="/school/register"
           className="font-medium text-brand-green hover:underline"

@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { UserRound } from "lucide-react";
 import { getMyApplications } from "@/src/lib/api/applications";
 import type { Application, ApplicationStatus } from "@/src/types/application";
@@ -48,12 +50,13 @@ function ApplicationCard({ app }: { app: Application }) {
         <p className="text-[12px] text-[#888]">Applied on {appliedOn}</p>
       </div>
 
-      <div className="h-[48px] w-[48px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
+      <div className="relative h-[48px] w-[48px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
         {app.photoUrl ? (
-          <img
+          <Image
             src={app.photoUrl}
             alt={childName}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -77,12 +80,12 @@ function ApplicationCard({ app }: { app: Application }) {
         </p>
       )}
 
-      <button
-        type="button"
+      <Link
+        href={`/parent/dashboard/track/${app.id}`}
         className="mt-auto text-left text-[14px] text-[#ff8d28] hover:underline"
       >
-        View details
-      </button>
+        View details →
+      </Link>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import EnrolStep1 from "@/src/components/parent/dashboard/enrol/EnrolStep1";
+import ParentDashboardHome from "@/src/components/parent/dashboard/home/ParentDashboardHome";
 
 export default function ParentDashboardPage() {
-  return <EnrolStep1 />;
+  return <ParentDashboardHome />;
 }

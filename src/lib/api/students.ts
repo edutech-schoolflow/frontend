@@ -1,6 +1,20 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_STUDENTS } from "./mock/data";
-import type { Student } from "@/src/types/student";
+import { MOCK_STUDENTS, MOCK_CLASSES } from "./mock/schoolData";
+import type { Student, Class } from "@/src/types/student";
+
+export const getClasses = async (): Promise<Class[]> =>
+  mockResponse(MOCK_CLASSES);
+
+export const createStudent = async (
+  payload: Omit<Student, "id" | "schoolId" | "createdAt">
+): Promise<Student> =>
+  mockResponse({
+    ...payload,
+    id: `std-${Date.now()}`,
+    schoolId: "sch-001",
+    admissionNumber: `GFA/2025/${String(MOCK_STUDENTS.length + 1).padStart(3, "0")}`,
+    createdAt: new Date().toISOString(),
+  });
 
 export const getStudents = async (_params?: {
   classId?: string;

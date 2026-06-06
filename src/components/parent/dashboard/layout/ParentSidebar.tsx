@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useAuth } from "@/src/context/AuthContext";
+import Logo from "@/src/components/ui/Logo";
 
 const MAIN_NAV = [
-  { label: "Enrol your child", href: "/parent/dashboard" },
+  { label: "Find a school", href: "/parent/dashboard/search" },
+  { label: "Enrol your child", href: "/parent/dashboard/enrol" },
   { label: "Track application", href: "/parent/dashboard/track" },
   { label: "Fees", href: "/parent/dashboard/fees" },
-  { label: "My children", href: "/parent/dashboard/children" },
   { label: "CA scores", href: "/parent/dashboard/ca-scores" },
   { label: "Report card", href: "/parent/dashboard/report-card" },
   { label: "Performance trend", href: "/parent/dashboard/performance" },
@@ -18,11 +20,17 @@ const MAIN_NAV = [
 export default function ParentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
 
-  const isActive = (href: string) =>
-    href === "/parent/dashboard"
-      ? pathname === href
-      : pathname.startsWith(href);
+  const fullName = user?.name ?? "John Okafor";
+  const initials = fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join("");
+
+  const isActive = (href: string) => pathname.startsWith(href);
 
   const itemCls = (href: string) =>
     `flex h-[45px] w-full items-center rounded-[5px] px-[18px] text-[14px] font-normal text-white transition-colors ${
@@ -32,11 +40,8 @@ export default function ParentSidebar() {
   return (
     <aside className="flex h-screen w-[243px] shrink-0 flex-col bg-[#00512d]">
       {/* Logo */}
-      <Link
-        href="/"
-        className="px-[29px] pt-[59px] pb-[46px] text-[16px] font-normal text-white"
-      >
-        SchoolFlow
+      <Link href="/parent/dashboard" className="px-[29px] pt-[59px] pb-[46px]">
+        <Logo size={30} textColor="white" />
       </Link>
 
       {/* Main nav */}
@@ -64,11 +69,11 @@ export default function ParentSidebar() {
 
         <div className="flex items-center gap-[10px]">
           <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[13px] font-medium text-white">
-            JO
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-white">
-              John Okafor
+              {fullName}
             </p>
             <p className="text-[11px] text-white/60">Parent</p>
           </div>
