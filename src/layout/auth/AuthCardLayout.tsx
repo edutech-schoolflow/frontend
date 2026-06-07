@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { AuthCardLayoutProps } from "@/src/types/auth";
+import Logo from "@/src/components/ui/Logo";
 
 const AuthCardLayout = ({ children, title, subTitle }: AuthCardLayoutProps) => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface-muted px-4 py-12">
       <div className="mb-8 flex flex-col items-center">
-        <Link href="/" className="text-xl font-bold text-brand-green tracking-tight">
-          SchoolFlow
+        <Link href="/">
+          <Logo size={32} />
         </Link>
       </div>
 

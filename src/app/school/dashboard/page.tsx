@@ -18,7 +18,9 @@ export default function SchoolDashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border-default bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-dark-blue">Getting Started Checklist</h2>
+          <h2 className="mb-4 text-sm font-semibold text-dark-blue">
+            Getting Started Checklist
+          </h2>
           <ul className="space-y-3 text-sm">
             {[
               { label: "Complete school setup", done: true },
@@ -31,10 +33,16 @@ export default function SchoolDashboardPage() {
               { label: "Test parent portal access", done: false },
             ].map((item) => (
               <li key={item.label} className="flex items-center gap-2">
-                <span className={item.done ? "text-green-500" : "text-gray-300"}>
+                <span
+                  className={item.done ? "text-green-500" : "text-gray-300"}
+                >
                   {item.done ? "✓" : "○"}
                 </span>
-                <span className={item.done ? "text-grey-text line-through" : "text-dark-blue"}>
+                <span
+                  className={
+                    item.done ? "text-grey-text line-through" : "text-dark-blue"
+                  }
+                >
                   {item.label}
                 </span>
               </li>
@@ -43,7 +51,9 @@ export default function SchoolDashboardPage() {
         </div>
 
         <div className="rounded-xl border border-border-default bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-dark-blue">KYC Status</h2>
+          <h2 className="mb-4 text-sm font-semibold text-dark-blue">
+            KYC Status
+          </h2>
           <div className="flex items-center gap-3 rounded-lg bg-green-50 p-4">
             <span className="text-2xl">✅</span>
             <div>

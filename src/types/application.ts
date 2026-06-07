@@ -1,8 +1,8 @@
 export type ApplicationStatus =
-  | "pending"
+  | "under_review"
   | "exam_scheduled"
   | "admitted"
-  | "rejected";
+  | "not_admitted";
 
 export interface ApplicationGuardian {
   name: string;
@@ -24,6 +24,7 @@ export interface Application {
   childDateOfBirth: string;
   childGender: "male" | "female";
   desiredClass: string;
+  termName?: string;
   previousSchool?: string;
   medicalNotes?: string;
   photoUrl?: string;
@@ -42,4 +43,12 @@ export interface Application {
   rejectionReason?: string;
   submittedAt: string;
   updatedAt: string;
+}
+
+export interface ApplicationPaymentDetails {
+  bank: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  reference: string;
 }

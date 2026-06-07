@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import Logo from "@/src/components/ui/Logo";
 import Image from "next/image";
 import Link from "next/link";
 import ParentSignUpForm from "./ParentSignUpForm";
@@ -12,11 +13,15 @@ import ParentVerifyEmail from "./ParentVerifyEmail";
 type Tab = "signup" | "login";
 type Step = "form" | "verify";
 
-export default function ParentAuthCard() {
+interface Props {
+  initialTab?: Tab;
+}
+
+export default function ParentAuthCard({ initialTab = "signup" }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("signup");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [step, setStep] = useState<Step>("form");
-  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyPhone, setVerifyPhone] = useState("");
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -36,11 +41,8 @@ export default function ParentAuthCard() {
     >
       {/* ── Left: green photo panel ──────────────────────────────────── */}
       <div className="relative overflow-hidden bg-brand-green">
-        <Link
-          href="/"
-          className="absolute left-8 top-8 z-10 text-lg font-semibold text-white"
-        >
-          SchoolFlow
+        <Link href="/" className="absolute left-[80px] top-[57px] z-10">
+          <Logo size={30} textColor="white" />
         </Link>
         <Image
           src="/images/svg/parentchildscreen.svg"
@@ -53,7 +55,6 @@ export default function ParentAuthCard() {
 
       {/* ── Right: white panel ───────────────────────────────────────── */}
       <div className="relative overflow-y-auto bg-white">
-
         {/* Close — top-right of right panel */}
         <button
           onClick={() => router.push("/")}
@@ -73,23 +74,23 @@ export default function ParentAuthCard() {
           style={{ paddingLeft: "105px", paddingRight: "99px" }}
         >
           {/* Tabs */}
-          <div className="mb-8 flex gap-3">
+          <div className="mb-8 flex gap-[22px]">
             <button
               onClick={() => handleTabChange("signup")}
-              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+              className={`w-[251px] rounded-[10px] p-[10px] text-[16px] font-normal transition-colors ${
                 activeTab === "signup"
                   ? "bg-brand-green text-white"
-                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+                  : "bg-[#eee] text-[#1b1b1b] hover:bg-neutral-200"
               }`}
             >
               Sign up
             </button>
             <button
               onClick={() => handleTabChange("login")}
-              className={`rounded-lg px-10 py-3 text-sm font-semibold transition-colors ${
+              className={`w-[251px] rounded-[10px] p-[10px] text-[16px] font-normal transition-colors ${
                 activeTab === "login"
                   ? "bg-brand-green text-white"
-                  : "bg-neutral-100 text-text-body hover:bg-neutral-200"
+                  : "bg-[#eee] text-[#1b1b1b] hover:bg-neutral-200"
               }`}
             >
               Login
@@ -98,15 +99,15 @@ export default function ParentAuthCard() {
 
           {activeTab === "signup" && step === "form" && (
             <ParentSignUpForm
-              onSuccess={(email) => {
-                setVerifyEmail(email);
+              onSuccess={(phone) => {
+                setVerifyPhone(phone);
                 setStep("verify");
               }}
             />
           )}
 
           {activeTab === "signup" && step === "verify" && (
-            <ParentVerifyEmail email={verifyEmail} />
+            <ParentVerifyEmail phone={verifyPhone} />
           )}
 
           {activeTab === "login" && <ParentLoginForm />}

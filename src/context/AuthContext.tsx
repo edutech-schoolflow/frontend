@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { getToken, clearToken } from "@/src/lib/api/client";
 import client from "@/src/lib/api/client";
 import type { StaffRole } from "@/src/types/staff";
@@ -31,12 +37,11 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !!getToken());
 
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      setIsLoading(false);
       return;
     }
     client

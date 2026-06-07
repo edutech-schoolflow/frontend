@@ -13,7 +13,11 @@ interface MultiStepFormProps {
   children: ReactNode;
 }
 
-const MultiStepForm = ({ steps, currentStep, children }: MultiStepFormProps) => (
+const MultiStepForm = ({
+  steps,
+  currentStep,
+  children,
+}: MultiStepFormProps) => (
   <div className="w-full max-w-xl mx-auto">
     {/* Step indicator */}
     <div className="flex items-center mb-8">
@@ -21,7 +25,10 @@ const MultiStepForm = ({ steps, currentStep, children }: MultiStepFormProps) => 
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
         return (
-          <div key={step.label} className="flex items-center flex-1 last:flex-none">
+          <div
+            key={step.label}
+            className="flex items-center flex-1 last:flex-none"
+          >
             <div className="flex flex-col items-center">
               <div
                 className={cn(

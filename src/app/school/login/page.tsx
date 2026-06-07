@@ -1,10 +1,13 @@
-import AuthCardLayout from "@/src/layout/auth/AuthCardLayout";
+import SchoolAuthLayout from "@/src/layout/auth/SchoolAuthLayout";
 import SchoolLoginForm from "@/src/components/school/auth/SchoolLoginForm";
 
 export default function SchoolLoginPage() {
   return (
-    <AuthCardLayout title="Welcome back" subTitle="Sign in to your school portal">
+    <SchoolAuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your school portal"
+    >
       <SchoolLoginForm />
-    </AuthCardLayout>
+    </SchoolAuthLayout>
   );
 }

@@ -28,6 +28,39 @@ export interface ParentChild {
   hasNewMessage: boolean;
 }
 
+export interface ChildProfile {
+  id: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  dateOfBirth: string;
+  desiredClass: string;
+  gender: "male" | "female";
+  previousSchool?: string;
+  medicalInfo?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  guardianRelationship?: string;
+  photoUrl: string | null;
+}
+
+export interface AttendanceSummary {
+  term: string;
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+}
+
+export interface SchoolMessage {
+  id: string;
+  from: string;
+  subject: string;
+  body: string;
+  date: string;
+  read: boolean;
+}
+
 export interface PtaInvite {
   parentId: string;
   parentName: string;

@@ -1,5 +1,14 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_SUBJECTS, MOCK_GRADES, MOCK_REPORT } from "./mock/data";
+import {
+  MOCK_SUBJECTS,
+  MOCK_GRADES,
+  MOCK_REPORT,
+  MOCK_PARENT_REPORTS,
+} from "./mock/schoolData";
+import {
+  MOCK_PARENT_CA_SCORES,
+  MOCK_PARENT_PERFORMANCE_TREND,
+} from "./mock/parentData";
 import type { Grade, Report, Subject, GradeBoundary } from "@/src/types/grade";
 
 const MOCK_GRADING: GradeBoundary[] = [
@@ -13,8 +22,9 @@ const MOCK_GRADING: GradeBoundary[] = [
 export const getSubjects = async (_classId: string): Promise<Subject[]> =>
   mockResponse(MOCK_SUBJECTS);
 
-export const createSubject = async (payload: Omit<Subject, "id">): Promise<Subject> =>
-  mockResponse({ ...payload, id: `sub-${Date.now()}` });
+export const createSubject = async (
+  payload: Omit<Subject, "id">
+): Promise<Subject> => mockResponse({ ...payload, id: `sub-${Date.now()}` });
 
 export const getGradingSystem = async (): Promise<GradeBoundary[]> =>
   mockResponse(MOCK_GRADING);
@@ -22,14 +32,22 @@ export const getGradingSystem = async (): Promise<GradeBoundary[]> =>
 export const saveGradingSystem = async (boundaries: GradeBoundary[]) =>
   mockResponse(boundaries);
 
-export const saveCaScores = async (_classId: string, _termId: string, _scores: unknown[]) =>
-  mockResponse({ message: "CA scores saved." });
+export const saveCaScores = async (
+  _classId: string,
+  _termId: string,
+  _scores: unknown[]
+) => mockResponse({ message: "CA scores saved." });
 
-export const saveExamScores = async (_classId: string, _termId: string, _scores: unknown[]) =>
-  mockResponse({ message: "Exam scores saved. Totals calculated." });
+export const saveExamScores = async (
+  _classId: string,
+  _termId: string,
+  _scores: unknown[]
+) => mockResponse({ message: "Exam scores saved. Totals calculated." });
 
-export const getClassGrades = async (_classId: string, _termId: string): Promise<Grade[]> =>
-  mockResponse(MOCK_GRADES);
+export const getClassGrades = async (
+  _classId: string,
+  _termId: string
+): Promise<Grade[]> => mockResponse(MOCK_GRADES);
 
 export const publishResults = async (_classId: string, _termId: string) =>
   mockResponse({ message: "Results published. Parents notified." });
@@ -37,21 +55,30 @@ export const publishResults = async (_classId: string, _termId: string) =>
 export const getReport = async (_enrollmentId: string): Promise<Report> =>
   mockResponse(MOCK_REPORT);
 
-export const getReportPdfUrl = (_enrollmentId: string) =>
-  "/mock-report.pdf";
+export const getReportPdfUrl = (_enrollmentId: string) => "/mock-report.pdf";
 
 // Parent-facing
-export const getChildCaScores = async (_studentId: string, _termId: string): Promise<Grade[]> =>
-  mockResponse(MOCK_GRADES);
+export const getChildCaScores = async (
+  studentId: string,
+  termName: string
+): Promise<Grade[]> =>
+  mockResponse(MOCK_PARENT_CA_SCORES[studentId]?.[termName] ?? MOCK_GRADES);
 
-export const getChildResults = async (_studentId: string, _termId: string): Promise<Report> =>
-  mockResponse(MOCK_REPORT);
+export const getChildCaScoresByChild = async (
+  studentId: string
+): Promise<Record<string, Grade[]>> =>
+  mockResponse(MOCK_PARENT_CA_SCORES[studentId] ?? {});
 
-export const getChildPerformanceTrend = async (_studentId: string) =>
-  mockResponse([
-    { term: "1st Term '23", average: 70 },
-    { term: "2nd Term '23", average: 75 },
-    { term: "3rd Term '23", average: 72 },
-    { term: "1st Term '24", average: 78 },
-    { term: "2nd Term '24", average: 79.9 },
-  ]);
+export const getChildResults = async (
+  _studentId: string,
+  _termId: string
+): Promise<Report> => mockResponse(MOCK_REPORT);
+
+export const getParentReportsByChild = async (
+  studentId: string
+): Promise<Report[]> => mockResponse(MOCK_PARENT_REPORTS[studentId] ?? []);
+
+export const getChildPerformanceTrend = async (
+  studentId: string
+): Promise<{ term: string; average: number }[]> =>
+  mockResponse(MOCK_PARENT_PERFORMANCE_TREND[studentId] ?? []);

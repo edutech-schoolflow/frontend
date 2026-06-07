@@ -1,5 +1,5 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_PTA_INVITES } from "./mock/data";
+import { MOCK_PTA_INVITES } from "./mock/schoolData";
 import type { PtaStats } from "@/src/types/parent";
 
 export const setPtaInviteLink = async (_inviteLink: string) =>
@@ -18,8 +18,13 @@ export const getPtaStatus = async (): Promise<PtaStats> =>
     leftGroup: 0,
   });
 
-export const getPtaInvites = async (_params?: { status?: string; page?: number; limit?: number }) =>
-  mockResponse({ data: MOCK_PTA_INVITES, total: MOCK_PTA_INVITES.length });
+export const getPtaInvites = async (_params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => mockResponse({ data: MOCK_PTA_INVITES, total: MOCK_PTA_INVITES.length });
 
-export const updateInviteStatus = async (_parentId: string, status: "in_group" | "left_group") =>
-  mockResponse({ message: `Status updated to ${status}.` });
+export const updateInviteStatus = async (
+  _parentId: string,
+  status: "in_group" | "left_group"
+) => mockResponse({ message: `Status updated to ${status}.` });

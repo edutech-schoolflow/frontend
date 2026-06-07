@@ -24,6 +24,8 @@ interface FormInputProps extends Omit<HTMLProps<HTMLInputElement>, "ref"> {
   type?: HTMLInputTypeAttribute;
   formatAsCurrency?: boolean;
   className?: string;
+  inputClassName?: string;
+  labelClassName?: string;
 }
 
 const FormInput = ({
@@ -33,6 +35,8 @@ const FormInput = ({
   type,
   formatAsCurrency,
   className,
+  inputClassName,
+  labelClassName,
   ...rest
 }: FormInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -82,7 +86,12 @@ const FormInput = ({
       render={({ field }) => (
         <FormItem className={className}>
           {label && (
-            <FormLabel className="text-[0.875rem] font-normal leading-4.5 tracking-[-0.14px] text-text-heading">
+            <FormLabel
+              className={
+                labelClassName ??
+                "text-[0.875rem] font-normal leading-4.5 tracking-[-0.14px] text-text-heading"
+              }
+            >
               {label}
             </FormLabel>
           )}
@@ -94,7 +103,10 @@ const FormInput = ({
                 {...field}
                 onChange={(e) => handleChange(e, field)}
                 {...rest}
-                className="h-12.5 rounded-[7px] bg-surface-muted px-3.75 py-4 border-0 pr-10 placeholder:text-neutral-input-text placeholder:text-[13px] placeholder:tracking-[-0.13px] outline-none text-[13px] text-neutral-input-text tracking-[-0.13px] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                className={
+                  inputClassName ??
+                  "h-12.5 rounded-[7px] bg-surface-muted px-3.75 py-4 border-0 pr-10 placeholder:text-neutral-input-text placeholder:text-[13px] placeholder:tracking-[-0.13px] outline-none text-[13px] text-neutral-input-text tracking-[-0.13px] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                }
               />
               {isPassword && (
                 <button
@@ -111,7 +123,9 @@ const FormInput = ({
               )}
             </div>
           </FormControl>
-          <FormMessage />
+          <div className="min-h-[18px]">
+            <FormMessage />
+          </div>
         </FormItem>
       )}
     />

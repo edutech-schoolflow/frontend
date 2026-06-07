@@ -4,67 +4,64 @@ const FEATURES = [
   {
     icon: "/icons/secure.svg",
     title: "Secure payments",
-    desc: "Trusted, encrypted, and safe for parents and schools alike.",
+    desc: "Encrypted and trusted. Every fee payment is protected end to end.",
   },
   {
     icon: "/icons/stayontop.svg",
-    title: "Stay on top of activities",
-    desc: "Keep track of classes, events, and student progress effortlessly.",
+    title: "Stay on top",
+    desc: "Classes, events, and student progress — always in front of you.",
   },
   {
     icon: "/icons/flexible.svg",
-    title: "Flexible payment options",
-    desc: "Cards, bank transfer, or mobile wallets for easy sending and receiving.",
+    title: "Flexible payments",
+    desc: "Cards, bank transfer, or mobile wallets. Parents choose what works.",
   },
   {
     icon: "/icons/simplify.svg",
-    title: "Simplify administration",
-    desc: "Reduce paperwork and streamline school management efficiently.",
+    title: "Less admin work",
+    desc: "Cut the paperwork. Run your school from a single dashboard.",
   },
 ];
 
 export default function WhyChooseUs() {
   return (
-    /**
-     * Figma: W:1240, H:372 Hug, X:100 → px-25
-     * Auto layout: vertical, Gap:41 → flex flex-col gap-10.25
-     * Padding: 0, Corner radius: 0
-     */
-    <section className="w-full bg-white px-25 py-20">
+    <section className="w-full bg-[#f7faf8] px-6 py-24 md:px-12 lg:px-20 xl:px-28">
+      <div className="mx-auto max-w-[1240px]">
+        <div className="mx-auto max-w-xl text-center">
+          <p className="text-[13px] font-semibold uppercase tracking-widest text-brand-green">
+            Why us
+          </p>
+          <h2 className="mt-3 text-[42px] font-semibold leading-tight tracking-tight text-text-heading">
+            Built to make your life easier
+          </h2>
+        </div>
 
-      <div className="flex flex-col gap-10.25">
-
-        <h2 className="text-center text-3xl font-bold text-text-heading">
-          Why everyone chooses us every time
-        </h2>
-
-        {/*
-          * Figma: 4 cards W:295 H:271, gap:20 (4×295 + 3×20 = 1240)
-          * Card: p:19, gap:54 (icon→text), corner-radius:10, fill:#F3F3F3
-          * Text block: X:19 Y:134 W:257 H:112 Gap:6
-          * Icon = Y:134 − padding(19) − gap(54) = 61px tall
-          */}
-        <div className="grid grid-cols-4 gap-5">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="flex h-67.75 flex-col gap-13.5 rounded-[10px] bg-neutral-100 p-4.75"
+              className="flex flex-col gap-5 rounded-[12px] border border-border-default bg-white p-6"
             >
-              <Image
-                src={f.icon}
-                alt={f.title}
-                width={61}
-                height={61}
-                className="h-15.25 w-15.25 object-contain"
-              />
-              <div className="flex flex-col gap-1.5">
-                <h3 className="text-xl font-medium leading-none text-text-heading">{f.title}</h3>
-                <p className="text-xl font-light leading-6.5 tracking-normal text-text-body">{f.desc}</p>
+              <div className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] bg-brand-mint">
+                <Image
+                  src={f.icon}
+                  alt={f.title}
+                  width={22}
+                  height={22}
+                  className="h-[22px] w-[22px] object-contain"
+                />
+              </div>
+              <div>
+                <h3 className="text-[16px] font-semibold text-text-heading">
+                  {f.title}
+                </h3>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-text-body">
+                  {f.desc}
+                </p>
               </div>
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

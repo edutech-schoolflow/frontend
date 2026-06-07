@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
@@ -37,11 +36,43 @@ import {
 import { registerSchool, checkSubdomain } from "@/src/lib/api/auth";
 
 const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
-  "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",
-  "FCT (Abuja)", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina",
-  "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo",
-  "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT (Abuja)",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
 ];
 
 const SCHOOL_TYPES = [
@@ -57,13 +88,16 @@ const STEPS = [
   { label: "Subdomain" },
 ];
 
-type AllFormData = Partial<SchoolInfoValues & AdminAccountValues & SubdomainValues>;
+type AllFormData = Partial<
+  SchoolInfoValues & AdminAccountValues & SubdomainValues
+>;
 
 export default function SchoolRegisterForm() {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<AllFormData>({});
-  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null);
+  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(
+    null
+  );
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -137,11 +171,15 @@ export default function SchoolRegisterForm() {
     return (
       <div className="flex flex-col items-center gap-4 py-6 text-center">
         <CheckCircle2 className="h-14 w-14 text-brand-green" />
-        <h2 className="text-xl font-semibold text-text-heading">Check your email</h2>
+        <h2 className="text-xl font-semibold text-text-heading">
+          Check your email
+        </h2>
         <p className="text-sm text-text-body">
           We sent a verification link to{" "}
-          <span className="font-medium text-text-heading">{formData.adminEmail}</span>.
-          Click it to activate your school account.
+          <span className="font-medium text-text-heading">
+            {formData.adminEmail}
+          </span>
+          . Click it to activate your school account.
         </p>
         <Link
           href="/school/login"
@@ -175,7 +213,10 @@ export default function SchoolRegisterForm() {
                     <FormLabel className="text-[0.875rem] font-normal text-text-heading">
                       School type
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="h-12.5 rounded-[7px] bg-surface-muted border-0 text-[13px] text-text-body">
                           <SelectValue placeholder="Select school type" />
@@ -212,7 +253,10 @@ export default function SchoolRegisterForm() {
                       <FormLabel className="text-[0.875rem] font-normal text-text-heading">
                         State
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-12.5 rounded-[7px] bg-surface-muted border-0 text-[13px] text-text-body">
                             <SelectValue placeholder="Select state" />
@@ -320,7 +364,8 @@ export default function SchoolRegisterForm() {
           <Form {...step3Form}>
             <form onSubmit={handleStep3} className="flex flex-col gap-4">
               <p className="text-sm text-text-body">
-                Choose a unique subdomain for your school portal. This cannot be changed later.
+                Choose a unique subdomain for your school portal. This cannot be
+                changed later.
               </p>
 
               <FormField
@@ -338,7 +383,9 @@ export default function SchoolRegisterForm() {
                           placeholder="greenfield"
                           className="flex-1 bg-transparent px-3.75 text-[13px] text-text-body placeholder:text-neutral-400 outline-none"
                           onChange={(e) => {
-                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                            const val = e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9-]/g, "");
                             field.onChange(val);
                             setSubdomainAvailable(null);
                           }}
@@ -393,7 +440,10 @@ export default function SchoolRegisterForm() {
 
       <p className="mt-6 text-center text-sm text-text-body">
         Already have an account?{" "}
-        <Link href="/school/login" className="font-medium text-brand-green hover:underline">
+        <Link
+          href="/school/login"
+          className="font-medium text-brand-green hover:underline"
+        >
           Sign in
         </Link>
       </p>

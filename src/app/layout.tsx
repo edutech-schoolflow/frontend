@@ -10,7 +10,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "SchoolFlow",
+  title: "1SP",
   description: "School Management Information System",
 };
 

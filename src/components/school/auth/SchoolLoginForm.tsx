@@ -9,7 +9,10 @@ import { Form } from "@/src/components/ui/form";
 import FormInput from "@/src/components/ui/formInput";
 import FormButton from "@/src/components/ui/formButton";
 import FormCheckbox from "@/src/components/ui/formCheckbox";
-import { loginFormSchema, type loginFormType } from "@/src/lib/validations/login";
+import {
+  loginFormSchema,
+  type loginFormType,
+} from "@/src/lib/validations/login";
 import { loginStaff } from "@/src/lib/api/auth";
 import { useAuth } from "@/src/context/AuthContext";
 
@@ -23,10 +26,16 @@ export default function SchoolLoginForm() {
     defaultValues: { email: "", password: "", rememberMe: false },
   });
 
-  const { handleSubmit, formState: { isValid, isSubmitting } } = form;
+  const {
+    handleSubmit,
+    formState: { isValid, isSubmitting },
+  } = form;
 
   const onSubmit = async (values: loginFormType) => {
-    const user = await loginStaff({ email: values.email, password: values.password });
+    const user = await loginStaff({
+      email: values.email,
+      password: values.password,
+    });
     setUser(user);
     router.push("/school/dashboard");
   };
@@ -65,8 +74,11 @@ export default function SchoolLoginForm() {
       </form>
 
       <p className="mt-6 text-center text-sm text-text-body">
-        New to SchoolFlow?{" "}
-        <Link href="/school/register" className="font-medium text-brand-green hover:underline">
+        New to Oneschoolplatform?{" "}
+        <Link
+          href="/school/register"
+          className="font-medium text-brand-green hover:underline"
+        >
           Register your school
         </Link>
       </p>

@@ -1,8 +1,11 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_NOTIFICATIONS } from "./mock/data";
+import { MOCK_NOTIFICATIONS } from "./mock/parentData";
 import type { NotificationPreferences } from "@/src/types/notification";
 
-export const getNotifications = async (_params?: { page?: number; limit?: number }) =>
+export const getNotifications = async (_params?: {
+  page?: number;
+  limit?: number;
+}) =>
   mockResponse({
     data: MOCK_NOTIFICATIONS,
     total: MOCK_NOTIFICATIONS.length,

@@ -16,8 +16,12 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-border-default px-4 pt-10 pb-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-dark-blue">Notifications</h1>
-          <button className="text-xs text-brand-green font-medium">Mark all read</button>
+          <h1 className="text-lg font-semibold text-dark-blue">
+            Notifications
+          </h1>
+          <button className="text-xs text-brand-green font-medium">
+            Mark all read
+          </button>
         </div>
       </div>
 
@@ -34,7 +38,9 @@ export default function NotificationsPage() {
             <div className="flex gap-3">
               <span className="text-xl">{typeIcon[notif.type] ?? "🔔"}</span>
               <div className="flex-1">
-                <p className="text-sm font-medium text-dark-blue">{notif.title}</p>
+                <p className="text-sm font-medium text-dark-blue">
+                  {notif.title}
+                </p>
                 <p className="mt-0.5 text-xs text-grey-text">{notif.body}</p>
                 <p className="mt-1 text-[10px] text-grey-text">
                   {new Date(notif.createdAt).toLocaleDateString("en-NG", {

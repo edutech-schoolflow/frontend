@@ -9,23 +9,23 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/src/components/ui/input-otp";
-import { verifyEmailOtp, resendVerificationEmail } from "@/src/lib/api/parents";
+import { verifyPhoneOtp, resendPhoneOtp } from "@/src/lib/api/parents";
+import OtpResultModal from "./OtpResultModal";
 
 interface Props {
-  email: string;
+  phone: string;
 }
 
 const RESEND_SECONDS = 60;
 
-export default function ParentVerifyEmail({ email }: Props) {
+export default function ParentVerifyEmail({ phone }: Props) {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_SECONDS);
-  const [error, setError] = useState("");
+  const [modal, setModal] = useState<"success" | "error" | null>(null);
 
-  // Countdown timer
   useEffect(() => {
     if (countdown <= 0) return;
     const t = setInterval(() => setCountdown((c) => c - 1), 1000);
@@ -34,13 +34,12 @@ export default function ParentVerifyEmail({ email }: Props) {
 
   const handleVerify = async () => {
     if (otp.length < 6) return;
-    setError("");
     setSubmitting(true);
     try {
-      await verifyEmailOtp({ email, otp });
-      router.push("/parent/dashboard");
+      await verifyPhoneOtp({ phone, otp });
+      setModal("success");
     } catch {
-      setError("Invalid code. Please try again.");
+      setModal("error");
     } finally {
       setSubmitting(false);
     }
@@ -48,9 +47,8 @@ export default function ParentVerifyEmail({ email }: Props) {
 
   const handleResend = async () => {
     setResending(true);
-    setError("");
     try {
-      await resendVerificationEmail(email);
+      await resendPhoneOtp(phone);
       setCountdown(RESEND_SECONDS);
       setOtp("");
     } finally {
@@ -59,78 +57,99 @@ export default function ParentVerifyEmail({ email }: Props) {
   };
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-text-heading">
-        Verify your email address
-      </h2>
-      <p className="mt-1 mb-7 text-sm text-text-body">
-        We've sent a code to{" "}
-        <span className="font-medium text-text-heading">{email}</span>. Enter it
-        below.
-      </p>
-
-      {/* 6 OTP boxes */}
-      <div className="flex justify-between mb-5">
-        <InputOTP
-          maxLength={6}
-          value={otp}
-          onChange={setOtp}
-          containerClassName="gap-2 w-full justify-between"
-        >
-          <InputOTPGroup className="gap-2">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <InputOTPSlot
-                key={i}
-                index={i}
-                className="h-12 w-12 rounded-xl border border-border-default bg-surface-subtle text-base font-semibold text-text-heading first:rounded-xl first:border last:rounded-xl last:border shadow-none data-[active=true]:border-brand-green data-[active=true]:ring-brand-green/20"
-              />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <p className="mb-3 text-xs text-red-500">{error}</p>
+    <>
+      {modal === "success" && (
+        <OtpResultModal
+          type="success"
+          title="Phone verified!"
+          message="Your account has been created successfully."
+          actionLabel="Go to dashboard"
+          onAction={() => router.push("/parent/dashboard")}
+        />
       )}
 
-      {/* Resend */}
-      <p className="mb-6 text-xs text-text-body text-center">
-        I didn't receive the code.{" "}
-        {countdown > 0 ? (
-          <span className="text-neutral-400">
-            Resend in {countdown}s
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resending}
-            className="font-medium text-brand-green hover:underline disabled:opacity-50"
-          >
-            {resending ? "Sending…" : "Resend"}
-          </button>
-        )}
-      </p>
+      {modal === "error" && (
+        <OtpResultModal
+          type="error"
+          title="Incorrect code"
+          message="The code you entered is wrong. Please check and try again."
+          actionLabel="Try again"
+          onAction={() => {
+            setModal(null);
+            setOtp("");
+          }}
+        />
+      )}
 
-      {/* Verify button */}
-      <button
-        type="button"
-        onClick={handleVerify}
-        disabled={otp.length < 6 || submitting}
-        className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold transition-colors
-          disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400
-          enabled:bg-brand-green enabled:text-white enabled:hover:opacity-90"
-      >
-        {submitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Verifying…
-          </>
-        ) : (
-          "Verify"
-        )}
-      </button>
-    </div>
+      <div className="flex flex-col gap-[45px]">
+        <div className="flex flex-col gap-[48px]">
+          {/* Header */}
+          <div className="flex flex-col gap-[18px]">
+            <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+              Verify your phone number
+            </h2>
+            <p className="text-[16px] font-medium text-[#1b1b1b]">
+              We&apos;ve sent a 6-digit code to{" "}
+              <span className="text-brand-green">{phone}</span>. Enter it below.
+            </p>
+          </div>
+
+          {/* OTP + resend */}
+          <div className="flex flex-col gap-[19px] items-center w-[448px]">
+            <InputOTP
+              maxLength={6}
+              value={otp}
+              onChange={setOtp}
+              containerClassName="gap-[20px] w-full"
+            >
+              <InputOTPGroup className="gap-[20px]">
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <InputOTPSlot
+                    key={i}
+                    index={i}
+                    className="h-[71px] w-[58px] rounded-[5px] border-0 bg-[#eee] text-[16px] font-medium text-[#1b1b1b] shadow-none data-[active=true]:ring-2 data-[active=true]:ring-brand-green"
+                  />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+
+            <p className="text-[14px] font-normal text-[#1b1b1b] text-center">
+              I didn&apos;t receive the code.{" "}
+              {countdown > 0 ? (
+                <span className="text-[#888]">Resend in {countdown}s</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="text-brand-green underline hover:opacity-80 disabled:opacity-50"
+                >
+                  {resending ? "Sending…" : "Resend"}
+                </button>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Verify button */}
+        <button
+          type="button"
+          onClick={handleVerify}
+          disabled={otp.length < 6 || submitting}
+          className="flex h-[59px] w-full items-center justify-center rounded-[5px] text-[20px] font-normal transition-colors
+            disabled:cursor-not-allowed disabled:bg-[#eee] disabled:text-[#888]
+            enabled:bg-brand-green enabled:text-white enabled:hover:opacity-90"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Verifying…
+            </>
+          ) : (
+            "Verify"
+          )}
+        </button>
+      </div>
+    </>
   );
 }

@@ -4,17 +4,28 @@ import {
   MOCK_CLASSES,
   MOCK_ACADEMIC_YEAR,
   MOCK_TERM,
-} from "./mock/data";
-import type { School, KycSubmission, AdmissionsSettings } from "@/src/types/school";
+} from "./mock/schoolData";
+import { MOCK_SCHOOL_LISTINGS } from "./mock/parentData";
+import type {
+  School,
+  SchoolListing,
+  KycSubmission,
+  AdmissionsSettings,
+} from "@/src/types/school";
 
 export const getMySchool = async (): Promise<School> =>
   mockResponse(MOCK_SCHOOL);
 
-export const searchSchools = async (_params: {
-  name?: string;
+export const searchSchools = async (_params?: {
+  query?: string;
   state?: string;
   type?: string;
-}): Promise<School[]> => mockResponse([MOCK_SCHOOL]);
+}): Promise<SchoolListing[]> => mockResponse(MOCK_SCHOOL_LISTINGS);
+
+export const getSchoolListingById = async (
+  id: string
+): Promise<SchoolListing | undefined> =>
+  mockResponse(MOCK_SCHOOL_LISTINGS.find((s) => s.id === id));
 
 export const getSchoolProfile = async (_subdomain: string): Promise<School> =>
   mockResponse(MOCK_SCHOOL);
@@ -73,7 +84,8 @@ export const getClasses = async () => mockResponse(MOCK_CLASSES);
 
 export const getCurrentTerm = async () => mockResponse(MOCK_TERM);
 
-export const getCurrentAcademicYear = async () => mockResponse(MOCK_ACADEMIC_YEAR);
+export const getCurrentAcademicYear = async () =>
+  mockResponse(MOCK_ACADEMIC_YEAR);
 
 export const getOnboardingProgress = async () =>
   mockResponse({
@@ -83,3 +95,19 @@ export const getOnboardingProgress = async () =>
     proprietorInvited: false,
     completed: false,
   });
+
+export const saveOnboardingClasses = async (_levels: string[]) =>
+  mockResponse({ message: "Classes saved." });
+
+export const saveAcademicCalendar = async (_payload: {
+  academicYear: string;
+  term: "first" | "second" | "third";
+  startDate: string;
+  endDate: string;
+}) => mockResponse({ message: "Calendar saved." });
+
+export const inviteProprietor = async (_payload: {
+  name: string;
+  email: string;
+  phone: string;
+}) => mockResponse({ message: "Invitation sent." });

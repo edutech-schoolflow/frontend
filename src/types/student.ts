@@ -17,6 +17,7 @@ export interface Student {
   previousSchool?: string;
   medicalNotes?: string;
   admissionNumber?: string;
+  classId?: string;
   createdAt: string;
 }
 

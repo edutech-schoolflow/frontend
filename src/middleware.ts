@@ -6,8 +6,7 @@ export function middleware(request: NextRequest) {
   // On localhost / 127.0.0.1 — pass all requests through untouched.
   // The path-based routing (/school/*, /parent/*, /platform-admin/*) works
   // directly without subdomain rewriting in local development.
-  const isLocal =
-    host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1");
 
   if (isLocal) {
     return NextResponse.next();
@@ -24,9 +23,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if (!subdomain || subdomain === "app" || subdomain === "www") {
+  if (subdomain === "parent") {
     url.pathname = `/parent${pathname}`;
     return NextResponse.rewrite(url);
+  }
+
+  // No subdomain or www — main marketing site, pass through
+  if (!subdomain || subdomain === "www") {
+    return NextResponse.next();
   }
 
   // School subdomain (e.g. greenfield.schoolflow.com)

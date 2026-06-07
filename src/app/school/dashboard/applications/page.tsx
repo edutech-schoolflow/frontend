@@ -1,4 +1,5 @@
 import PageHeader from "@/src/shared/PageHeader";
+import SchoolApplications from "@/src/components/school/applications/SchoolApplications";
 
 export default function ApplicationsPage() {
   return (
@@ -7,7 +8,7 @@ export default function ApplicationsPage() {
         title="Applications"
         subtitle="Student enrollment applications received from parents."
       />
-      <p className="text-sm text-grey-text">Applications inbox — connect to mock API in component.</p>
+      <SchoolApplications />
     </div>
   );
 }
