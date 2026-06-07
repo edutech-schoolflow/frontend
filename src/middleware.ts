@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
 
-  // On localhost / 127.0.0.1 — pass all requests through untouched.
-  // The path-based routing (/school/*, /parent/*, /platform-admin/*) works
-  // directly without subdomain rewriting in local development.
+  // On localhost or Vercel preview URLs — pass all requests through untouched.
   const isLocal = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  const isVercelPreview = host.endsWith(".vercel.app");
 
-  if (isLocal) {
+  if (isLocal || isVercelPreview) {
     return NextResponse.next();
   }
 
