@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   images: {
     remotePatterns: [
       // S3 / CloudFront — restrict to your bucket domain once known
