@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const SCHOOL_FEATURES = [
-  "Collect fees via OPay — zero cash handling",
+  "Collect fees via Monnify — zero cash handling",
   "Manage students, classes, and staff",
   "Publish results and report cards digitally",
   "Send announcements to parents instantly",
@@ -9,9 +9,16 @@ const SCHOOL_FEATURES = [
 
 const PARENT_FEATURES = [
   "Pay school fees from your phone",
-  "Track your child's attendance and results",
+  "Track your child&apos;s attendance and results",
   "Receive real-time school notifications",
   "Apply to schools and track applications",
+];
+
+const TEACHER_FEATURES = [
+  "Take attendance digitally in under a minute",
+  "Enter scores — totals and grades auto-calculated",
+  "Set exam questions and submit to HOD digitally",
+  "Your professional profile stays with you across schools",
 ];
 
 export default function PortalCards() {
@@ -27,13 +34,13 @@ export default function PortalCards() {
             Built for everyone in the school
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-text-body">
-            Whether you run a school or have a child in one, Oneschoolplatform
-            has you covered.
+            Schools, parents, and teachers — each with their own portal, all
+            connected on one platform.
           </p>
         </div>
 
         {/* Cards */}
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* School card */}
           <div className="flex flex-col rounded-[14px] border border-border-default bg-white p-8">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] bg-brand-mint">
@@ -51,17 +58,17 @@ export default function PortalCards() {
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <h3 className="mt-5 text-[26px] font-semibold text-text-heading">
+            <h3 className="mt-5 text-[24px] font-semibold text-text-heading">
               For schools
             </h3>
-            <p className="mt-2 text-[16px] leading-relaxed text-text-body">
-              Everything an admin, bursar, or teacher needs — in one dashboard.
+            <p className="mt-2 text-[15px] leading-relaxed text-text-body">
+              Everything an admin or bursar needs — in one dashboard.
             </p>
             <ul className="mt-6 space-y-3">
               {SCHOOL_FEATURES.map((f) => (
                 <li
                   key={f}
-                  className="flex items-start gap-2.5 text-[15px] text-text-body"
+                  className="flex items-start gap-2.5 text-[14px] text-text-body"
                 >
                   <span className="mt-[3px] h-[18px] w-[18px] shrink-0 flex items-center justify-center rounded-full bg-brand-mint text-brand-green text-[10px] font-bold">
                     ✓
@@ -72,13 +79,13 @@ export default function PortalCards() {
             </ul>
             <div className="mt-auto pt-8">
               <Link
-                href="/school/login"
-                className="flex h-[50px] w-full items-center justify-center rounded-[8px] bg-brand-green text-[15px] font-medium text-white transition-opacity hover:opacity-90"
+                href="/school/register"
+                className="flex h-[48px] w-full items-center justify-center rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
               >
                 Get started as a school
               </Link>
               <p className="mt-3 text-center text-[13px] text-text-body">
-                Already have an account?{" "}
+                Already registered?{" "}
                 <Link
                   href="/school/login"
                   className="font-medium text-brand-green hover:underline"
@@ -107,18 +114,18 @@ export default function PortalCards() {
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
               </svg>
             </div>
-            <h3 className="mt-5 text-[26px] font-semibold text-text-heading">
+            <h3 className="mt-5 text-[24px] font-semibold text-text-heading">
               For parents
             </h3>
-            <p className="mt-2 text-[16px] leading-relaxed text-text-body">
-              Stay connected to your child&apos;s school life without making a
-              single phone call.
+            <p className="mt-2 text-[15px] leading-relaxed text-text-body">
+              Stay connected to your child&apos;s school life without a phone
+              call.
             </p>
             <ul className="mt-6 space-y-3">
               {PARENT_FEATURES.map((f) => (
                 <li
                   key={f}
-                  className="flex items-start gap-2.5 text-[15px] text-text-body"
+                  className="flex items-start gap-2.5 text-[14px] text-text-body"
                 >
                   <span className="mt-[3px] h-[18px] w-[18px] shrink-0 flex items-center justify-center rounded-full bg-[#fde8cc] text-[#f47e14] text-[10px] font-bold">
                     ✓
@@ -129,18 +136,74 @@ export default function PortalCards() {
             </ul>
             <div className="mt-auto pt-8">
               <Link
-                href="/parent/login"
-                className="flex h-[50px] w-full items-center justify-center rounded-[8px] border border-[#f47e14] text-[15px] font-medium text-[#f47e14] transition-colors hover:bg-[#fde8cc]"
+                href="/parent/register"
+                className="flex h-[48px] w-full items-center justify-center rounded-[8px] border border-[#f47e14] text-[14px] font-medium text-[#f47e14] transition-colors hover:bg-[#fde8cc]"
               >
-                Access parent portal
+                Create parent account
               </Link>
               <p className="mt-3 text-center text-[13px] text-text-body">
-                Invited by your school?{" "}
+                Already registered?{" "}
                 <Link
                   href="/parent/login"
                   className="font-medium text-[#f47e14] hover:underline"
                 >
-                  Activate account
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* Teacher card */}
+          <div className="flex flex-col rounded-[14px] border border-border-default bg-[#f5f4ff] p-8">
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#e0ddff]">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#5b4fcf"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </div>
+            <h3 className="mt-5 text-[24px] font-semibold text-text-heading">
+              For teachers
+            </h3>
+            <p className="mt-2 text-[15px] leading-relaxed text-text-body">
+              Your professional teaching identity — portable across every school
+              you teach at.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {TEACHER_FEATURES.map((f) => (
+                <li
+                  key={f}
+                  className="flex items-start gap-2.5 text-[14px] text-text-body"
+                >
+                  <span className="mt-[3px] h-[18px] w-[18px] shrink-0 flex items-center justify-center rounded-full bg-[#e0ddff] text-[#5b4fcf] text-[10px] font-bold">
+                    ✓
+                  </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto pt-8">
+              <Link
+                href="/teacher/register"
+                className="flex h-[48px] w-full items-center justify-center rounded-[8px] border border-[#5b4fcf] text-[14px] font-medium text-[#5b4fcf] transition-colors hover:bg-[#e0ddff]"
+              >
+                Create teacher account
+              </Link>
+              <p className="mt-3 text-center text-[13px] text-text-body">
+                Already registered?{" "}
+                <Link
+                  href="/teacher/login"
+                  className="font-medium text-[#5b4fcf] hover:underline"
+                >
+                  Sign in
                 </Link>
               </p>
             </div>

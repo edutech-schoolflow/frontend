@@ -87,3 +87,76 @@ export interface SchoolListing {
   verified: boolean;
   isRecommended: boolean;
 }
+
+export interface DashboardStats {
+  studentsEnrolled: number;
+  attendanceTodayPct: number;
+  absenteesToday: number;
+  outstandingFees: number;
+  feesCollectedThisTerm: number;
+  feeTargetThisTerm: number;
+  pendingApplications: number;
+  complianceApproved: boolean;
+}
+
+export type ActivityType =
+  | "payment"
+  | "application"
+  | "result"
+  | "staff"
+  | "announcement";
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityType;
+  description: string;
+  timestamp: string;
+}
+
+export interface DashboardApplication {
+  id: string;
+  studentName: string;
+  classApplied: string;
+  appliedAt: string;
+  status: "pending" | "approved" | "rejected";
+}
+
+// ─── Classes & Arms ────────────────────────────────────────────────────────────
+
+export type ClassLevel =
+  | "nursery"
+  | "primary"
+  | "junior_secondary"
+  | "senior_secondary";
+
+export interface SchoolClass {
+  id: string;
+  name: string; // "JSS 1", "Primary 3", "SS 2"
+  level: ClassLevel;
+  order: number; // for sorting within a level
+  armsCount: number;
+  studentsCount: number;
+}
+
+export interface SubjectTeacher {
+  subject: string;
+  teacherId: string;
+  teacherName: string;
+}
+
+export interface ClassArm {
+  id: string;
+  classId: string;
+  className: string; // "JSS 1"
+  arm: string; // "A", "B", "C"
+  fullName: string; // "JSS 1A"
+  classTeacher: { id: string; name: string } | null;
+  studentsCount: number;
+  subjectTeachers: SubjectTeacher[];
+}
+
+export interface CreateClassPayload {
+  name: string;
+  level: ClassLevel;
+  arms: string[]; // ["A", "B", "C"]
+}

@@ -8,25 +8,26 @@ type Props = {
   subtitle: string;
 };
 
-export default function SchoolAuthLayout({ children, title, subtitle }: Props) {
+export default function TeacherAuthLayout({
+  children,
+  title,
+  subtitle,
+}: Props) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white">
-      {/* Page content */}
+    <div className="min-h-screen bg-white">
       <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
-        {/* Top bar: logo + back link */}
         <div className="mb-6 flex w-full max-w-[520px] items-center justify-between">
-          <Link href="/">
+          <Link href="/teacher">
             <Logo size={28} />
           </Link>
           <Link
-            href="/"
+            href="/teacher"
             className="text-[13px] text-text-body transition-colors hover:text-text-heading"
           >
-            ← Back to home
+            ← Back
           </Link>
         </div>
 
-        {/* Card */}
         <div className="w-full max-w-[520px] rounded-2xl bg-white px-8 py-8 shadow-[0_4px_40px_rgba(0,0,0,0.10)]">
           <div className="mb-7">
             <h1 className="text-[26px] font-semibold tracking-tight text-text-heading">
@@ -34,7 +35,6 @@ export default function SchoolAuthLayout({ children, title, subtitle }: Props) {
             </h1>
             <p className="mt-1.5 text-[14px] text-text-body">{subtitle}</p>
           </div>
-
           {children}
         </div>
       </div>

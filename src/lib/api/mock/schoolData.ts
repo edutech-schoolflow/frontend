@@ -920,3 +920,114 @@ export const MOCK_PAYMENTS: Payment[] = [
     paidAt: "2025-01-21T10:45:00Z",
   },
 ];
+
+import type {
+  DashboardStats,
+  ActivityItem,
+  DashboardApplication,
+  SchoolClass,
+  ClassArm,
+} from "@/src/types/school";
+
+export const MOCK_DASHBOARD_STATS: DashboardStats = {
+  studentsEnrolled: 0,
+  attendanceTodayPct: 0,
+  absenteesToday: 0,
+  outstandingFees: 0,
+  feesCollectedThisTerm: 0,
+  feeTargetThisTerm: 0,
+  pendingApplications: 0,
+  complianceApproved: false,
+};
+
+export const MOCK_RECENT_APPLICATIONS: DashboardApplication[] = [];
+
+export const MOCK_RECENT_ACTIVITY: ActivityItem[] = [];
+
+// ─── Classes & Arms ────────────────────────────────────────────────────────────
+
+export const MOCK_SCHOOL_CLASSES: SchoolClass[] = [
+  {
+    id: "sc-001",
+    name: "Primary 1",
+    level: "primary",
+    order: 1,
+    armsCount: 1,
+    studentsCount: 3,
+  },
+  {
+    id: "sc-002",
+    name: "Primary 2",
+    level: "primary",
+    order: 2,
+    armsCount: 1,
+    studentsCount: 3,
+  },
+  {
+    id: "sc-003",
+    name: "JSS 1",
+    level: "junior_secondary",
+    order: 1,
+    armsCount: 1,
+    studentsCount: 2,
+  },
+  {
+    id: "sc-004",
+    name: "JSS 2",
+    level: "junior_secondary",
+    order: 2,
+    armsCount: 1,
+    studentsCount: 2,
+  },
+];
+
+export const MOCK_CLASS_ARMS: Record<string, ClassArm[]> = {
+  "sc-001": [
+    {
+      id: "arm-001",
+      classId: "sc-001",
+      className: "Primary 1",
+      arm: "A",
+      fullName: "Primary 1A",
+      classTeacher: { id: "stf-002", name: "Amaka Adeyemi" },
+      studentsCount: 3,
+      subjectTeachers: [],
+    },
+  ],
+  "sc-002": [
+    {
+      id: "arm-002",
+      classId: "sc-002",
+      className: "Primary 2",
+      arm: "A",
+      fullName: "Primary 2A",
+      classTeacher: null,
+      studentsCount: 3,
+      subjectTeachers: [],
+    },
+  ],
+  "sc-003": [
+    {
+      id: "arm-003",
+      classId: "sc-003",
+      className: "JSS 1",
+      arm: "A",
+      fullName: "JSS 1A",
+      classTeacher: null,
+      studentsCount: 2,
+      subjectTeachers: [],
+    },
+  ],
+  "sc-004": [
+    {
+      id: "arm-004",
+      classId: "sc-004",
+      className: "JSS 2",
+      arm: "A",
+      fullName: "JSS 2A",
+      classTeacher: null,
+      studentsCount: 2,
+      subjectTeachers: [],
+    },
+  ],
+};
