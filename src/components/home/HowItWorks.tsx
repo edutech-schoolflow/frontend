@@ -40,7 +40,7 @@ export default function HowItWorks() {
           {/* Image */}
           <div className="relative hidden h-[500px] w-[360px] shrink-0 overflow-hidden rounded-[12px] lg:block">
             <Image
-              src="/images/svg/graduation.svg"
+              src="/images/graduation.jpg"
               alt="Students graduating"
               fill
               className="object-cover object-center"

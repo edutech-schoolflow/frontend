@@ -111,3 +111,53 @@ export const inviteProprietor = async (_payload: {
   email: string;
   phone: string;
 }) => mockResponse({ message: "Invitation sent." });
+
+import type {
+  DashboardStats,
+  ActivityItem,
+  DashboardApplication,
+  SchoolClass,
+  ClassArm,
+  CreateClassPayload,
+} from "@/src/types/school";
+import {
+  MOCK_DASHBOARD_STATS,
+  MOCK_RECENT_APPLICATIONS,
+  MOCK_RECENT_ACTIVITY,
+  MOCK_SCHOOL_CLASSES,
+  MOCK_CLASS_ARMS,
+} from "./mock/schoolData";
+
+export const getSchoolDashboard = async (): Promise<{
+  stats: DashboardStats;
+  recentApplications: DashboardApplication[];
+  recentActivity: ActivityItem[];
+}> =>
+  mockResponse({
+    stats: MOCK_DASHBOARD_STATS,
+    recentApplications: MOCK_RECENT_APPLICATIONS,
+    recentActivity: MOCK_RECENT_ACTIVITY,
+  });
+
+// ─── Classes & Arms ────────────────────────────────────────────────────────────
+
+export const getSchoolClasses = async (): Promise<SchoolClass[]> =>
+  mockResponse(MOCK_SCHOOL_CLASSES);
+
+export const getClassArms = async (_classId: string): Promise<ClassArm[]> =>
+  mockResponse(MOCK_CLASS_ARMS[_classId] ?? []);
+
+export const createSchoolClass = async (
+  _payload: CreateClassPayload
+): Promise<SchoolClass> =>
+  mockResponse({
+    id: `cls-${Date.now()}`,
+    name: _payload.name,
+    level: _payload.level,
+    order: 0,
+    armsCount: _payload.arms.length,
+    studentsCount: 0,
+  });
+
+export const deleteSchoolClass = async (_classId: string): Promise<void> =>
+  mockResponse(undefined);

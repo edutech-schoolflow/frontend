@@ -10,14 +10,12 @@ import {
 import Step1Logo from "./Step1Logo";
 import Step2Classes from "./Step2Classes";
 import Step3Calendar from "./Step3Calendar";
-import Step4Proprietor from "./Step4Proprietor";
 import Step5Summary from "./Step5Summary";
 
 const STEPS = [
   { label: "Logo" },
   { label: "Classes" },
   { label: "Calendar" },
-  { label: "Proprietor" },
   { label: "Summary" },
 ];
 
@@ -29,10 +27,6 @@ type WizardData = {
   currentTerm: "first" | "second" | "third";
   termStart: string;
   termEnd: string;
-  proprietorName: string;
-  proprietorEmail: string;
-  proprietorPhone: string;
-  proprietorInvited: boolean;
 };
 
 const INITIAL: WizardData = {
@@ -43,10 +37,6 @@ const INITIAL: WizardData = {
   currentTerm: "second",
   termStart: "",
   termEnd: "",
-  proprietorName: "",
-  proprietorEmail: "",
-  proprietorPhone: "",
-  proprietorInvited: false,
 };
 
 export default function SchoolOnboarding() {
@@ -112,23 +102,10 @@ export default function SchoolOnboarding() {
           />
         )}
         {step === 3 && (
-          <Step4Proprietor
-            name={data.proprietorName}
-            email={data.proprietorEmail}
-            phone={data.proprietorPhone}
-            invited={data.proprietorInvited}
-            onChange={update}
-            onInvited={() => update({ proprietorInvited: true })}
-            onNext={next}
-            onBack={back}
-          />
-        )}
-        {step === 4 && (
           <Step5Summary
             logoUploaded={!!data.logoPreviewUrl}
             classesConfigured={data.selectedLevels.length > 0}
             calendarSet={!!data.termStart && !!data.termEnd}
-            proprietorInvited={data.proprietorInvited}
           />
         )}
       </MultiStepForm>

@@ -44,17 +44,34 @@ export default function SchoolSidebar() {
     .map((n) => n[0].toUpperCase())
     .join("");
 
-  const itemBase =
-    "flex h-[45px] w-full items-center gap-[12px] rounded-[5px] px-[14px] text-[14px] font-normal text-white transition-colors";
+  const itemCls = (active: boolean) =>
+    `flex h-[42px] w-full items-center gap-[10px] rounded-[6px] px-[12px] text-[13.5px] font-normal text-white transition-colors ${
+      active ? "bg-[#1ca95c]" : "hover:bg-white/10"
+    }`;
 
   return (
-    <aside className="flex h-screen w-[243px] shrink-0 flex-col bg-[#00512d]">
-      <Link href="/school/dashboard" className="px-[24px] pt-[59px] pb-[40px]">
-        <Logo size={30} textColor="white" />
+    <aside className="flex h-screen w-[256px] shrink-0 flex-col bg-[#00512d]">
+      {/* Logo */}
+      <Link href="/school/dashboard" className="px-[20px] pt-[28px] pb-[24px]">
+        <Logo size={28} textColor="white" />
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-px overflow-y-auto px-[16px]">
-        {schoolRoutes.map((route) => {
+      {/* Nav */}
+      <nav className="flex flex-1 flex-col overflow-y-auto px-[12px] pb-[8px]">
+        {schoolRoutes.map((route, idx) => {
+          const prevRoute = schoolRoutes[idx - 1];
+          const showSection =
+            route.section && route.section !== prevRoute?.section;
+
+          const header = showSection ? (
+            <p
+              key={`section-${route.section}`}
+              className="mt-[14px] mb-[4px] px-[12px] text-[10px] font-semibold uppercase tracking-widest text-white/40"
+            >
+              {route.section}
+            </p>
+          ) : null;
+
           if (route.children) {
             const isGroupActive = route.children.some((c) =>
               pathname.startsWith(`${BASE}/${c.link}`)
@@ -63,22 +80,23 @@ export default function SchoolSidebar() {
 
             return (
               <div key={route.label}>
+                {header}
                 <button
                   type="button"
                   onClick={() => toggle(route.label)}
-                  className={`${itemBase} ${isGroupActive ? "bg-[#1ca95c]" : "hover:bg-white/10"}`}
+                  className={itemCls(isGroupActive)}
                 >
-                  <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-70">
+                  <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
                     {route.icon}
                   </span>
                   <span className="flex-1 text-left">{route.label}</span>
                   <ChevronDown
-                    className={`h-[14px] w-[14px] opacity-60 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                    className={`h-[13px] w-[13px] opacity-50 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {isOpen && (
-                  <div className="ml-[38px] mt-[2px] flex flex-col gap-[2px]">
+                  <div className="ml-[34px] mt-[2px] mb-[2px] flex flex-col gap-[1px]">
                     {route.children.map((child) => {
                       const childPath = `${BASE}/${child.link}`;
                       const isActive = pathname.startsWith(childPath);
@@ -86,10 +104,10 @@ export default function SchoolSidebar() {
                         <Link
                           key={child.link}
                           href={childPath}
-                          className={`flex h-[36px] items-center rounded-[5px] px-[10px] text-[13px] transition-colors ${
+                          className={`flex h-[34px] items-center rounded-[5px] px-[10px] text-[12.5px] transition-colors ${
                             isActive
                               ? "bg-[#1ca95c] text-white"
-                              : "text-white/70 hover:bg-white/10 hover:text-white"
+                              : "text-white/60 hover:bg-white/10 hover:text-white"
                           }`}
                         >
                           {child.label}
@@ -107,46 +125,59 @@ export default function SchoolSidebar() {
             route.link === "" ? pathname === BASE : pathname.startsWith(href);
 
           return (
-            <Link
-              key={route.label}
-              href={href}
-              className={`${itemBase} ${isActive ? "bg-[#1ca95c]" : "hover:bg-white/10"}`}
-            >
-              <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-70">
-                {route.icon}
-              </span>
-              {route.label}
-            </Link>
+            <div key={route.label}>
+              {header}
+              <Link href={href} className={itemCls(isActive)}>
+                <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
+                  {route.icon}
+                </span>
+                {route.label}
+              </Link>
+            </div>
           );
         })}
       </nav>
 
-      <div className="px-[16px] pb-[32px] pt-[8px]">
+      {/* Bottom: settings + user */}
+      <div className="border-t border-white/10 px-[12px] py-[16px]">
         <Link
           href="/school/dashboard/settings/onboarding"
-          className={`${itemBase} ${pathname.includes("/settings") ? "bg-[#1ca95c]" : "hover:bg-white/10"}`}
+          className={itemCls(pathname.includes("/settings"))}
         >
+          <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          </span>
           Settings
         </Link>
 
-        <div className="my-4 h-px bg-white/20" />
-
-        <div className="flex items-center gap-[10px]">
-          <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[13px] font-medium text-white">
+        <div className="mt-[12px] flex items-center gap-[10px] px-[4px]">
+          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-white">
               {fullName}
             </p>
-            <p className="text-[11px] text-white/60">School Admin</p>
+            <p className="text-[11px] text-white/50">School Admin</p>
           </div>
           <button
             onClick={() => router.push("/school/login")}
-            className="shrink-0 text-white/60 transition-colors hover:text-white"
+            className="shrink-0 text-white/50 transition-colors hover:text-white"
             aria-label="Log out"
           >
-            <LogOut className="h-[16px] w-[16px]" />
+            <LogOut className="h-[15px] w-[15px]" />
           </button>
         </div>
       </div>

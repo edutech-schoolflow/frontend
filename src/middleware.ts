@@ -27,6 +27,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  if (subdomain === "teacher") {
+    url.pathname = `/teacher${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   // No subdomain or www — main marketing site, pass through
   if (!subdomain || subdomain === "www") {
     return NextResponse.next();

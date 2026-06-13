@@ -1,9 +1,9 @@
 # SchoolFlow — Sprint Plan 2 (Phases 2–6)
 
 **Goal:** Build both the Parent Portal and School operational features — applications, communication, report cards, and fee payments — for all actors (school, parent, teacher, bursar).  
-**Duration:** 5 sprints × 2 weeks = 10 weeks (Weeks 11–20)  
-**Stack:** Java (Backend) · Next.js (Frontend) · PostgreSQL · AWS S3 · OPay · WhatsApp Business API  
-**Covers:** Phase 2 (Parent Portal & Enrollment) · Phase 3 (PTA & Notifications) · Phase 5 (Report Cards) · Phase 6 (Finance Module)
+**Duration:** 6 sprints × 2 weeks = 12 weeks (Weeks 11–22)  
+**Stack:** Java (Backend) · Next.js (Frontend) · PostgreSQL · AWS S3 · Monnify · WhatsApp Business API  
+**Covers:** Phase 2 (Parent Portal & Enrollment) · Phase 3 (PTA & Notifications) · Phase 4 (Teacher Portal) · Phase 5 (Report Cards) · Phase 6 (Finance Module)
 
 > **Prerequisite:** All Sprint 1–5 work is complete. Schools are registered, KYC-approved, and student data is in the system.
 
@@ -16,8 +16,9 @@
 | Sprint 6  | Parent Portal Foundation          | 11–12 | Parent, School          |
 | Sprint 7  | Applications & Enrollment         | 13–14 | Parent, School          |
 | Sprint 8  | PTA Communication & Notifications | 15–16 | Parent, School, Teacher |
-| Sprint 9  | Report Cards & Academic Results   | 17–18 | Parent, School, Teacher |
-| Sprint 10 | Finance Module — Fees & Payments  | 19–20 | Parent, School (Bursar) |
+| Sprint 8b | Teacher Portal                    | 16–17 | Teacher, School         |
+| Sprint 9  | Report Cards & Academic Results   | 18–19 | Parent, School, Teacher |
+| Sprint 10 | Finance Module — Fees & Payments  | 20–21 | Parent, School (Bursar) |
 
 ---
 
@@ -29,9 +30,12 @@
 
 **Parent Auth & Account**
 
-- [ ] `POST /api/parents/register` — accepts phone number; sends OTP via WhatsApp (primary) or SMS (fallback); creates a `pending` parent user record
-- [ ] `POST /api/parents/verify-otp` — validates OTP; activates parent account; returns JWT tokens
-- [ ] `POST /api/parents/activate-invite` — handles activation from a school invitation link (Sprint 5 flow); parent sets a PIN (6-digit) for future payment actions; account status changes from `pending` to `active`
+- [ ] `POST /api/parents/register` — accepts phone number; checks if a `users` row already exists for this phone (the person may already be a teacher on the platform); if yes: creates a `parent_profiles` row linked to the existing `users` row and returns a "profile added to your account" response; if no: creates a new `users` row + `parent_profiles` row; sends OTP via WhatsApp for verification
+- [ ] `POST /api/parents/verify-otp` — validates OTP; activates the parent profile; returns JWT (same JWT structure used across all portals — portal context is derived from which profiles exist, not from a separate token type)
+- [ ] `POST /api/parents/activate-invite` — handles activation from a school invitation link; parent sets a PIN (6-digit) for payment actions; triggers Monnify reserved account creation (see below)
+- [ ] `POST /api/parents/wallet/create-account` — internal; called after parent activation; calls `POST /api/v2/bank-transfer/reserved-accounts` on Monnify to generate dedicated virtual account numbers (Wema + Sterling); stores account reference and account numbers in `parent_wallets`
+- [ ] `POST /api/webhooks/monnify` — Monnify webhook receiver; validates HMAC signature; on `SUCCESSFUL_TRANSACTION` event: credits `parent_wallets.balance`, creates a `wallet_transactions` credit record, sends WhatsApp notification to parent ("₦X,XXX received. Wallet balance: ₦Y,YYY")
+- [ ] `GET /api/parents/wallet` — returns parent's wallet balance and all their virtual account numbers (so parent can see where to send money)
 - [ ] `POST /api/auth/parent/login` — phone + OTP login (parents do not use passwords — OTP only)
 - [ ] `GET /api/parents/me` — returns logged-in parent's profile, linked children, and each child's school
 - [ ] `GET /api/parents/children` — list all children linked to this parent (across all schools)
@@ -61,6 +65,11 @@
   - On success: redirect to parent dashboard
 - [ ] Build parent login page (`/parent/login`):
   - Phone number → OTP flow (same as registration OTP screen)
+  - After successful login: if user also has a `teachers` profile, show a context switcher banner — "You also have a teacher account. [Switch to Teacher Portal]"
+- [ ] Build shared post-login context routing logic:
+  - Only parent profile → redirect to `/parent/dashboard`
+  - Only teacher profile → redirect to `/teacher/dashboard`
+  - Both profiles → show "Welcome back, [Name]. How would you like to continue?" with two cards: Parent Portal and Teacher Portal. User's last-used context is remembered for next login.
 
 **Parent — Dashboard**
 
@@ -112,10 +121,10 @@
 - [ ] `GET /api/applications` — list all applications for the logged-in parent (across schools), with current status
 - [ ] `GET /api/applications/:id` — single application detail
 
-**OPay — Application Fee Payment**
+**Monnify — Application Fee Payment**
 
-- [ ] `POST /api/payments/application-fee/initiate` — creates an OPay payment order for the application fee amount; returns OPay checkout URL
-- [ ] `POST /api/webhooks/opay` — OPay webhook receiver; validates signature; on success: records payment in `payments` table, marks application as `paid`, generates PDF receipt, sends WhatsApp + email confirmation to parent, sends notification to school admin
+- [ ] `POST /api/payments/application-fee/pay` — accepts `{ application_id, pin }`: validates PIN, checks `parent_wallets.balance >= application_fee`, calls Monnify disbursement API (`POST /api/v2/disbursements/single`) to transfer to school's settlement account, debits wallet, creates `payments` record, marks application as `paid`, generates PDF receipt, sends WhatsApp + email confirmation to parent, notifies school admin
+- [ ] `POST /api/payments/application-fee/topup-prompt` — if wallet balance is insufficient: returns parent's virtual account numbers and the exact top-up amount needed; Monnify webhook (registered in Sprint 6) auto-completes the payment when funds arrive
 - [ ] `GET /api/payments/receipt/:payment_id` — returns receipt data (for PDF download)
 
 **School — Application Processing**
@@ -136,10 +145,11 @@
   - **Step 2 — Documents:** child passport photo upload, birth certificate upload (optional)
   - **Step 3 — Additional guardian:** name, phone, relationship (optional, "Add Another" button for multiple)
   - **Step 4 — Review:** summary of all entered data, application fee amount shown
-- [ ] Build OPay payment screen:
+- [ ] Build payment screen for application fee:
+  - Wallet balance card ("Your wallet: ₦X,XXX")
   - Application fee summary card
-  - "Pay ₦X,XXX" button → opens OPay checkout (redirect or modal)
-  - Processing screen while waiting for webhook confirmation
+  - If balance sufficient: PIN entry → "Confirm Payment" button → processing → success
+  - If balance insufficient: show shortfall amount + parent's Monnify virtual account numbers with "Top up and continue" message; poll or wait for webhook to auto-complete
   - Success screen: application reference number, receipt download button, "Back to Dashboard" button
 - [ ] Build application tracker (in parent dashboard):
   - List of all applications with status chips: `Under Review` / `Exam Scheduled` / `Admitted` / `Not Admitted`
@@ -170,7 +180,7 @@
   - Recommendation radio
   - Assessed-by dropdown (staff list)
 
-**Definition of Done:** Parent can complete an application, pay the fee via OPay, and see their application status update. School can view all applications, schedule an exam, record the result, and admit or reject — with the parent notified via WhatsApp at each step.
+**Definition of Done:** Parent can complete an application, pay the fee from their Monnify wallet (or top up and auto-pay), and see their application status update. School can view all applications, schedule an exam, record the result, and admit or reject — with the parent notified via WhatsApp at each step.
 
 ---
 
@@ -268,7 +278,71 @@
 
 ---
 
-## Sprint 9 — Report Cards & Academic Results (Weeks 17–18)
+## Sprint 8b — Teacher Portal (Weeks 16–17)
+
+**Goal:** Teachers have their own independent portal account that persists across schools. Schools invite teachers; teachers accept and are linked. Teachers can resign without losing their profile or history.
+
+### Backend
+
+**Teacher Auth & Account**
+
+- [ ] `POST /api/teachers/register` — teacher self-registration: name, email, phone, password; checks if a `users` row already exists for this phone/email (the person may already be a parent on the platform); if yes: creates a `teachers` profile row linked to the existing `users` row — one account, new capability added; if no: creates a new `users` row + `teachers` row. Either way, the user now has both profiles accessible from one login.
+- [ ] `POST /api/teachers/verify-email` — email verification flow (same pattern as school registration)
+- [ ] `POST /api/auth/teacher/login` — email + password login; returns JWT
+- [ ] `GET /api/teachers/me` — returns teacher's profile, current school links, and employment history
+- [ ] `PUT /api/teachers/me` — teacher updates their own profile: qualifications, subjects, bio, photo
+
+**School → Teacher Invite Flow**
+
+- [ ] `POST /api/school/staff/invite` — school admin sends invite: email, role (class_teacher | subject_teacher | admin), assigned_class_id (optional); creates a `teacher_invites` row with a signed token; sends WhatsApp + email to the teacher
+- [ ] `GET /api/teacher/invites` — teacher views all pending invites (they may have invites from multiple schools)
+- [ ] `POST /api/teacher/invites/:token/accept` — teacher accepts; creates a `school_staff` row (teacher_id, school_id, role, start_date = today); invite status → `accepted`
+- [ ] `POST /api/teacher/invites/:token/decline` — invite status → `declined`; school admin notified
+- [ ] `GET /api/school/staff` — school lists all current and past staff (filterable by status: active | resigned | terminated); returns teacher name, role, assigned class, start_date, end_date
+- [ ] `GET /api/school/staff/:teacher_id` — school views a teacher's profile and their employment history **at this school only**
+
+**Teacher Resignation & Offboarding**
+
+- [ ] `POST /api/teacher/schools/:school_id/resign` — teacher resigns from a school: sets `school_staff.end_date = today`, `status → resigned`; school admin notified via WhatsApp + email; teacher retains full account and read-only access to historical records at this school
+- [ ] `POST /api/school/staff/:teacher_id/end-employment` — school admin ends employment: same effect as resignation but sets `status → terminated`; teacher notified
+
+### Frontend
+
+**Teacher Portal (`teacher.schoolflow.com`)**
+
+- [ ] Build teacher registration page (`/teacher/register`):
+  - Name, email, phone, password
+  - Basic profile: subjects taught (multi-select), years of experience
+  - Email verification step
+- [ ] Build teacher login page (`/teacher/login`):
+  - Email + password login
+  - After login: same context routing logic as parent portal — if user also has a `parent_profiles` row, show context switcher: "You also have a parent account. [Switch to Parent Portal]"
+- [ ] Build teacher dashboard:
+  - Current school cards (one card per active `school_staff` row): school name, logo, role, assigned class
+  - Pending invites section (if any): school name, role offered, "Accept" / "Decline" buttons
+  - "No schools yet" empty state for new teachers
+- [ ] Build teacher profile page:
+  - Editable: qualifications (add/remove), subjects, bio, profile photo
+  - Read-only: employment history timeline (School A: Jan 2020 – Mar 2022, School B: May 2022 – present)
+- [ ] Build resign flow:
+  - Teacher selects school → "Resign from this school" → confirmation modal
+  - On confirm: school removed from active cards; moved to employment history with end date
+
+**School — Staff Management Page (`/school/dashboard/staff`)**
+
+- [ ] Build staff list: table of all current staff — name, role, assigned class, start date, status chip (Active)
+- [ ] Build "Invite Teacher" modal:
+  - Email input, role dropdown, class assignment (optional)
+  - "Send Invite" button → WhatsApp + email sent to teacher
+  - Pending invites section below table: email, role, sent date, status (Pending / Accepted / Declined / Expired)
+- [ ] Build staff detail drawer: teacher name, photo, contact, qualifications, assigned class, start date; "End Employment" button (with confirmation)
+- [ ] Build past staff section (collapsed by default): former teachers with end dates and status chips
+
+**Definition of Done:** A teacher can register independently at `teacher.schoolflow.com`, build their profile, receive an invite from a school, accept it, and appear on the school's staff page. A teacher can resign and their account remains active. The school can end employment from their dashboard. If a teacher registers using the same phone/email as an existing parent account, no duplicate `users` row is created — a `teachers` profile is added to their existing identity and they see a context switcher on login. All school linkage uses `school_staff` as the join — no teacher record is owned by or deleted by a school.
+
+---
+
+## Sprint 9 — Report Cards & Academic Results (Weeks 18–19)
 
 **Goal:** Teachers enter scores. System calculates results. School publishes reports. Parents receive and download PDF report cards.
 
@@ -322,22 +396,30 @@
   - Grade boundaries table (add rows: min score, max score, grade letter, remark)
   - Example: 70–100 → A → Excellent; 60–69 → B → Very Good; etc.
 
-**Teacher — Score Entry**
+**Teacher — Score Entry (in Teacher Portal)**
 
-- [ ] Build CA score entry page:
-  - Class selector + term selector
+Score entry happens in the teacher's own portal (`teacher.schoolflow.com`), not the school dashboard. The teacher sees only the class(es) they are assigned to via `school_staff`.
+
+- [ ] Build CA score entry page (teacher portal):
+  - School + class selector (if teacher is at multiple schools)
+  - Term selector
   - Subject tabs across the top
-  - Table: student name | CA1 input | CA2 input | total (auto-calculated and read-only)
+  - Table: student name | CA1 input | CA2 input | total (auto-calculated, read-only)
   - Validation: cannot exceed max score; highlights invalid cells in red
   - "Save Scores" button; shows last-saved timestamp
 - [ ] Build exam score entry page (same layout, adds exam column, shows CA total as read-only, calculates grand total)
-- [ ] Build comments entry page:
+- [ ] Build comments entry page (teacher portal):
   - Student list for the class
-  - Text area per student for class teacher comment
-  - Principal comment entry (separate view restricted to principal role)
-- [ ] Build behavioral ratings page:
+  - Text area per student for teacher comment
+- [ ] Build behavioral ratings page (teacher portal):
   - Student list
   - 5-star selector per trait per student (grid layout)
+
+**School — Principal Comment Entry (in School Dashboard)**
+
+- [ ] Build principal comment entry page (school dashboard — restricted to principal role):
+  - Student list for a class
+  - Text area per student for principal comment
 
 **School — Results Publishing**
 
@@ -373,7 +455,7 @@
 
 ## Sprint 10 — Finance Module: Fees & Payments (Weeks 19–20)
 
-**Goal:** School configures fees and invoices. Parent views outstanding fees and pays via OPay. Automated reminders run on schedule. Bursar has a full payment dashboard.
+**Goal:** School configures fees and invoices. Parent views outstanding fees and pays from their Monnify wallet. Automated reminders run on schedule. Bursar has a full payment dashboard.
 
 ### Backend
 
@@ -393,8 +475,9 @@
 **Parent — Fee Payment**
 
 - [ ] `GET /api/parent/children/:student_id/fees?term_id=` — returns outstanding fee breakdown per fee type for the child (amount, paid, balance per item)
-- [ ] `POST /api/payments/fees/initiate` — accepts `{ invoice_id, fee_type_ids[] }` (parent selects which items to pay); creates an OPay payment order for the sum; returns OPay checkout URL
-- [ ] `POST /api/webhooks/opay` (already built in Sprint 7) — extend to handle fee payments: update `invoices.paid_amount`, create `payments` record, recalculate balance, generate PDF receipt, send WhatsApp + email to parent, send notification to bursar
+- [ ] `POST /api/payments/fees/pay` — accepts `{ invoice_id, fee_type_ids[], pin }`: validates PIN, sums selected fee items, checks `parent_wallets.balance >= total`, calls Monnify disbursement to school's settlement account, debits wallet, creates `payments` record, updates `invoices.paid_amount`, recalculates balance, generates PDF receipt, sends WhatsApp + email to parent, notifies bursar
+- [ ] `POST /api/payments/fees/topup-prompt` — if wallet balance is insufficient: returns parent's virtual account numbers and exact shortfall; Monnify webhook (Sprint 6) auto-triggers payment when funds arrive
+- [ ] `GET /api/parents/wallet` (Sprint 6) — also used here to show wallet balance on fees screen
 
 **Automated Fee Reminders**
 
@@ -442,10 +525,12 @@
   - Fee breakdown table: fee type | total | paid | balance | status chip (paid / partial / due / overdue)
   - Checkboxes to select which fee items to pay
   - "Pay Selected (₦X,XXX)" and "Pay All (₦X,XXX)" buttons
-- [ ] Build OPay payment flow (reuse Sprint 7 pattern):
+- [ ] Build Monnify wallet payment flow (reuse Sprint 7 pattern):
+  - Wallet balance card shown at top of fees screen
   - Payment summary screen: itemised list of selected fees, total amount
   - PIN entry screen (6-digit PIN set during account activation)
-  - "Confirm Payment" → OPay checkout opens
+  - "Confirm Payment" → server validates PIN + balance → Monnify disbursement → success
+  - If balance insufficient: top-up screen showing virtual account numbers + shortfall amount
   - Success screen: receipt download + share button + "Back to Dashboard"
 - [ ] Build payment history screen:
   - Chronological list: date, description, amount, receipt link
@@ -454,7 +539,7 @@
   - When parent taps a fee reminder notification → deep link to the fees screen for that child
   - "Snooze for 24 hours" button on the notification itself
 
-**Definition of Done:** Bursar can create fee types, generate invoices for all students in a class, and view a full payment dashboard. Parent can see exactly what is owed per fee type, select items to pay, complete payment via OPay, and download the receipt. Automated reminders fire on schedule and stop as soon as the invoice is fully paid.
+**Definition of Done:** Bursar can create fee types, generate invoices for all students in a class, and view a full payment dashboard. Parent can see exactly what is owed per fee type, see their wallet balance, select items to pay, confirm with PIN, and download the receipt — all without leaving the app. Automated reminders fire on schedule and stop as soon as the invoice is fully paid.
 
 ---
 
@@ -472,11 +557,15 @@ AI features require at least one full term of clean data (grades, attendance) to
 
 Every parent-facing screen must work on a budget Android phone (360px viewport, slow 3G). Test each screen on Chrome DevTools mobile emulation before marking a frontend task done.
 
-### OPay integration notes
+### Monnify integration notes
 
-- All OPay payment initiations return a checkout URL — open this in the parent's default browser (not a WebView) to ensure OPay's security flows work correctly
-- Always validate the OPay webhook signature before processing any payment confirmation
-- Store the OPay transaction reference on every `payments` record for dispute resolution
+- **Authentication:** Monnify uses Basic Auth (`base64(apiKey:secretKey)`) to obtain a token; cache the token server-side (valid 1 hour) and refresh on 401
+- **Reserved account creation:** `POST /api/v2/bank-transfer/reserved-accounts` — called once per parent on activation; pass `getAllAvailableBanks: true` to get Wema + Sterling numbers; store the `accountReference` (your parent UUID) and both account numbers in `parent_wallets`
+- **Inflow webhook:** `POST /api/webhooks/monnify` — validate the HMAC-SHA512 signature (`monnify-signature` header) before processing; event type `SUCCESSFUL_TRANSACTION` triggers wallet credit
+- **Disbursement:** `POST /api/v2/disbursements/single` — platform initiates transfer from its Monnify wallet to the school's bank account; use a unique `reference` per payment for idempotency
+- **Disbursement webhook:** `POST /api/webhooks/monnify` — same endpoint handles both inflow and disbursement events; check `eventType`: `SUCCESSFUL_DISBURSEMENT` confirms school received funds
+- Store the Monnify `transactionReference` on every `payments` and `wallet_transactions` record for reconciliation and dispute resolution
+- Sandbox at `https://sandbox.monnify.com` — simulate incoming transfers from the Monnify sandbox dashboard
 
 ### Notification delivery priority
 
@@ -512,7 +601,7 @@ Schools currently handle item sales manually — parents call to ask what books 
 
 1. Parent opens the app and sees a "School Shop" card on their child's dashboard.
 2. They browse available items (filtered automatically to their child's class).
-3. They add items to a cart, review the order, and pay via OPay — same flow as school fees.
+3. They add items to a cart, review the order, and pay from their Monnify wallet — same PIN → deduction → disbursement flow as school fees.
 4. They receive a WhatsApp receipt and a notification when their order is ready for collection.
 
 ---
@@ -527,7 +616,7 @@ store_products       — one row per item listed by a school
 
 store_orders         — one row per parent order
   id, school_id, parent_id, student_id, status (pending_payment | paid | ready | collected | cancelled),
-  total_amount NUMERIC(10,2), opay_reference, receipt_url, notes, created_at
+  total_amount NUMERIC(10,2), monnify_reference, receipt_url, notes, created_at
 
 store_order_items    — line items per order
   id, order_id, product_id, quantity INT, unit_price NUMERIC(10,2), subtotal NUMERIC(10,2)
@@ -547,8 +636,8 @@ store_order_items    — line items per order
 **Parent — Browsing & Ordering**
 
 - [ ] `GET /api/parent/store?student_id=` — returns all active products applicable to this student's class
-- [ ] `POST /api/store/orders` — parent submits an order (array of `{ product_id, quantity }`); validates stock; creates order with status `pending_payment`; initiates OPay payment; returns OPay checkout URL
-- [ ] `POST /api/webhooks/opay` (extend existing) — handle store order payments: mark order as `paid`, deduct stock, generate receipt PDF, send WhatsApp confirmation to parent, send notification to school bursar
+- [ ] `POST /api/store/orders` — parent submits an order (`{ items: [{ product_id, quantity }], pin }`); validates stock; checks wallet balance; calls Monnify disbursement to school; on success: marks order as `paid`, debits wallet, creates `wallet_transactions` debit record, deducts stock, generates receipt PDF, sends WhatsApp confirmation to parent, notifies bursar
+- [ ] `POST /api/store/orders/topup-prompt` — if wallet balance insufficient: returns virtual account numbers + shortfall amount
 - [ ] `GET /api/parent/store/orders?student_id=` — parent's order history for a child
 
 **School — Order Fulfilment**
@@ -589,7 +678,7 @@ store_order_items    — line items per order
 - [ ] Product grid: image (or category icon placeholder), name, price, class badge, "Add to Cart" button
 - [ ] Cart drawer: list of selected items, quantities (increment/decrement), subtotal per item, order total
 - [ ] Order review screen: itemised list, school name, total, "Pay ₦X,XXX" button
-- [ ] OPay payment flow (same PIN → processing → success pattern as fees)
+- [ ] Monnify wallet payment flow (same PIN → wallet deduction → Monnify disbursement → success pattern as fees)
 - [ ] Order history screen: list of past orders with status chips (Paid / Ready for Collection / Collected)
 - [ ] Push notification when order is marked Ready: "Your order at [School Name] is ready for collection"
 
@@ -597,13 +686,13 @@ store_order_items    — line items per order
 
 ### Key Rules
 
-1. Stock is decremented only on confirmed payment (OPay webhook), not on order creation.
+1. Stock is decremented only on confirmed Monnify disbursement, not on order creation.
 2. If payment fails or times out, the order is cancelled and stock is restored.
 3. A product with `stock_qty = 0` shows as "Out of Stock" on the parent side and cannot be added to cart.
 4. Store payments go into the same school bank account as fee payments — no separate wallet.
 5. Store sales appear in the bursar's Finance dashboard alongside fee income.
 
-**Definition of Done:** School admin can list products with prices, classes, and stock levels. Parent can browse items for their child's class, place an order, and pay via OPay. School receives an instant notification, packs the order, marks it ready, and records collection. Parent receives a WhatsApp notification when items are ready.
+**Definition of Done:** School admin can list products with prices, classes, and stock levels. Parent can browse items for their child's class, place an order, pay from their Monnify wallet with a PIN, and receive a WhatsApp receipt. School receives an instant notification, packs the order, marks it ready, and records collection. Parent receives a WhatsApp notification when items are ready.
 
 ---
 
@@ -698,7 +787,7 @@ accounting_periods   — defines the financial period for reporting
 **Export**
 
 - [ ] `GET /api/accounting/export?term_id=&type=income|expenses|full` — returns a CSV file:
-  - **Income CSV:** date, student name, class, fee type / item, amount, OPay reference
+  - **Income CSV:** date, student name, class, fee type / item, amount, Monnify reference
   - **Expenses CSV:** date, category, description, amount, recorded by
   - **Full CSV:** both sheets combined with a summary row
 
@@ -756,7 +845,7 @@ Extend the existing Bursar Dashboard with a new "Accounting" tab alongside the e
 ### Export Format (Excel / CSV)
 
 **Income sheet columns:**
-`Date | Student Name | Admission No. | Class | Fee Type / Item | Amount (₦) | OPay Reference | Recorded At`
+`Date | Student Name | Admission No. | Class | Fee Type / Item | Amount (₦) | Monnify Reference | Recorded At`
 
 **Expenses sheet columns:**
 `Date | Category | Description | Amount (₦) | Recorded By | Receipt`
@@ -788,7 +877,7 @@ we have to add a feature for parents to be able to schdule a meetup with teacher
 Application flow
 
 Application detail view — "View details" on the track page goes nowhere
-OPay payment flow — PIN entry screen + real OPay checkout (current Step 4 is a bank transfer mockup)
+Monnify wallet payment flow — PIN entry screen, wallet balance check, and Monnify disbursement (current Step 4 in the frontend is a mockup)
 Account
 
 Parent invite activation page (/parent/activate?token=xxx) — PIN setup for school-invited parents
@@ -811,6 +900,6 @@ Fee reminder snooze ("Snooze for 24 hours" on a reminder notification)
 New feature (from your note)
 
 Schedule a meetup with a teacher — form to request a meeting (date, time, reason), teacher responds to approve/reject
-That's roughly 8 areas. The biggest ones are the OPay payment flow and the notifications improvements. The meetup scheduler is net new — not in the sprint plan at all.
+That's roughly 8 areas. The biggest ones are the Monnify wallet payment flow and the notifications improvements. The meetup scheduler is net new — not in the sprint plan at all.
 
 Which do you want to tackle first?

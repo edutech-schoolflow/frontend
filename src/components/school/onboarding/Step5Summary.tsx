@@ -5,14 +5,12 @@ type Props = {
   logoUploaded: boolean;
   classesConfigured: boolean;
   calendarSet: boolean;
-  proprietorInvited: boolean;
 };
 
 const STEPS = [
   { label: "School logo", key: "logoUploaded" as const },
   { label: "Classes configured", key: "classesConfigured" as const },
   { label: "Academic calendar set", key: "calendarSet" as const },
-  { label: "Proprietor invited", key: "proprietorInvited" as const },
 ];
 
 export default function Step5Summary(props: Props) {
@@ -23,11 +21,11 @@ export default function Step5Summary(props: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-[18px] font-semibold text-dark-blue">
-          {doneCount === 4 ? "🎉 Setup complete!" : "Setup summary"}
+          {doneCount === 3 ? "🎉 Setup complete!" : "Setup summary"}
         </h2>
         <p className="mt-1 text-sm text-grey-text">
-          {doneCount === 4
-            ? "Your school is fully set up and ready to go."
+          {doneCount === 3
+            ? "Your school is set up. Complete your compliance profile to unlock all features."
             : `${doneCount} of ${STEPS.length} steps completed. You can finish the rest any time.`}
         </p>
       </div>
@@ -54,6 +52,16 @@ export default function Step5Summary(props: Props) {
             </div>
           );
         })}
+      </div>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p className="text-sm font-semibold text-amber-800">
+          Complete your compliance profile
+        </p>
+        <p className="mt-1 text-xs text-amber-700">
+          Head to <strong>Compliance</strong> in the sidebar to verify your
+          school and unlock fee collection and full platform access.
+        </p>
       </div>
 
       <div className="rounded-xl border border-border-default bg-white p-4 text-center">
