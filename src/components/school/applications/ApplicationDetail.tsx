@@ -16,7 +16,7 @@ import {
   getSchoolApplication,
   admitApplication,
 } from "@/src/lib/api/applications";
-import type { Application, ApplicationStatus } from "@/src/types/application";
+import type { Application } from "@/src/types/application";
 import AppStatusChip from "./AppStatusChip";
 import ScheduleExamModal from "./ScheduleExamModal";
 import RejectModal from "./RejectModal";
@@ -188,10 +188,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
   async function handleAdmit() {
     if (!app) return;
     setAdmitting(true);
-    await admitApplication(app.id);
+    const updated = await admitApplication(app.id);
     setAdmitting(false);
     setDone("admitted");
-    setApp((prev) => (prev ? { ...prev, status: "admitted" } : prev));
+    setApp(updated);
   }
 
   function handleModalDone(type: "scheduled" | "rejected" | "assessed") {
@@ -245,7 +245,17 @@ export default function ApplicationDetail({ id }: { id: string }) {
             <AppStatusChip status={app.status} />
           </div>
           <p className="mt-1 text-[13px] text-grey-text">
-            Ref: {app.referenceNumber} · Applied{" "}
+            {app.admissionNumber ? (
+              <>
+                <span className="font-medium text-brand-green">
+                  Admission No: {app.admissionNumber}
+                </span>
+                {" · "}App. Ref: {app.referenceNumber}
+              </>
+            ) : (
+              <>App. No: {app.referenceNumber}</>
+            )}
+            {" · Applied "}
             {new Date(app.submittedAt).toLocaleDateString("en-NG", {
               day: "numeric",
               month: "short",

@@ -338,6 +338,7 @@ export const MOCK_APPLICATIONS: Application[] = [
       },
     ],
     status: "admitted",
+    admissionNumber: "GFA/2025/003",
     applicationFeePaid: true,
     applicationFeeAmount: 10000,
     assessmentRating: "excellent",

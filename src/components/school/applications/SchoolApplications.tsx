@@ -64,7 +64,8 @@ export default function SchoolApplications() {
       !q ||
       `${a.childFirstName} ${a.childLastName}`.toLowerCase().includes(q) ||
       a.parentName.toLowerCase().includes(q) ||
-      a.referenceNumber.toLowerCase().includes(q);
+      a.referenceNumber.toLowerCase().includes(q) ||
+      (a.admissionNumber ?? "").toLowerCase().includes(q);
     return matchTab && matchClass && matchSearch;
   });
 
@@ -184,7 +185,10 @@ export default function SchoolApplications() {
                     </p>
                     <div className="mt-[3px] flex items-center gap-[6px]">
                       <span className="text-[12px] text-grey-text">
-                        {app.parentName} · {app.referenceNumber}
+                        {app.parentName} ·{" "}
+                        {app.admissionNumber
+                          ? app.admissionNumber
+                          : app.referenceNumber}
                       </span>
                       {!app.applicationFeePaid && (
                         <span className="rounded-full bg-amber-50 px-[7px] py-[1px] text-[10px] font-medium text-amber-700 border border-amber-200">
