@@ -1,7 +1,7 @@
 "use client";
 
 import { Printer, UserRound } from "lucide-react";
-import type { Report } from "@/src/types/grade";
+import type { Report } from "@/src/types/reportCard";
 import { formatCurrency } from "../fees/feeUtils";
 import {
   traitLabel,

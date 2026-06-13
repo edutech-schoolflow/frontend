@@ -8,7 +8,7 @@ import {
   getParentReportsByChild,
 } from "@/src/lib/api/grades";
 import type { ChildProfile } from "@/src/types/parent";
-import type { Grade } from "@/src/types/grade";
+import type { Grade } from "@/src/types/reportCard";
 import type { TrendPoint } from "./types";
 import ChildAvatar from "../shared/ChildAvatar";
 import PerformanceSummary from "./PerformanceSummary";

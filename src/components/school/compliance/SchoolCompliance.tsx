@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   ChevronRight,
   Upload,
@@ -13,30 +13,15 @@ import {
   Link2,
 } from "lucide-react";
 import { inviteProprietor } from "@/src/lib/api/schools";
+import {
+  getComplianceRecord,
+  updateComplianceStep,
+} from "@/src/lib/api/compliance";
+import { useAuth } from "@/src/context/AuthContext";
+import type { StepStatus, ComplianceStep } from "@/src/types/compliance";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type Status = "not_started" | "in_progress" | "under_review" | "approved";
-
-interface Section {
-  id: string;
-  label: string;
-  status: Status;
-}
-
-// ─── Static data (will be replaced by API) ───────────────────────────────────
-
-const SECTIONS: Section[] = [
-  { id: "school_profile", label: "School Profile", status: "not_started" },
-  { id: "contact_setup", label: "Contact Setup", status: "not_started" },
-  { id: "proprietor", label: "Proprietor / Owner", status: "not_started" },
-  {
-    id: "business_registration",
-    label: "Business Registration",
-    status: "not_started",
-  },
-  { id: "review", label: "Review & Submit", status: "not_started" },
-];
+// Section is just a ComplianceStep
+type Section = ComplianceStep;
 
 const TIPS: Record<
   string,
@@ -90,12 +75,12 @@ const TIPS: Record<
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: Status }) {
-  const map: Record<Status, { label: string; cls: string }> = {
+function StatusBadge({ status }: { status: StepStatus }) {
+  const map: Record<StepStatus, { label: string; cls: string }> = {
     not_started: { label: "Not Started", cls: "bg-[#f3f4f6] text-[#6b7280]" },
     in_progress: { label: "In Progress", cls: "bg-[#fef3c7] text-[#b45309]" },
-    under_review: { label: "Under Review", cls: "bg-[#dbeafe] text-[#1d4ed8]" },
-    approved: { label: "Approved", cls: "bg-[#dcfce7] text-[#15803d]" },
+    pending: { label: "Under Review", cls: "bg-[#dbeafe] text-[#1d4ed8]" },
+    verified: { label: "Approved", cls: "bg-[#dcfce7] text-[#15803d]" },
   };
   const { label, cls } = map[status];
   return (
@@ -159,7 +144,7 @@ function FileUploadRow({
 
 // ─── Section forms ────────────────────────────────────────────────────────────
 
-function SchoolProfileForm() {
+function SchoolProfileForm({ onSave }: { onSave: () => void }) {
   const TYPES = [
     { value: "nursery", label: "Nursery / Creche" },
     { value: "primary", label: "Primary School" },
@@ -268,7 +253,10 @@ function SchoolProfileForm() {
           </select>
         </div>
       </div>
-      <button className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90">
+      <button
+        onClick={onSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+      >
         Save & Continue
       </button>
     </div>
@@ -277,7 +265,7 @@ function SchoolProfileForm() {
 
 type LocationData = { lat: number; lng: number } | null;
 
-function ContactSetupForm() {
+function ContactSetupForm({ onSave }: { onSave: () => void }) {
   const [mapsUrl, setMapsUrl] = useState("");
   const [location, setLocation] = useState<LocationData>(null);
   const [locating, setLocating] = useState(false);
@@ -445,7 +433,10 @@ function ContactSetupForm() {
         )}
       </div>
 
-      <button className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90">
+      <button
+        onClick={onSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+      >
         Save & Continue
       </button>
     </div>
@@ -454,7 +445,7 @@ function ContactSetupForm() {
 
 type ProprietorPath = "self" | "other" | null;
 
-function ProprietorForm() {
+function ProprietorForm({ onSave }: { onSave: () => void }) {
   const [path, setPath] = useState<ProprietorPath>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -471,6 +462,7 @@ function ProprietorForm() {
     await inviteProprietor({ name, email, phone: "" });
     setSending(false);
     setInvited(true);
+    onSave();
   }
 
   return (
@@ -525,7 +517,10 @@ function ProprietorForm() {
             You will need a valid government-issued ID — BVN, NIN, or Passport.
             Have it ready before starting.
           </p>
-          <button className="mt-4 flex h-[44px] items-center gap-2 rounded-[8px] bg-brand-green px-6 text-[14px] font-medium text-white transition-opacity hover:opacity-90">
+          <button
+            onClick={onSave}
+            className="mt-4 flex h-[44px] items-center gap-2 rounded-[8px] bg-brand-green px-6 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+          >
             <ExternalLink className="h-[15px] w-[15px]" />
             Start Verification with Dojah
           </button>
@@ -598,7 +593,7 @@ function ProprietorForm() {
   );
 }
 
-function BusinessRegistrationForm() {
+function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
   const [docs, setDocs] = useState<Record<string, File | null>>({
     cac: null,
     tin_cert: null,
@@ -671,17 +666,26 @@ function BusinessRegistrationForm() {
         </div>
       </div>
 
-      <button className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90">
+      <button
+        onClick={onSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+      >
         Save & Continue
       </button>
     </div>
   );
 }
 
-function ReviewForm({ sections }: { sections: Section[] }) {
+function ReviewForm({
+  sections,
+  onSubmit,
+}: {
+  sections: Section[];
+  onSubmit: () => void;
+}) {
   const allDone = sections
     .filter((s) => s.id !== "review")
-    .every((s) => s.status === "approved");
+    .every((s) => s.status === "verified");
 
   return (
     <div className="flex flex-col gap-5">
@@ -708,6 +712,7 @@ function ReviewForm({ sections }: { sections: Section[] }) {
       )}
 
       <button
+        onClick={onSubmit}
         disabled={!allDone}
         className="h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
@@ -719,9 +724,69 @@ function ReviewForm({ sections }: { sections: Section[] }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+const FALLBACK_SECTIONS: Section[] = [
+  {
+    id: "school_profile",
+    label: "School Profile",
+    status: "not_started",
+    required: true,
+  },
+  {
+    id: "contact_setup",
+    label: "Contact Setup",
+    status: "not_started",
+    required: true,
+  },
+  {
+    id: "proprietor",
+    label: "Proprietor / Owner",
+    status: "not_started",
+    required: true,
+  },
+  {
+    id: "business_registration",
+    label: "Business Registration",
+    status: "not_started",
+    required: true,
+  },
+  {
+    id: "review",
+    label: "Review & Submit",
+    status: "not_started",
+    required: true,
+  },
+];
+
 export default function SchoolCompliance() {
-  const [sections] = useState<Section[]>(SECTIONS);
-  const [activeId, setActiveId] = useState(SECTIONS[0].id);
+  const { user } = useAuth();
+  const [sections, setSections] = useState<Section[]>(FALLBACK_SECTIONS);
+  const [activeId, setActiveId] = useState(FALLBACK_SECTIONS[0].id);
+
+  useEffect(() => {
+    let cancelled = false;
+    getComplianceRecord("school", user?.schoolId ?? "sch-001").then(
+      (record) => {
+        if (cancelled) return;
+        setSections(record.steps as Section[]);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.schoolId]);
+
+  const handleSectionSave = async (stepId: string) => {
+    const updated = await updateComplianceStep(
+      "school",
+      user?.schoolId ?? "sch-001",
+      stepId,
+      "in_progress"
+    );
+    setSections(updated.steps as Section[]);
+    const ids = FALLBACK_SECTIONS.map((s) => s.id);
+    const nextIdx = ids.indexOf(stepId) + 1;
+    if (nextIdx < ids.length) setActiveId(ids[nextIdx]);
+  };
 
   const tips = TIPS[activeId];
 
@@ -793,11 +858,28 @@ export default function SchoolCompliance() {
           {sectionTitles[activeId].subtitle}
         </p>
 
-        {activeId === "school_profile" && <SchoolProfileForm />}
-        {activeId === "contact_setup" && <ContactSetupForm />}
-        {activeId === "proprietor" && <ProprietorForm />}
-        {activeId === "business_registration" && <BusinessRegistrationForm />}
-        {activeId === "review" && <ReviewForm sections={sections} />}
+        {activeId === "school_profile" && (
+          <SchoolProfileForm
+            onSave={() => handleSectionSave("school_profile")}
+          />
+        )}
+        {activeId === "contact_setup" && (
+          <ContactSetupForm onSave={() => handleSectionSave("contact_setup")} />
+        )}
+        {activeId === "proprietor" && (
+          <ProprietorForm onSave={() => handleSectionSave("proprietor")} />
+        )}
+        {activeId === "business_registration" && (
+          <BusinessRegistrationForm
+            onSave={() => handleSectionSave("business_registration")}
+          />
+        )}
+        {activeId === "review" && (
+          <ReviewForm
+            sections={sections}
+            onSubmit={() => handleSectionSave("review")}
+          />
+        )}
       </div>
 
       {/* Right tips panel */}

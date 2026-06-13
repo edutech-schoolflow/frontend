@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { getChildProfiles } from "@/src/lib/api/parents";
 import { getParentReportsByChild } from "@/src/lib/api/grades";
 import type { ChildProfile } from "@/src/types/parent";
-import type { Report } from "@/src/types/grade";
+import type { Report } from "@/src/types/reportCard";
 import ReportView from "./ReportView";
 
 export default function ParentReportCard() {

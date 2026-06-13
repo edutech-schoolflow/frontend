@@ -3,7 +3,7 @@ import type { Student, Class, AcademicYear, Term } from "@/src/types/student";
 import type { Staff } from "@/src/types/staff";
 import type { Parent, ParentChild, PtaInvite } from "@/src/types/parent";
 import type { Application } from "@/src/types/application";
-import type { Subject, Grade, Report } from "@/src/types/grade";
+import type { Subject, Grade, Report } from "@/src/types/reportCard";
 import type { FeeType, Invoice, Payment, BursarSummary } from "@/src/types/fee";
 
 export const MOCK_SCHOOL: School = {
@@ -201,6 +201,20 @@ export const MOCK_STAFF: Staff[] = [
     classIds: ["cls-001"],
     status: "active",
     createdAt: "2025-01-02T00:00:00Z",
+  },
+  {
+    id: "stf-003",
+    schoolId: "sch-001",
+    userId: "usr-003",
+    firstName: "Emeka",
+    lastName: "Obi",
+    email: "emeka@greenfieldacademy.com",
+    phone: "+234 805 678 9012",
+    role: "teacher",
+    position: "Class Teacher",
+    classIds: ["cls-001"],
+    status: "active",
+    createdAt: "2025-01-03T00:00:00Z",
   },
 ];
 
@@ -990,6 +1004,16 @@ export const MOCK_CLASS_ARMS: Record<string, ClassArm[]> = {
       arm: "A",
       fullName: "Primary 1A",
       classTeacher: { id: "stf-002", name: "Amaka Adeyemi" },
+      studentsCount: 3,
+      subjectTeachers: [],
+    },
+    {
+      id: "arm-001b",
+      classId: "sc-001",
+      className: "Primary 1",
+      arm: "B",
+      fullName: "Primary 1B",
+      classTeacher: { id: "stf-003", name: "Emeka Obi" },
       studentsCount: 3,
       subjectTeachers: [],
     },

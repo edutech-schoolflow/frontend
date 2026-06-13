@@ -7,6 +7,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import Logo from "@/src/components/ui/Logo";
 
 const MAIN_NAV = [
+  { label: "Compliance", href: "/parent/dashboard/compliance" },
   { label: "Find a school", href: "/parent/dashboard/search" },
   { label: "Enrol your child", href: "/parent/dashboard/enrol" },
   { label: "Track application", href: "/parent/dashboard/track" },

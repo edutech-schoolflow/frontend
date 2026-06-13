@@ -1,7 +1,8 @@
 export interface TeacherDashboardStats {
-  classesToday: number;
+  armsCount: number;
   totalStudents: number;
-  pendingTasks: number;
+  examsSubmitted: number;
+  attendanceMarkedToday: boolean;
 }
 
 export interface TimetableSlot {

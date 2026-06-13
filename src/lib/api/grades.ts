@@ -9,7 +9,12 @@ import {
   MOCK_PARENT_CA_SCORES,
   MOCK_PARENT_PERFORMANCE_TREND,
 } from "./mock/parentData";
-import type { Grade, Report, Subject, GradeBoundary } from "@/src/types/grade";
+import type {
+  Grade,
+  Report,
+  Subject,
+  GradeBoundary,
+} from "@/src/types/reportCard";
 
 const MOCK_GRADING: GradeBoundary[] = [
   { minScore: 70, maxScore: 100, grade: "A", remark: "Excellent" },

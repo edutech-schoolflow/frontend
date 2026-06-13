@@ -1,9 +1,8 @@
-import type { TeacherDashboardStats, TimetableSlot } from "@/src/types/teacher";
+import type { TeacherDashboardStats } from "@/src/types/teacher";
 
 export const MOCK_TEACHER_STATS: TeacherDashboardStats = {
-  classesToday: 0,
-  totalStudents: 0,
-  pendingTasks: 0,
+  armsCount: 1,
+  totalStudents: 3,
+  examsSubmitted: 2,
+  attendanceMarkedToday: false,
 };
-
-export const MOCK_TODAY_SCHEDULE: TimetableSlot[] = [];

@@ -1,4 +1,4 @@
-import type { BehavioralTrait } from "@/src/types/grade";
+import type { BehavioralTrait } from "@/src/types/reportCard";
 
 export function gradeStyle(grade: string): { bg: string; text: string } {
   const map: Record<string, { bg: string; text: string }> = {
