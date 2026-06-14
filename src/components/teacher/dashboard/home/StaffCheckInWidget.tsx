@@ -30,7 +30,7 @@ const STATUS_STYLE = {
 };
 
 export default function StaffCheckInWidget() {
-  const { profile } = useStaffFeatures();
+  const { profile, loading: profileLoading } = useStaffFeatures();
   const [checkIn, setCheckIn] = useState<StaffCheckIn | null>(null);
   const [settings, setSettings] = useState<StaffAttendanceSettings | null>(
     null
@@ -77,8 +77,24 @@ export default function StaffCheckInWidget() {
         if (err.code === err.PERMISSION_DENIED) setGeoState("denied");
         else setGeoState("unavailable");
       },
-      { timeout: 10000, maximumAge: 0 }
+      { timeout: 10000, maximumAge: 30000 }
     );
+  }, [profile?.staff.id]);
+
+  // Demo-only: lets desktop testers simulate a check-in when real GPS is unavailable.
+  const handleSimulateCheckIn = useCallback(async () => {
+    const staffId = profile?.staff.id;
+    if (!staffId) return;
+    setGeoState("requesting");
+    const result = await staffCheckIn(
+      {
+        lat: 9.0608 + (Math.random() - 0.5) * 0.001,
+        lng: 7.4896 + (Math.random() - 0.5) * 0.001,
+      },
+      staffId
+    );
+    setCheckIn(result);
+    setGeoState("success");
   }, [profile?.staff.id]);
 
   if (!loaded) return null;
@@ -151,23 +167,30 @@ export default function StaffCheckInWidget() {
                 </div>
               )}
               {geoState === "unavailable" && (
-                <div className="mt-2 flex items-center gap-1.5 text-[12px] text-[#dc2626]">
-                  <AlertCircle className="h-[12px] w-[12px]" />
-                  Location unavailable. Try again or contact admin to mark
-                  manually.
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[12px] text-[#dc2626]">
+                    <AlertCircle className="h-[12px] w-[12px]" />
+                    Location unavailable. Contact admin to mark manually.
+                  </div>
+                  <button
+                    onClick={handleSimulateCheckIn}
+                    className="text-[11px] font-medium text-[#9ca3af] underline hover:text-text-body"
+                  >
+                    Simulate check-in (demo only)
+                  </button>
                 </div>
               )}
             </div>
 
             <button
               onClick={handleCheckIn}
-              disabled={geoState === "requesting"}
+              disabled={geoState === "requesting" || profileLoading}
               className="flex shrink-0 items-center gap-2 rounded-[10px] bg-brand-green px-4 py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-60"
             >
-              {geoState === "requesting" ? (
+              {geoState === "requesting" || profileLoading ? (
                 <>
                   <Loader2 className="h-[14px] w-[14px] animate-spin" />
-                  Locating…
+                  {profileLoading ? "Loading…" : "Locating…"}
                 </>
               ) : (
                 <>
