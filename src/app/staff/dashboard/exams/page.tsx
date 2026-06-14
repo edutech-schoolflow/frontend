@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import TeacherExamsList from "@/src/components/teacher/exams/TeacherExamsList";
+import StaffExamsList from "@/src/components/teacher/exams/TeacherExamsList";
 
-export default function TeacherExamsRoute() {
+export default function StaffExamsRoute() {
   return (
     <Suspense
       fallback={
@@ -10,7 +10,7 @@ export default function TeacherExamsRoute() {
         </div>
       }
     >
-      <TeacherExamsList />
+      <StaffExamsList />
     </Suspense>
   );
 }

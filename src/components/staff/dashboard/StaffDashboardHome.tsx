@@ -6,7 +6,7 @@ import { ChevronRight, BookOpen } from "lucide-react";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 import StaffCheckInWidget from "@/src/components/teacher/dashboard/home/StaffCheckInWidget";
 import { getTeacherArms, getStudentsForArm } from "@/src/lib/api/attendance";
-import { getTeacherDashboardStats } from "@/src/lib/api/teachers";
+import { getStaffDashboardStats } from "@/src/lib/api/teachers";
 import { getBursarSummary } from "@/src/lib/api/fees";
 import { getSchoolApplications } from "@/src/lib/api/applications";
 import {
@@ -16,7 +16,7 @@ import {
 import { getSchoolStaff } from "@/src/lib/api/staff";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
-import type { TeacherDashboardStats } from "@/src/types/teacher";
+import type { StaffDashboardStats } from "@/src/types/teacher";
 import type { BursarSummary } from "@/src/types/fee";
 import type { Application } from "@/src/types/application";
 
@@ -78,7 +78,7 @@ function QuickAction({
 // ─── Teacher home ──────────────────────────────────────────────────────────────
 
 function TeacherHome({ userId }: { userId: string | undefined }) {
-  const [stats, setStats] = useState<TeacherDashboardStats | null>(null);
+  const [stats, setStats] = useState<StaffDashboardStats | null>(null);
   const [arms, setArms] = useState<
     (ArmSelectOption & { students: AttendanceStudentRow[] })[]
   >([]);
@@ -86,7 +86,7 @@ function TeacherHome({ userId }: { userId: string | undefined }) {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      getTeacherDashboardStats(userId),
+      getStaffDashboardStats(userId),
       getTeacherArms(userId).then((opts) =>
         Promise.all(
           opts.map((opt) =>

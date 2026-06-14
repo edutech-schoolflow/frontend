@@ -166,7 +166,7 @@ function SummaryBar({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function TeacherGradesPage() {
+export default function StaffGradesPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 

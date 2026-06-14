@@ -54,6 +54,67 @@ export const getTeacherArms = async (
   return mockResponse(options);
 };
 
+// Returns the arms where this teacher is a subject teacher, grouped with
+// which subjects they cover in each arm. Used by grade entry and exam paper
+// submission to scope what subjects a subject teacher can act on.
+export interface SubjectArmOption extends ArmSelectOption {
+  subjects: string[]; // subject names this teacher covers in this arm
+}
+
+export const getTeacherSubjectArms = async (
+  userId: string | undefined
+): Promise<SubjectArmOption[]> => {
+  const classMap = Object.fromEntries(
+    MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])
+  );
+
+  const staff = userId
+    ? MOCK_STAFF.find((s) => s.userId === userId)
+    : MOCK_STAFF.find((s) => s.role === "teacher");
+
+  if (!staff?.assignments) return mockResponse([]);
+
+  const options: SubjectArmOption[] = staff.assignments
+    .filter((a) => a.type === "subject_teacher")
+    .map((a) => ({
+      armId: a.armId,
+      armName: a.armName,
+      classId: a.classId,
+      className: a.className,
+      level: classMap[a.classId]?.level ?? "junior_secondary",
+      subjects: a.subjects,
+    }));
+
+  return mockResponse(options);
+};
+
+// Returns ALL arms this teacher has any assignment for (class teacher + subject
+// teacher). Used by the "My Classes" overview page to show the full picture.
+export const getTeacherAllArms = async (
+  userId: string | undefined
+): Promise<SubjectArmOption[]> => {
+  const classMap = Object.fromEntries(
+    MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])
+  );
+
+  const staff = userId
+    ? MOCK_STAFF.find((s) => s.userId === userId)
+    : MOCK_STAFF.find((s) => s.role === "teacher");
+
+  if (!staff?.assignments) return mockResponse([]);
+
+  const options: SubjectArmOption[] = staff.assignments.map((a) => ({
+    armId: a.armId,
+    armName: a.armName,
+    classId: a.classId,
+    className: a.className,
+    level: classMap[a.classId]?.level ?? "primary",
+    subjects: a.subjects,
+  }));
+
+  return mockResponse(options);
+};
+
 export const getAllArms = async (): Promise<ArmSelectOption[]> => {
   const classMap = Object.fromEntries(
     MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])

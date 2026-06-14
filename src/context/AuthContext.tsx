@@ -19,6 +19,7 @@ export interface AuthUser {
   role: StaffRole | "parent";
   schoolId?: string;
   subdomain?: string;
+  isOwner?: boolean; // true only for the school account that registered on SchoolFlow
 }
 
 interface AuthContextValue {

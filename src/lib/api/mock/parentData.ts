@@ -378,6 +378,7 @@ export const MOCK_PARENT_FEE_INVOICES: Record<string, Invoice> = {
     totalAmount: 245000,
     totalPaid: 100000,
     balance: 145000,
+    status: "partial",
     createdAt: "2026-01-10T00:00:00Z",
   },
   "std-002": {
@@ -433,6 +434,7 @@ export const MOCK_PARENT_FEE_INVOICES: Record<string, Invoice> = {
     totalAmount: 245000,
     totalPaid: 245000,
     balance: 0,
+    status: "paid",
     createdAt: "2026-01-10T00:00:00Z",
   },
   "std-003": {
@@ -488,6 +490,7 @@ export const MOCK_PARENT_FEE_INVOICES: Record<string, Invoice> = {
     totalAmount: 245000,
     totalPaid: 100000,
     balance: 145000,
+    status: "partial",
     createdAt: "2026-01-10T00:00:00Z",
   },
 };

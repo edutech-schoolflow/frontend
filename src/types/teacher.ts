@@ -1,4 +1,4 @@
-export interface TeacherDashboardStats {
+export interface StaffDashboardStats {
   armsCount: number;
   totalStudents: number;
   examsSubmitted: number;

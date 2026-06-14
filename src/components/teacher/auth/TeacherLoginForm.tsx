@@ -14,7 +14,7 @@ import {
   type loginFormType,
 } from "@/src/lib/validations/login";
 
-export default function TeacherLoginForm() {
+export default function StaffLoginForm() {
   const router = useRouter();
 
   const form = useForm<loginFormType>({
@@ -29,7 +29,7 @@ export default function TeacherLoginForm() {
   } = form;
 
   const onSubmit = async (_values: loginFormType) => {
-    // TODO: call teacher login API
+    // TODO: call staff login API
     router.push("/staff/dashboard");
   };
 

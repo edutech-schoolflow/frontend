@@ -156,6 +156,28 @@ export interface ClassArm {
   subjectTeachers: SubjectTeacher[];
 }
 
+// ── Teacher assignments ────────────────────────────────────────────────────────
+// A teacher can hold multiple assignments simultaneously:
+//   "class_teacher"   — owns a specific arm: takes the morning register.
+//                       In primary schools they typically also teach all subjects.
+//   "subject_teacher" — teaches specific subjects across one or more arms.
+//
+// Example: Mr. Taiwo teaches Maths in JSS 1–3 (subject_teacher) and is
+// also form master of SS 3A (class_teacher). One staff record, two types.
+
+export type TeacherAssignmentType = "class_teacher" | "subject_teacher";
+
+export interface TeacherAssignment {
+  armId: string;
+  armName: string; // e.g. "JSS 1A"
+  classId: string;
+  className: string; // e.g. "JSS 1"
+  type: TeacherAssignmentType;
+  subjects: string[]; // subject names this teacher covers in this arm.
+  // Empty for class_teacher (primary: enter all subjects;
+  // secondary: attendance only). Non-empty for subject_teacher.
+}
+
 export interface CreateClassPayload {
   name: string;
   level: ClassLevel;

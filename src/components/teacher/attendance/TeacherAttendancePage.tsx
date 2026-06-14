@@ -158,7 +158,7 @@ function SummaryBar({
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function TeacherAttendancePage() {
+export default function StaffAttendancePage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 

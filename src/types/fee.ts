@@ -19,10 +19,13 @@ export interface InvoiceLine {
   status: InvoiceLineStatus;
 }
 
+export type InvoiceStatus = "paid" | "partial" | "unpaid";
+
 export interface Invoice {
   id: string;
   studentId: string;
   studentName: string;
+  className?: string;
   schoolId: string;
   termId: string;
   termName: string;
@@ -30,6 +33,8 @@ export interface Invoice {
   totalAmount: number;
   totalPaid: number;
   balance: number;
+  status: InvoiceStatus;
+  lastPaymentDate?: string | null;
   dueDate?: string;
   createdAt: string;
 }

@@ -7,6 +7,7 @@ import { STAFF_TEST_USER_KEY } from "@/src/context/StaffFeaturesContext";
 import { FEATURE_LABELS } from "@/src/types/staffFeatures";
 import type { StaffWithPermissions } from "@/src/lib/api/staffProfile";
 import type { StaffFeatures } from "@/src/types/staffFeatures";
+import type { TeacherAssignment } from "@/src/types/school";
 
 const ROLE_LABELS: Record<string, string> = {
   teacher: "Teacher",
@@ -20,6 +21,27 @@ const ROLE_LABELS: Record<string, string> = {
 
 function enabledCount(f: StaffFeatures) {
   return (Object.values(f) as boolean[]).filter(Boolean).length;
+}
+
+function AssignmentSummary({
+  assignments,
+}: {
+  assignments?: TeacherAssignment[];
+}) {
+  if (!assignments?.length) return null;
+  return (
+    <div className="mt-2 flex flex-col gap-1">
+      {assignments.map((a, i) => (
+        <span key={i} className="text-[11px] text-[#6b7280]">
+          {a.type === "class_teacher" ? "Class teacher" : "Subject teacher"} —{" "}
+          <span className="font-medium text-text-heading">{a.armName}</span>
+          {a.subjects.length > 0 && (
+            <span className="text-[#9ca3af]"> ({a.subjects.join(", ")})</span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function ActiveBadge({ userId }: { userId: string }) {
@@ -38,14 +60,15 @@ function ActiveBadge({ userId }: { userId: string }) {
 export default function StaffTestLoginPage() {
   const router = useRouter();
   const [list, setList] = useState<StaffWithPermissions[]>([]);
-  const [currentId, setCurrentId] = useState<string | null>(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem(STAFF_TEST_USER_KEY)
-      : null
-  );
+  // Always null on first render (server + client hydration), then set client-side.
+  // Lazy initializer with typeof window would cause SSR/client HTML mismatch.
+  const [currentId, setCurrentId] = useState<string | null>(null);
 
   useEffect(() => {
-    getStaffWithPermissions().then(setList);
+    getStaffWithPermissions().then((staff) => {
+      setList(staff);
+      setCurrentId(localStorage.getItem(STAFF_TEST_USER_KEY));
+    });
   }, []);
 
   function loginAs(userId: string) {
@@ -134,6 +157,8 @@ export default function StaffTestLoginPage() {
                         {enabled}/{total} features enabled
                       </span>
                     </div>
+
+                    <AssignmentSummary assignments={staff.assignments} />
 
                     {/* Enabled features */}
                     {enabled > 0 && (

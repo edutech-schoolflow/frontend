@@ -135,7 +135,7 @@ function ArmCard({ arm }: { arm: ArmDetail }) {
   );
 }
 
-export default function TeacherClassesPage() {
+export default function StaffClassesPage() {
   const { user } = useAuth();
   const [arms, setArms] = useState<ArmDetail[]>([]);
   const [loaded, setLoaded] = useState(false);

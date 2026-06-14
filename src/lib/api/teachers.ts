@@ -2,11 +2,11 @@ import { mockResponse } from "./mockClient";
 import { MOCK_STAFF, MOCK_CLASS_ARMS } from "./mock/schoolData";
 import { MOCK_ARM_STUDENTS } from "./mock/attendanceData";
 import { MOCK_EXAM_PAPERS } from "./mock/examData";
-import type { TeacherDashboardStats } from "@/src/types/teacher";
+import type { StaffDashboardStats } from "@/src/types/teacher";
 
-export const getTeacherDashboardStats = async (
+export const getStaffDashboardStats = async (
   userId?: string
-): Promise<TeacherDashboardStats> => {
+): Promise<StaffDashboardStats> => {
   const staff = userId
     ? MOCK_STAFF.find((s) => s.userId === userId && s.role === "teacher")
     : MOCK_STAFF.find((s) => s.role === "teacher");

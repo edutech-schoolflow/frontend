@@ -1,5 +1,5 @@
-import TeacherProfilePage from "@/src/components/teacher/profile/TeacherProfilePage";
+import StaffProfilePage from "@/src/components/teacher/profile/TeacherProfilePage";
 
 export default function ProfilePage() {
-  return <TeacherProfilePage />;
+  return <StaffProfilePage />;
 }

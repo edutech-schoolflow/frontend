@@ -28,7 +28,7 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>;
 
-export default function TeacherRegisterForm() {
+export default function StaffRegisterForm() {
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -49,7 +49,7 @@ export default function TeacherRegisterForm() {
   } = form;
 
   const onSubmit = async (_values: FormValues) => {
-    // TODO: call teacher registration API
+    // TODO: call staff registration API
     router.push("/staff/dashboard");
   };
 

@@ -86,7 +86,7 @@ function SchoolCard({
   );
 }
 
-export default function TeacherSchoolsPage() {
+export default function StaffSchoolsPage() {
   const {
     mySchools: schools,
     activeSchoolId,

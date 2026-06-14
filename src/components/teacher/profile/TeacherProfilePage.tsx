@@ -14,14 +14,14 @@ import {
   Clock,
 } from "lucide-react";
 import {
-  getTeacherProfile,
-  updateTeacherProfile,
+  getStaffPortalProfile,
+  updateStaffPortalProfile,
 } from "@/src/lib/api/teacherProfile";
 import { getMyMonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
 import type { MonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
 import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
-import type { TeacherProfile } from "@/src/lib/api/teacherProfile";
+import type { StaffPortalProfile } from "@/src/lib/api/teacherProfile";
 
 function Avatar({ name, size = 72 }: { name: string; size?: number }) {
   const initials = name
@@ -324,12 +324,12 @@ function AttendanceHistorySection({
   );
 }
 
-export default function TeacherProfilePage() {
+export default function StaffProfilePage() {
   const { user, setUser } = useAuth();
   const { profile: staffCtx, activeSchoolId } = useStaffFeatures();
   const effectiveUserId = staffCtx?.staff.userId ?? user?.id;
 
-  const [profile, setProfile] = useState<TeacherProfile | null>(null);
+  const [profile, setProfile] = useState<StaffPortalProfile | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -340,7 +340,7 @@ export default function TeacherProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
-    getTeacherProfile(effectiveUserId, activeSchoolId).then((p) => {
+    getStaffPortalProfile(effectiveUserId, activeSchoolId).then((p) => {
       if (cancelled) return;
       setProfile(p);
       if (p) {
@@ -381,7 +381,7 @@ export default function TeacherProfilePage() {
       return;
     }
     setSaving(true);
-    const updated = await updateTeacherProfile(
+    const updated = await updateStaffPortalProfile(
       effectiveUserId,
       {
         firstName: firstName.trim(),

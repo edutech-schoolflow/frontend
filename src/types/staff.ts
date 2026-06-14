@@ -1,4 +1,5 @@
 import type { StaffFeatures } from "./staffFeatures";
+import type { TeacherAssignment } from "./school";
 
 export type StaffRole =
   | "super_admin"
@@ -20,12 +21,14 @@ export interface Staff {
   role: StaffRole;
   position: string;
   photoUrl?: string;
-  classIds?: string[];
+  assignments?: TeacherAssignment[]; // typed class/subject assignments (replaces flat classIds)
   status: "active" | "inactive" | "pending";
   employmentType?: "full_time" | "part_time";
   createdAt: string;
   permissionTemplateId?: string;
   featureOverrides?: Partial<StaffFeatures>;
+  isOwner?: boolean; // true only for the account that registered the school
+  inviteToken?: string; // set on pending staff; cleared after registration completes
 }
 
 export interface StaffInvitation {
