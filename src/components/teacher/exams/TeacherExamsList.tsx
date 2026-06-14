@@ -235,7 +235,7 @@ function NewPaperModal({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function TeacherExamsList() {
+export default function StaffExamsList() {
   const router = useRouter();
   const { user } = useAuth();
 

@@ -459,7 +459,6 @@ Lesson planning, scheme of work, invigilation scheduling, textbook tracking, mat
 
 _Last updated: 2026-06-12_
 
-Invoices — bursar core workflow, needs student invoice list with payment status
 Timetable — teachers need their weekly schedule
 
 Scores — unclear if this is separate from Grades or the same thing under a different name

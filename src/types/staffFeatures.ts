@@ -47,27 +47,57 @@ export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
     can_submit_exam_papers: true,
     can_view_my_classes: true,
   },
+
+  // Principal oversees the whole school. Approves admissions (registrar
+  // processes, principal signs off). Needs fee visibility to manage
+  // defaulters before exams. Does not manage daily operations directly.
   principal: {
     ...NONE,
     can_view_school_overview: true,
     can_view_staff_attendance_board: true,
+    can_view_student_records: true,
+    can_manage_admissions: true,
+    can_view_invoices: true,
   },
+
+  // VP assists the principal. Typically handles academic scheduling,
+  // exam coordination, and teacher supervision.
   vice_principal: {
     ...NONE,
     can_view_school_overview: true,
     can_view_staff_attendance_board: true,
+    can_view_student_records: true,
+    can_view_invoices: true,
   },
+
+  // Bursar manages fees end-to-end: types, amounts, invoices, payments.
+  // Needs student records to know who to bill. No access to grades or admissions.
   bursar: {
     ...NONE,
     can_manage_fees: true,
     can_view_invoices: true,
+    can_view_student_records: true,
   },
+
+  // Registrar handles the full admissions pipeline and student record
+  // management (enroll, transfer, withdraw). No access to fees or grades.
   registrar: {
     ...NONE,
     can_manage_admissions: true,
     can_view_student_records: true,
   },
-  school_admin: ALL,
+
+  // ICT / school admin manages the software. Broad view access for system
+  // support, but does not perform operational roles (no fee management,
+  // no marking registers). Teaching features are separate.
+  school_admin: {
+    ...NONE,
+    can_view_school_overview: true,
+    can_view_staff_attendance_board: true,
+    can_view_student_records: true,
+    can_view_invoices: true,
+  },
+
   super_admin: ALL,
 };
 
@@ -85,3 +115,66 @@ export const FEATURE_LABELS: Record<keyof StaffFeatures, string> = {
   can_view_school_overview: "View school overview",
   can_view_staff_attendance_board: "View staff attendance board",
 };
+
+// Plain-language descriptions shown next to each toggle in the permissions UI.
+export const FEATURE_DESCRIPTIONS: Record<keyof StaffFeatures, string> = {
+  can_mark_student_attendance:
+    "Take the morning register for their assigned class",
+  can_enter_grades:
+    "Record CA scores and exam results for their assigned subjects",
+  can_submit_exam_papers: "Upload exam questions for printing and distribution",
+  can_view_my_classes: "See their assigned classes and student rosters",
+  can_manage_fees:
+    "Create fee types, set amounts per class, and generate invoices",
+  can_view_invoices: "See who has paid, who owes, and full payment history",
+  can_manage_admissions:
+    "Review applications, schedule entrance exams, and admit students",
+  can_view_student_records:
+    "Access student profiles, documents, and school history",
+  can_view_school_overview:
+    "See school-wide statistics, performance, and daily snapshot",
+  can_view_staff_attendance_board:
+    "See daily staff check-in and check-out status",
+};
+
+// Feature groups for the permissions UI — one section per group.
+// Keeps related toggles together so school admins can reason by role
+// rather than reading raw feature names.
+export interface FeatureGroup {
+  label: string;
+  hint: string; // one sentence explaining who this group is for
+  keys: (keyof StaffFeatures)[];
+}
+
+export const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    label: "Teaching",
+    hint: "For staff assigned to specific classes or subjects",
+    keys: [
+      "can_view_my_classes",
+      "can_mark_student_attendance",
+      "can_enter_grades",
+      "can_submit_exam_papers",
+    ],
+  },
+  {
+    label: "Academic Oversight",
+    hint: "For principals and vice principals managing school performance",
+    keys: ["can_view_school_overview", "can_view_student_records"],
+  },
+  {
+    label: "Admissions",
+    hint: "For registrars and principals handling student intake",
+    keys: ["can_manage_admissions"],
+  },
+  {
+    label: "Finance",
+    hint: "For bursars tracking fee collection and payments",
+    keys: ["can_manage_fees", "can_view_invoices"],
+  },
+  {
+    label: "Staff Management",
+    hint: "For leadership monitoring staff punctuality and attendance",
+    keys: ["can_view_staff_attendance_board"],
+  },
+];

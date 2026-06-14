@@ -1,6 +1,15 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_STAFF, MOCK_CLASS_ARMS } from "./mock/schoolData";
+import {
+  MOCK_STAFF,
+  MOCK_CLASS_ARMS,
+  MOCK_INVITE_TOKENS,
+} from "./mock/schoolData";
 import type { Staff, StaffInvitation } from "@/src/types/staff";
+
+export interface InviteStaffResult {
+  staff: Staff;
+  inviteLink: string;
+}
 
 function getArmsByStaff(): Record<string, string[]> {
   const map: Record<string, string[]> = {};
@@ -27,9 +36,13 @@ export const getSchoolStaff = async (): Promise<{
 export const getStaffMember = async (id: string): Promise<Staff | null> =>
   mockResponse(MOCK_STAFF.find((s) => s.id === id) ?? null);
 
-export const inviteStaff = async (payload: StaffInvitation): Promise<Staff> => {
+export const inviteStaff = async (
+  payload: StaffInvitation
+): Promise<InviteStaffResult> => {
+  const id = `stf-${Date.now()}`;
+  const token = `invite-${id}`;
   const newStaff: Staff = {
-    id: `stf-${Date.now()}`,
+    id,
     schoolId: "sch-001",
     firstName: payload.firstName,
     lastName: payload.lastName,
@@ -38,10 +51,20 @@ export const inviteStaff = async (payload: StaffInvitation): Promise<Staff> => {
     role: payload.role,
     position: payload.position,
     status: "pending",
+    inviteToken: token,
     createdAt: new Date().toISOString(),
   };
   MOCK_STAFF.push(newStaff);
-  return mockResponse(newStaff);
+  MOCK_INVITE_TOKENS[token] = { staffId: id };
+
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:3000";
+  return mockResponse({
+    staff: newStaff,
+    inviteLink: `${origin}/staff/register?token=${token}`,
+  });
 };
 
 export const updateStaffRole = async (

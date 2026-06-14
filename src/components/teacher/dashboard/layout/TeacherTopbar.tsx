@@ -14,7 +14,7 @@ import {
 import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 
-export default function TeacherTopbar() {
+export default function StaffTopbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [schoolOpen, setSchoolOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ export default function TeacherTopbar() {
     mySchools.find((e) => e.school.id === activeSchoolId)?.school ??
     mySchools[0]?.school;
 
-  const fullName = user?.name ?? "Teacher";
+  const fullName = user?.name ?? "Staff";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")

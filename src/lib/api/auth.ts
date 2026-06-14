@@ -1,13 +1,18 @@
 import { mockResponse } from "./mockClient";
 import type { AuthUser } from "@/src/context/AuthContext";
 
+// The school portal account — whoever manages the school's SchoolFlow account
+// (set up during registration). This may not be the legal school owner — KYC for
+// legal ownership is stored in the compliance tab. This is separate from staff
+// members who may also have school_admin role.
 const MOCK_SCHOOL_USER: AuthUser = {
-  id: "usr-001",
-  name: "John Okonkwo",
-  email: "john@greenfieldacademy.com",
+  id: "owner-001",
+  name: "Chidi Eze",
+  email: "chidi@greenfieldacademy.com",
   role: "school_admin",
   schoolId: "sch-001",
   subdomain: "greenfield",
+  isOwner: true,
 };
 
 const MOCK_PARENT_USER: AuthUser = {

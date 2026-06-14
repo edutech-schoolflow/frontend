@@ -1,7 +1,7 @@
 import { mockResponse } from "./mockClient";
 import { MOCK_STAFF, MOCK_SCHOOLS, MOCK_CLASS_ARMS } from "./mock/schoolData";
 
-export interface TeacherProfile {
+export interface StaffPortalProfile {
   staffId: string;
   userId: string;
   firstName: string;
@@ -16,10 +16,10 @@ export interface TeacherProfile {
   assignedArms: string[];
 }
 
-export const getTeacherProfile = async (
+export const getStaffPortalProfile = async (
   userId: string | undefined,
   activeSchoolId?: string | null
-): Promise<TeacherProfile | null> => {
+): Promise<StaffPortalProfile | null> => {
   if (!userId) return mockResponse(null);
 
   const records = MOCK_STAFF.filter(
@@ -54,7 +54,7 @@ export const getTeacherProfile = async (
   });
 };
 
-export const updateTeacherProfile = async (
+export const updateStaffPortalProfile = async (
   userId: string | undefined,
   updates: {
     firstName: string;
@@ -63,7 +63,7 @@ export const updateTeacherProfile = async (
     phone: string;
   },
   activeSchoolId?: string | null
-): Promise<TeacherProfile> => {
+): Promise<StaffPortalProfile> => {
   if (!userId) throw new Error("Staff not found");
 
   const records = MOCK_STAFF.filter(
@@ -80,6 +80,6 @@ export const updateTeacherProfile = async (
 
   MOCK_STAFF[staffIdx] = { ...MOCK_STAFF[staffIdx], ...updates };
 
-  const updated = await getTeacherProfile(userId, activeSchoolId);
+  const updated = await getStaffPortalProfile(userId, activeSchoolId);
   return updated!;
 };

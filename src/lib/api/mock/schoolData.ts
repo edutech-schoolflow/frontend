@@ -729,6 +729,8 @@ export const MOCK_STAFF: Staff[] = [
     createdAt: "2025-01-01T00:00:00Z",
   },
   {
+    // Class teacher for Primary 1A. Primary school model: takes register AND
+    // teaches all subjects for their class.
     id: "stf-002",
     schoolId: "sch-001",
     userId: "usr-002",
@@ -738,12 +740,24 @@ export const MOCK_STAFF: Staff[] = [
     phone: "+234 803 567 8901",
     role: "teacher",
     position: "Class Teacher",
-    classIds: ["cls-001"],
     status: "active",
     createdAt: "2025-01-02T00:00:00Z",
     permissionTemplateId: "tpl-001",
+    assignments: [
+      {
+        armId: "arm-001",
+        armName: "Primary 1A",
+        classId: "sc-001",
+        className: "Primary 1",
+        type: "class_teacher",
+        subjects: [], // primary: enters all subjects for this class
+      },
+    ],
   },
   {
+    // HOD Mathematics — secondary model: subject teacher for Maths in JSS 1 & 2,
+    // AND class teacher (form master) for Primary 1B at Greenfield.
+    // This is the exact scenario: one teacher, multiple typed assignments.
     id: "stf-003",
     schoolId: "sch-001",
     userId: "usr-003",
@@ -752,14 +766,41 @@ export const MOCK_STAFF: Staff[] = [
     email: "emeka@greenfieldacademy.com",
     phone: "+234 805 678 9012",
     role: "teacher",
-    position: "Head of Department",
-    classIds: ["cls-001"],
+    position: "Head of Department (Mathematics)",
     status: "active",
     createdAt: "2025-01-03T00:00:00Z",
-    permissionTemplateId: "tpl-002",
+    permissionTemplateId: "tpl-007", // class teacher + subject teacher — he owns Primary 1B AND teaches Maths in JSS
+    featureOverrides: { can_view_student_records: true }, // HOD-level oversight of student performance
     employmentType: "part_time",
+    assignments: [
+      {
+        armId: "arm-001b",
+        armName: "Primary 1B",
+        classId: "sc-001",
+        className: "Primary 1",
+        type: "class_teacher",
+        subjects: [], // primary: enters all subjects as class teacher
+      },
+      {
+        armId: "arm-003",
+        armName: "JSS 1A",
+        classId: "sc-003",
+        className: "JSS 1",
+        type: "subject_teacher",
+        subjects: ["Mathematics"],
+      },
+      {
+        armId: "arm-004",
+        armName: "JSS 2A",
+        classId: "sc-004",
+        className: "JSS 2",
+        type: "subject_teacher",
+        subjects: ["Mathematics"],
+      },
+    ],
   },
   {
+    // Same person (Emeka) as part-time teacher at a second school.
     id: "stf-003b",
     schoolId: "sch-002",
     userId: "usr-003",
@@ -773,6 +814,16 @@ export const MOCK_STAFF: Staff[] = [
     createdAt: "2025-06-01T00:00:00Z",
     permissionTemplateId: "tpl-001",
     employmentType: "part_time",
+    assignments: [
+      {
+        armId: "arm-001",
+        armName: "Primary 1A",
+        classId: "sc-001",
+        className: "Primary 1",
+        type: "class_teacher",
+        subjects: [],
+      },
+    ],
   },
   {
     id: "stf-004",
@@ -801,7 +852,6 @@ export const MOCK_STAFF: Staff[] = [
     status: "active",
     createdAt: "2024-09-01T00:00:00Z",
     permissionTemplateId: "tpl-003",
-    featureOverrides: { can_manage_admissions: true },
   },
   {
     id: "stf-006",
@@ -828,6 +878,7 @@ export const MOCK_STAFF: Staff[] = [
     role: "teacher",
     position: "Class Teacher",
     status: "pending",
+    inviteToken: "invite-stf-007",
     createdAt: "2026-06-01T00:00:00Z",
   },
   {
@@ -849,39 +900,92 @@ export const MOCK_STAFF: Staff[] = [
 // Seeded from role defaults but fully editable by the school admin.
 // When a template is updated, all staff on that template are affected immediately.
 export const MOCK_PERMISSION_TEMPLATES: PermissionTemplate[] = [
+  // ── Teaching templates ─────────────────────────────────────────────────────
   {
+    // Takes morning register + enters all subjects (typical primary school teacher).
     id: "tpl-001",
     name: "Class Teacher",
     description:
-      "Standard teaching access — attendance, grades, and exam papers for assigned classes.",
+      "Takes the morning register and enters grades for their assigned class. Typical for primary school class teachers.",
     features: { ...ROLE_FEATURES.teacher },
     createdAt: "2025-01-01T00:00:00Z",
   },
   {
+    // Teaches specific subjects across multiple classes; does NOT take register.
+    id: "tpl-006",
+    name: "Subject Teacher",
+    description:
+      "Enters grades and submits exam papers for their subjects only. Does not take the morning register — the class teacher handles that.",
+    features: {
+      ...ROLE_FEATURES.teacher,
+      can_mark_student_attendance: false, // register is the class teacher's job
+    },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    // HOD: subject teacher base (no register) + student records for dept oversight.
+    // If the HOD is also a class teacher, admin should use tpl-007 + student records override.
     id: "tpl-002",
-    name: "Head of Department",
-    description: "Teaching access plus visibility into all student records.",
-    features: { ...ROLE_FEATURES.teacher, can_view_student_records: true },
+    name: "Head of Department (HOD)",
+    description:
+      "Same as Subject Teacher (no register marking), plus access to student records for department-level oversight of academic performance.",
+    features: {
+      ...ROLE_FEATURES.teacher,
+      can_mark_student_attendance: false, // HODs teach subjects; register belongs to class teachers
+      can_view_student_records: true,
+    },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    // For the rare case where a teacher is BOTH class teacher AND a subject teacher
+    // in other classes (the exact scenario: Maths in JSS1–3 + form master of SS3).
+    id: "tpl-007",
+    name: "Class Teacher + Subject Teacher",
+    description:
+      "For staff who own a class (take register) and also teach specific subjects in other classes. Full teaching access.",
+    features: { ...ROLE_FEATURES.teacher },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+
+  // ── Administrative templates ───────────────────────────────────────────────
+  {
+    id: "tpl-004",
+    name: "Principal",
+    description:
+      "Full school oversight — school overview, student records, admissions decisions, and fee visibility to manage exam exclusions.",
+    features: { ...ROLE_FEATURES.principal },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "tpl-008",
+    name: "Vice Principal (Academic)",
+    description:
+      "Oversees academic operations — school performance, staff attendance, and student records. Use for VP Academic or Deputy Head.",
+    features: { ...ROLE_FEATURES.vice_principal },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    // Principal who also teaches a class — stack principal + full teacher access.
+    id: "tpl-009",
+    name: "Principal + Class Teacher",
+    description:
+      "For a principal who also takes a class. Full school oversight plus teaching access (register, grades, exam papers).",
+    features: { ...ROLE_FEATURES.principal, ...ROLE_FEATURES.teacher },
     createdAt: "2025-01-01T00:00:00Z",
   },
   {
     id: "tpl-003",
     name: "Bursar",
-    description: "Full fee management and invoice access.",
+    description:
+      "Full fee management — create fee types, set amounts per class, generate invoices, and track payments.",
     features: { ...ROLE_FEATURES.bursar },
-    createdAt: "2025-01-01T00:00:00Z",
-  },
-  {
-    id: "tpl-004",
-    name: "School Leadership",
-    description: "School overview dashboard and staff attendance board.",
-    features: { ...ROLE_FEATURES.principal },
     createdAt: "2025-01-01T00:00:00Z",
   },
   {
     id: "tpl-005",
     name: "Registrar",
-    description: "Admissions pipeline and student record management.",
+    description:
+      "Admissions pipeline and student record management — applications, entrance exams, enrollment, transfers, and withdrawals.",
     features: { ...ROLE_FEATURES.registrar },
     createdAt: "2025-01-01T00:00:00Z",
   },
@@ -1542,10 +1646,13 @@ export const MOCK_FEE_TYPES: FeeType[] = [
   },
 ];
 
+// David Okafor paid ₦65,000 (tuition + books) — uniform outstanding.
+// inv-001 is also referenced by getStudentInvoices and the parent portal.
 export const MOCK_INVOICE: Invoice = {
   id: "inv-001",
   studentId: "std-001",
   studentName: "David Okafor",
+  className: "Primary 1A",
   schoolId: "sch-001",
   termId: "term-001",
   termName: "2nd Term 2024/2025",
@@ -1554,17 +1661,17 @@ export const MOCK_INVOICE: Invoice = {
       feeTypeId: "ft-001",
       feeTypeName: "Tuition",
       amount: 50000,
-      paid: 0,
-      balance: 50000,
-      status: "unpaid",
+      paid: 50000,
+      balance: 0,
+      status: "paid",
     },
     {
       feeTypeId: "ft-002",
       feeTypeName: "Books",
       amount: 15000,
-      paid: 0,
-      balance: 15000,
-      status: "unpaid",
+      paid: 15000,
+      balance: 0,
+      status: "paid",
     },
     {
       feeTypeId: "ft-003",
@@ -1576,11 +1683,185 @@ export const MOCK_INVOICE: Invoice = {
     },
   ],
   totalAmount: 75000,
-  totalPaid: 0,
-  balance: 75000,
+  totalPaid: 65000,
+  balance: 10000,
+  status: "partial",
+  lastPaymentDate: "2025-01-21",
   dueDate: "2025-01-31",
   createdAt: "2025-01-10T00:00:00Z",
 };
+
+export const MOCK_INVOICES: Invoice[] = [
+  MOCK_INVOICE,
+  {
+    id: "inv-002",
+    studentId: "std-002",
+    studentName: "Grace Adaeze",
+    className: "Primary 2A",
+    schoolId: "sch-001",
+    termId: "term-001",
+    termName: "2nd Term 2024/2025",
+    lines: [
+      {
+        feeTypeId: "ft-001",
+        feeTypeName: "Tuition",
+        amount: 50000,
+        paid: 50000,
+        balance: 0,
+        status: "paid",
+      },
+      {
+        feeTypeId: "ft-002",
+        feeTypeName: "Books",
+        amount: 15000,
+        paid: 15000,
+        balance: 0,
+        status: "paid",
+      },
+      {
+        feeTypeId: "ft-003",
+        feeTypeName: "Uniform",
+        amount: 10000,
+        paid: 10000,
+        balance: 0,
+        status: "paid",
+      },
+    ],
+    totalAmount: 75000,
+    totalPaid: 75000,
+    balance: 0,
+    status: "paid",
+    lastPaymentDate: "2025-01-15",
+    dueDate: "2025-01-31",
+    createdAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    id: "inv-003",
+    studentId: "std-003",
+    studentName: "Emeka Nwachukwu",
+    className: "Primary 1A",
+    schoolId: "sch-001",
+    termId: "term-001",
+    termName: "2nd Term 2024/2025",
+    lines: [
+      {
+        feeTypeId: "ft-001",
+        feeTypeName: "Tuition",
+        amount: 50000,
+        paid: 0,
+        balance: 50000,
+        status: "unpaid",
+      },
+      {
+        feeTypeId: "ft-002",
+        feeTypeName: "Books",
+        amount: 15000,
+        paid: 0,
+        balance: 15000,
+        status: "unpaid",
+      },
+      {
+        feeTypeId: "ft-003",
+        feeTypeName: "Uniform",
+        amount: 10000,
+        paid: 0,
+        balance: 10000,
+        status: "unpaid",
+      },
+    ],
+    totalAmount: 75000,
+    totalPaid: 0,
+    balance: 75000,
+    status: "unpaid",
+    lastPaymentDate: null,
+    dueDate: "2025-01-31",
+    createdAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    id: "inv-004",
+    studentId: "std-004",
+    studentName: "Joseph Olabode",
+    className: "Primary 2A",
+    schoolId: "sch-001",
+    termId: "term-001",
+    termName: "2nd Term 2024/2025",
+    lines: [
+      {
+        feeTypeId: "ft-001",
+        feeTypeName: "Tuition",
+        amount: 50000,
+        paid: 50000,
+        balance: 0,
+        status: "paid",
+      },
+      {
+        feeTypeId: "ft-002",
+        feeTypeName: "Books",
+        amount: 15000,
+        paid: 0,
+        balance: 15000,
+        status: "unpaid",
+      },
+      {
+        feeTypeId: "ft-003",
+        feeTypeName: "Uniform",
+        amount: 10000,
+        paid: 0,
+        balance: 10000,
+        status: "unpaid",
+      },
+    ],
+    totalAmount: 75000,
+    totalPaid: 50000,
+    balance: 25000,
+    status: "partial",
+    lastPaymentDate: "2025-01-18",
+    dueDate: "2025-01-31",
+    createdAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    id: "inv-005",
+    studentId: "std-005",
+    studentName: "Amina Bello",
+    className: "Primary 2A",
+    schoolId: "sch-001",
+    termId: "term-001",
+    termName: "2nd Term 2024/2025",
+    lines: [
+      {
+        feeTypeId: "ft-001",
+        feeTypeName: "Tuition",
+        amount: 50000,
+        paid: 0,
+        balance: 50000,
+        status: "unpaid",
+      },
+      {
+        feeTypeId: "ft-002",
+        feeTypeName: "Books",
+        amount: 15000,
+        paid: 0,
+        balance: 15000,
+        status: "unpaid",
+      },
+      {
+        feeTypeId: "ft-003",
+        feeTypeName: "Uniform",
+        amount: 10000,
+        paid: 0,
+        balance: 10000,
+        status: "unpaid",
+      },
+    ],
+    totalAmount: 75000,
+    totalPaid: 0,
+    balance: 75000,
+    status: "unpaid",
+    lastPaymentDate: null,
+    dueDate: "2025-01-31",
+    createdAt: "2025-01-10T00:00:00Z",
+  },
+];
 
 export const MOCK_BURSAR_SUMMARY: BursarSummary = {
   totalExpected: 3750000,
@@ -1604,6 +1885,11 @@ export const MOCK_PAYMENTS: Payment[] = [
     paidAt: "2025-01-21T10:45:00Z",
   },
 ];
+
+// Token → staffId map. New invites push here; completeRegistration removes the token.
+export const MOCK_INVITE_TOKENS: Record<string, { staffId: string }> = {
+  "invite-stf-007": { staffId: "stf-007" },
+};
 
 import type {
   DashboardStats,
@@ -1709,7 +1995,13 @@ export const MOCK_CLASS_ARMS: Record<string, ClassArm[]> = {
       fullName: "JSS 1A",
       classTeacher: null,
       studentsCount: 2,
-      subjectTeachers: [],
+      subjectTeachers: [
+        {
+          subject: "Mathematics",
+          teacherId: "stf-003",
+          teacherName: "Emeka Obi",
+        },
+      ],
     },
   ],
   "sc-004": [
@@ -1721,7 +2013,13 @@ export const MOCK_CLASS_ARMS: Record<string, ClassArm[]> = {
       fullName: "JSS 2A",
       classTeacher: null,
       studentsCount: 2,
-      subjectTeachers: [],
+      subjectTeachers: [
+        {
+          subject: "Mathematics",
+          teacherId: "stf-003",
+          teacherName: "Emeka Obi",
+        },
+      ],
     },
   ],
 };

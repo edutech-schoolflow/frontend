@@ -55,8 +55,9 @@ export const getMyStaffProfile = async (
   return mockResponse({
     staff,
     features: computeFeatures(staff),
-    isSchoolAdmin:
-      staff.role === "school_admin" || staff.role === "super_admin",
+    // Only the school portal account holder (isOwner) gets redirected to
+    // the school portal. Staff with school_admin role are not the same thing.
+    isSchoolAdmin: staff.isOwner === true,
   });
 };
 

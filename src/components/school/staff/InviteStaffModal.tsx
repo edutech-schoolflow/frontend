@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Copy, Check } from "lucide-react";
 import { inviteStaff } from "@/src/lib/api/staff";
 import type { Staff, StaffRole } from "@/src/types/staff";
 import { ROLE_LABELS, INVITABLE_ROLES } from "@/src/types/staff";
@@ -19,6 +19,8 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
   const [role, setRole] = useState<StaffRole>("teacher");
   const [position, setPosition] = useState("");
   const [saving, setSaving] = useState(false);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const canSave =
     firstName.trim() &&
@@ -39,9 +41,78 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
       position: position.trim(),
     });
     setSaving(false);
-    onDone(result);
+    setInviteLink(result.inviteLink);
+    onDone(result.staff);
   }
 
+  async function copyLink() {
+    if (!inviteLink) return;
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  // ── Success state ──────────────────────────────────────────────────────────
+  if (inviteLink) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="w-full max-w-[480px] rounded-[16px] bg-white p-6 shadow-xl">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-[16px] font-semibold text-text-heading">
+              Invitation sent
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-[#9ca3af] hover:text-text-heading"
+            >
+              <X className="h-[18px] w-[18px]" />
+            </button>
+          </div>
+
+          <div className="mb-4 rounded-[10px] bg-[#f0fdf4] px-4 py-3">
+            <p className="text-[13px] text-[#15803d]">
+              An email has been sent to{" "}
+              <span className="font-semibold">{email}</span>. They will use the
+              link below to set up their account.
+            </p>
+          </div>
+
+          <p className="mb-2 text-[12px] font-medium text-text-body">
+            Invite link — share directly if email doesn&apos;t arrive
+          </p>
+          <div className="flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-[#f9fafb] px-3 py-2">
+            <p className="flex-1 truncate text-[12px] text-text-heading">
+              {inviteLink}
+            </p>
+            <button
+              onClick={copyLink}
+              className="shrink-0 text-[#9ca3af] hover:text-brand-green transition-colors"
+            >
+              {copied ? (
+                <Check className="h-[15px] w-[15px] text-brand-green" />
+              ) : (
+                <Copy className="h-[15px] w-[15px]" />
+              )}
+            </button>
+          </div>
+
+          <p className="mt-3 text-[11px] text-[#9ca3af]">
+            This link is unique to {firstName}. Do not share it with anyone
+            else.
+          </p>
+
+          <button
+            onClick={onClose}
+            className="mt-5 w-full rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Form state ─────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-[480px] rounded-[16px] bg-white p-6 shadow-xl">

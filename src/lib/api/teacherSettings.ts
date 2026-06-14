@@ -8,7 +8,7 @@ export interface QualificationEntry {
   year: string;
 }
 
-export interface TeacherSettings {
+export interface StaffSettings {
   trcnNumber: string;
   bank: {
     bankName: string;
@@ -18,7 +18,7 @@ export interface TeacherSettings {
   qualifications: QualificationEntry[];
 }
 
-const MOCK_SETTINGS: Record<string, TeacherSettings> = {
+const MOCK_SETTINGS: Record<string, StaffSettings> = {
   "demo-user": {
     trcnNumber: "",
     bank: { bankName: "", accountNumber: "", accountName: "" },
@@ -26,9 +26,9 @@ const MOCK_SETTINGS: Record<string, TeacherSettings> = {
   },
 };
 
-export const getTeacherSettings = async (
+export const getStaffSettings = async (
   userId: string | undefined
-): Promise<TeacherSettings> => {
+): Promise<StaffSettings> => {
   const id = userId ?? "demo-user";
   if (!MOCK_SETTINGS[id]) {
     MOCK_SETTINGS[id] = {
@@ -40,10 +40,10 @@ export const getTeacherSettings = async (
   return mockResponse({ ...MOCK_SETTINGS[id] });
 };
 
-export const saveTeacherSettings = async (
+export const saveStaffSettings = async (
   userId: string | undefined,
-  patch: Partial<TeacherSettings>
-): Promise<TeacherSettings> => {
+  patch: Partial<StaffSettings>
+): Promise<StaffSettings> => {
   const id = userId ?? "demo-user";
   if (!MOCK_SETTINGS[id]) {
     MOCK_SETTINGS[id] = {

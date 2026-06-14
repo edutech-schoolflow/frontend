@@ -73,7 +73,7 @@ const NAV_ITEMS: Array<{
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function TeacherSidebar() {
+export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();

@@ -2,6 +2,7 @@ import { mockResponse } from "./mockClient";
 import {
   MOCK_FEE_TYPES,
   MOCK_INVOICE,
+  MOCK_INVOICES,
   MOCK_PAYMENTS,
   MOCK_BURSAR_SUMMARY,
 } from "./mock/schoolData";
@@ -47,6 +48,17 @@ export const generateInvoices = async (_classId: string, _termId: string) =>
 
 export const getStudentInvoices = async (_studentId: string) =>
   mockResponse([MOCK_INVOICE]);
+
+// Returns all invoices for a term, optionally filtered by class name.
+export const getInvoiceList = async (
+  _termId: string,
+  className?: string
+): Promise<Invoice[]> => {
+  const results = className
+    ? MOCK_INVOICES.filter((inv) => inv.className === className)
+    : MOCK_INVOICES;
+  return mockResponse(results);
+};
 
 export const getChildFees = async (_studentId: string, _termId: string) =>
   mockResponse(MOCK_INVOICE);

@@ -8,11 +8,7 @@ type Props = {
   subtitle: string;
 };
 
-export default function TeacherAuthLayout({
-  children,
-  title,
-  subtitle,
-}: Props) {
+export default function StaffAuthLayout({ children, title, subtitle }: Props) {
   return (
     <div className="min-h-screen bg-white">
       <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">

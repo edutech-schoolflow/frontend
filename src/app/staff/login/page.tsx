@@ -1,13 +1,13 @@
-import TeacherAuthLayout from "@/src/layout/auth/TeacherAuthLayout";
-import TeacherLoginForm from "@/src/components/teacher/auth/TeacherLoginForm";
+import StaffAuthLayout from "@/src/layout/auth/TeacherAuthLayout";
+import StaffLoginForm from "@/src/components/teacher/auth/TeacherLoginForm";
 
-export default function TeacherLoginPage() {
+export default function StaffLoginPage() {
   return (
-    <TeacherAuthLayout
+    <StaffAuthLayout
       title="Welcome back"
-      subtitle="Sign in to your teacher portal"
+      subtitle="Sign in to your staff portal"
     >
-      <TeacherLoginForm />
-    </TeacherAuthLayout>
+      <StaffLoginForm />
+    </StaffAuthLayout>
   );
 }

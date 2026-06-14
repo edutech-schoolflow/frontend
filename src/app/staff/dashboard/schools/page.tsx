@@ -1,5 +1,5 @@
-import TeacherSchoolsPage from "@/src/components/teacher/schools/TeacherSchoolsPage";
+import StaffSchoolsPage from "@/src/components/teacher/schools/TeacherSchoolsPage";
 
 export default function SchoolsPage() {
-  return <TeacherSchoolsPage />;
+  return <StaffSchoolsPage />;
 }

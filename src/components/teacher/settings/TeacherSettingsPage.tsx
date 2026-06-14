@@ -11,8 +11,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import {
-  getTeacherSettings,
-  saveTeacherSettings,
+  getStaffSettings,
+  saveStaffSettings,
   NIGERIAN_BANKS,
 } from "@/src/lib/api/teacherSettings";
 import type { QualificationEntry } from "@/src/lib/api/teacherSettings";
@@ -154,7 +154,7 @@ function SaveButton({
   );
 }
 
-export default function TeacherSettingsPage() {
+export default function StaffSettingsPage() {
   const { user } = useAuth();
 
   const [loaded, setLoaded] = useState(false);
@@ -182,7 +182,7 @@ export default function TeacherSettingsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getTeacherSettings(user?.id).then((s) => {
+    getStaffSettings(user?.id).then((s) => {
       if (cancelled) return;
       setTrcn(s.trcnNumber);
       setBankName(s.bank.bankName);
@@ -204,7 +204,7 @@ export default function TeacherSettingsPage() {
     }
     setTrcnError("");
     setTrcnSaving(true);
-    await saveTeacherSettings(user?.id, { trcnNumber: trcn.trim() });
+    await saveStaffSettings(user?.id, { trcnNumber: trcn.trim() });
     setTrcnSaving(false);
     setTrcnSaved(true);
     setTimeout(() => setTrcnSaved(false), 3000);
@@ -224,7 +224,7 @@ export default function TeacherSettingsPage() {
     }
     setBankErrors({});
     setBankSaving(true);
-    await saveTeacherSettings(user?.id, {
+    await saveStaffSettings(user?.id, {
       bank: {
         bankName,
         accountNumber: accountNumber.trim(),
@@ -266,7 +266,7 @@ export default function TeacherSettingsPage() {
 
   const handleSaveQualifications = async () => {
     setQualSaving(true);
-    await saveTeacherSettings(user?.id, { qualifications });
+    await saveStaffSettings(user?.id, { qualifications });
     setQualSaving(false);
     setQualSaved(true);
     setTimeout(() => setQualSaved(false), 3000);

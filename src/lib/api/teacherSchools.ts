@@ -1,7 +1,7 @@
 import { mockResponse } from "./mockClient";
 import { MOCK_STAFF, MOCK_SCHOOL, MOCK_CLASS_ARMS } from "./mock/schoolData";
 
-export interface TeacherSchoolAffiliation {
+export interface StaffSchoolAffiliation {
   schoolId: string;
   schoolName: string;
   position: string;
@@ -14,9 +14,9 @@ export interface TeacherSchoolAffiliation {
   joinedAt?: string;
 }
 
-export const getTeacherSchools = async (
+export const getStaffSchools = async (
   userId: string | undefined
-): Promise<TeacherSchoolAffiliation[]> => {
+): Promise<StaffSchoolAffiliation[]> => {
   const id = userId ?? "demo-user";
 
   const staff = MOCK_STAFF.find((s) => s.userId === id && s.role === "teacher");
@@ -27,7 +27,7 @@ export const getTeacherSchools = async (
     .filter((arm) => arm.classTeacher?.id === staff.id)
     .map((arm) => arm.fullName);
 
-  const affiliation: TeacherSchoolAffiliation = {
+  const affiliation: StaffSchoolAffiliation = {
     schoolId: staff.schoolId,
     schoolName: MOCK_SCHOOL.name,
     position: staff.position ?? "Teacher",

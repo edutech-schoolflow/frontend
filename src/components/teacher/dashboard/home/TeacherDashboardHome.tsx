@@ -11,10 +11,10 @@ import {
   ShieldCheck,
   ChevronRight,
 } from "lucide-react";
-import { getTeacherDashboardStats } from "@/src/lib/api/teachers";
+import { getStaffDashboardStats } from "@/src/lib/api/teachers";
 import { getTeacherArms, getStudentsForArm } from "@/src/lib/api/attendance";
 import { useAuth } from "@/src/context/AuthContext";
-import type { TeacherDashboardStats } from "@/src/types/teacher";
+import type { StaffDashboardStats } from "@/src/types/teacher";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
 import StaffCheckInWidget from "./StaffCheckInWidget";
@@ -68,9 +68,9 @@ interface ArmSummary extends ArmSelectOption {
   students: AttendanceStudentRow[];
 }
 
-export default function TeacherDashboardHome() {
+export default function StaffDashboardHome() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<TeacherDashboardStats | undefined>(
+  const [stats, setStats] = useState<StaffDashboardStats | undefined>(
     undefined
   );
   const [arms, setArms] = useState<ArmSummary[]>([]);
@@ -79,7 +79,7 @@ export default function TeacherDashboardHome() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      getTeacherDashboardStats(user?.id),
+      getStaffDashboardStats(user?.id),
       getTeacherArms(user?.id).then((opts) =>
         Promise.all(
           opts.map((opt) =>
@@ -125,7 +125,7 @@ export default function TeacherDashboardHome() {
       {/* Greeting */}
       <div className="mb-7">
         <h1 className="text-[22px] font-semibold text-text-heading">
-          Welcome back, {user?.name?.split(" ")[0] ?? "Teacher"}
+          Welcome back, {user?.name?.split(" ")[0] ?? "Staff"}
         </h1>
         <p className="mt-0.5 text-[14px] text-text-body">
           Here&apos;s an overview of your classes this term.
