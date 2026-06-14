@@ -17,11 +17,11 @@ export default function TeacherAuthLayout({
     <div className="min-h-screen bg-white">
       <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
         <div className="mb-6 flex w-full max-w-[520px] items-center justify-between">
-          <Link href="/teacher">
+          <Link href="/staff">
             <Logo size={28} />
           </Link>
           <Link
-            href="/teacher"
+            href="/staff"
             className="text-[13px] text-text-body transition-colors hover:text-text-heading"
           >
             ← Back

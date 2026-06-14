@@ -1,10 +1,22 @@
 import type { School } from "@/src/types/school";
-import type { Student, Class, AcademicYear, Term } from "@/src/types/student";
+import type {
+  Student,
+  Class,
+  AcademicYear,
+  Term,
+  StudentDocument,
+} from "@/src/types/student";
 import type { Staff } from "@/src/types/staff";
 import type { Parent, ParentChild, PtaInvite } from "@/src/types/parent";
 import type { Application } from "@/src/types/application";
 import type { Subject, Grade, Report } from "@/src/types/reportCard";
 import type { FeeType, Invoice, Payment, BursarSummary } from "@/src/types/fee";
+import type {
+  StaffCheckIn,
+  StaffAttendanceSettings,
+} from "@/src/types/staffAttendance";
+import { ROLE_FEATURES } from "@/src/types/staffFeatures";
+import type { PermissionTemplate } from "@/src/types/permissionTemplate";
 
 export const MOCK_SCHOOL: School = {
   id: "sch-001",
@@ -23,7 +35,143 @@ export const MOCK_SCHOOL: School = {
   paymentsEnabled: true,
   plan: "starter",
   createdAt: "2025-09-01T00:00:00Z",
+  location: { lat: 9.0608, lng: 7.4896 },
 };
+
+export const MOCK_SCHOOL_2: School = {
+  id: "sch-002",
+  name: "Sunrise Academy",
+  subdomain: "sunrise",
+  type: "primary",
+  address: "Plot 12, Jabi Road",
+  city: "Jabi",
+  state: "FCT",
+  phone: "+234 803 111 2222",
+  email: "info@sunriseacademy.com",
+  status: "active",
+  kycStatus: "approved",
+  visibility: "public",
+  paymentsEnabled: false,
+  plan: "starter",
+  createdAt: "2024-06-01T00:00:00Z",
+  location: { lat: 9.0742, lng: 7.4566 },
+};
+
+export const MOCK_SCHOOLS: School[] = [MOCK_SCHOOL, MOCK_SCHOOL_2];
+
+const _today = new Date().toISOString().slice(0, 10);
+
+export const MOCK_ATTENDANCE_SETTINGS: StaffAttendanceSettings = {
+  schoolLocation: { lat: 9.0608, lng: 7.4896 },
+  geofenceRadius: 200,
+  checkInCutoff: "08:00",
+  workStartTime: "07:30",
+};
+
+export const MOCK_STAFF_CHECKINS: StaffCheckIn[] = [
+  {
+    id: "chk-001",
+    staffId: "stf-002",
+    date: _today,
+    checkInTime: "07:52",
+    lat: 9.0612,
+    lng: 7.4896,
+    distanceMeters: 44,
+    status: "present",
+    isManualOverride: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "chk-002",
+    staffId: "stf-003",
+    date: _today,
+    checkInTime: "08:14",
+    lat: 9.0615,
+    lng: 7.4898,
+    distanceMeters: 87,
+    status: "late",
+    isManualOverride: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "chk-003",
+    staffId: "stf-004",
+    date: _today,
+    checkInTime: "07:45",
+    lat: 9.0609,
+    lng: 7.4896,
+    distanceMeters: 11,
+    status: "present",
+    isManualOverride: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "chk-004",
+    staffId: "stf-005",
+    date: _today,
+    checkInTime: "07:58",
+    lat: 9.0611,
+    lng: 7.4897,
+    distanceMeters: 33,
+    status: "present",
+    isManualOverride: false,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+// Returns the last `count` weekday dates (Mon–Fri) going backwards from today.
+function _pastWorkdays(count: number): string[] {
+  const days: string[] = [];
+  const d = new Date();
+  while (days.length < count) {
+    d.setDate(d.getDate() - 1);
+    const dow = d.getDay(); // 0=Sun, 6=Sat
+    if (dow !== 0 && dow !== 6) days.push(d.toISOString().slice(0, 10));
+  }
+  return days; // newest first
+}
+
+// Historical check-ins for stf-002 (Amaka — default test user). Each tuple is
+// [status, checkInTime, distanceMeters]. Absent rows get "--:--" / 0m.
+const _stf002History: Array<["present" | "late" | "absent", string, number]> = [
+  ["present", "07:52", 44],
+  ["late", "08:14", 87],
+  ["present", "07:44", 31],
+  ["present", "07:58", 22],
+  ["present", "07:46", 56],
+  ["present", "07:55", 13],
+  ["late", "08:22", 98],
+  ["present", "07:49", 38],
+  ["absent", "--:--", 0],
+  ["present", "07:53", 44],
+  ["present", "07:47", 67],
+  ["present", "07:58", 19],
+  ["late", "08:09", 75],
+  ["present", "07:44", 42],
+  ["present", "07:51", 28],
+  ["present", "07:56", 51],
+  ["absent", "--:--", 0],
+  ["present", "07:43", 35],
+  ["present", "07:50", 60],
+  ["present", "07:48", 24],
+];
+
+_stf002History.forEach(([status, time, dist], i) => {
+  const date = _pastWorkdays(20)[i];
+  if (!date) return;
+  MOCK_STAFF_CHECKINS.push({
+    id: `chk-hist-${String(i).padStart(2, "0")}`,
+    staffId: "stf-002",
+    date,
+    checkInTime: time,
+    lat: status === "absent" ? 0 : 9.0612,
+    lng: status === "absent" ? 0 : 7.4896,
+    distanceMeters: dist,
+    status,
+    isManualOverride: status === "absent",
+    createdAt: `${date}T09:00:00Z`,
+  });
+});
 
 export const MOCK_CLASSES: Class[] = [
   {
@@ -58,6 +206,8 @@ export const MOCK_TERM: Term = {
   isCurrent: true,
 };
 
+const _PHOTO = "/images/png/profile-placeholder.png";
+
 export const MOCK_STUDENTS: Student[] = [
   {
     id: "std-001",
@@ -69,6 +219,17 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "male",
     admissionNumber: "GFA/2025/001",
     classId: "cls-001",
+    status: "active",
+    photoUrl: _PHOTO,
+    medicalNotes:
+      "Mild peanut allergy. Carries an antihistamine. Please avoid peanut-based snacks.",
+    guardians: [
+      {
+        name: "Mr. Chukwuma Okafor",
+        phone: "+234 803 111 2222",
+        relationship: "Father",
+      },
+    ],
     createdAt: "2025-01-15T00:00:00Z",
   },
   {
@@ -80,6 +241,16 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "female",
     admissionNumber: "GFA/2025/002",
     classId: "cls-002",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mrs. Ifeoma Adaeze",
+        phone: "+234 809 222 3333",
+        relationship: "Mother",
+        email: "ifeoma.adaeze@gmail.com",
+      },
+    ],
     createdAt: "2025-01-16T00:00:00Z",
   },
   {
@@ -91,6 +262,17 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "male",
     admissionNumber: "GFA/2025/003",
     classId: "cls-001",
+    status: "active",
+    photoUrl: _PHOTO,
+    medicalNotes:
+      "Asthmatic. Inhaler should be kept accessible at all times. Triggers include dust and cold air.",
+    guardians: [
+      {
+        name: "Mr. Ikenna Nwachukwu",
+        phone: "+234 807 333 4444",
+        relationship: "Father",
+      },
+    ],
     createdAt: "2025-01-17T00:00:00Z",
   },
   {
@@ -98,10 +280,20 @@ export const MOCK_STUDENTS: Student[] = [
     schoolId: "sch-001",
     firstName: "Joseph",
     lastName: "Olabode",
-    dateOfBirth: "2018-11-05",
+    dateOfBirth: "2018-05-20",
     gender: "male",
     admissionNumber: "GFA/2025/004",
     classId: "cls-002",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mr. Tunde Olabode",
+        phone: "+234 805 444 5555",
+        relationship: "Father",
+        email: "tunde.olabode@yahoo.com",
+      },
+    ],
     createdAt: "2025-01-17T00:00:00Z",
   },
   {
@@ -113,6 +305,17 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "female",
     admissionNumber: "GFA/2025/005",
     classId: "cls-002",
+    status: "active",
+    photoUrl: _PHOTO,
+    medicalNotes:
+      "Sickle cell trait (AS). May experience fatigue during intense physical activity.",
+    guardians: [
+      {
+        name: "Mrs. Zainab Bello",
+        phone: "+234 806 555 6666",
+        relationship: "Mother",
+      },
+    ],
     createdAt: "2025-01-18T00:00:00Z",
   },
   {
@@ -125,6 +328,15 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "male",
     admissionNumber: "GFA/2025/006",
     classId: "cls-003",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mr. Festus Eze",
+        phone: "+234 808 666 7777",
+        relationship: "Uncle (Guardian)",
+      },
+    ],
     createdAt: "2025-01-19T00:00:00Z",
   },
   {
@@ -136,6 +348,15 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "female",
     admissionNumber: "GFA/2025/007",
     classId: "cls-003",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Alhaji Musa Aliyu",
+        phone: "+234 803 777 8888",
+        relationship: "Father",
+      },
+    ],
     createdAt: "2025-01-20T00:00:00Z",
   },
   {
@@ -147,6 +368,16 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "male",
     admissionNumber: "GFA/2025/008",
     classId: "cls-004",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mrs. Funke Akindele",
+        phone: "+234 807 888 9999",
+        relationship: "Mother",
+        email: "funke.akindele@gmail.com",
+      },
+    ],
     createdAt: "2025-01-21T00:00:00Z",
   },
   {
@@ -159,9 +390,20 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "female",
     admissionNumber: "GFA/2025/009",
     classId: "cls-004",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mr. Kingsley Obi",
+        phone: "+234 809 999 0000",
+        relationship: "Father",
+        email: "kingsley.obi@hotmail.com",
+      },
+    ],
     createdAt: "2025-01-22T00:00:00Z",
   },
   {
+    // No photoUrl — photo not yet submitted
     id: "std-010",
     schoolId: "sch-001",
     firstName: "Yusuf",
@@ -170,7 +412,305 @@ export const MOCK_STUDENTS: Student[] = [
     gender: "male",
     admissionNumber: "GFA/2025/010",
     classId: "cls-001",
+    status: "active",
+    guardians: [
+      {
+        name: "Alhaji Ibrahim Abdullahi",
+        phone: "+234 803 000 1111",
+        relationship: "Father",
+      },
+    ],
     createdAt: "2025-01-23T00:00:00Z",
+  },
+  {
+    id: "std-011",
+    schoolId: "sch-001",
+    firstName: "Blessing",
+    lastName: "Ochuko",
+    dateOfBirth: "2016-03-12",
+    gender: "female",
+    admissionNumber: "GFA/2025/011",
+    classId: "cls-003",
+    status: "withdrawn",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mrs. Ada Ochuko",
+        phone: "+234 806 123 4567",
+        relationship: "Mother",
+      },
+    ],
+    createdAt: "2025-01-24T00:00:00Z",
+  },
+  {
+    id: "std-012",
+    schoolId: "sch-001",
+    firstName: "Adekunle",
+    lastName: "Fashola",
+    dateOfBirth: "2015-07-03",
+    gender: "male",
+    admissionNumber: "GFA/2025/012",
+    classId: "cls-004",
+    status: "active",
+    photoUrl: _PHOTO,
+    guardians: [
+      {
+        name: "Mr. Lekan Fashola",
+        phone: "+234 809 876 5432",
+        relationship: "Father",
+        email: "lekan.fashola@gmail.com",
+      },
+    ],
+    createdAt: "2025-01-25T00:00:00Z",
+  },
+];
+
+export const MOCK_STUDENT_DOCUMENTS: StudentDocument[] = [
+  // std-001 David Okafor
+  {
+    id: "doc-001",
+    studentId: "std-001",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-15T10:30:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-002",
+    studentId: "std-001",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-15T10:33:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-002 Grace Adaeze
+  {
+    id: "doc-003",
+    studentId: "std-002",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-16T09:10:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-004",
+    studentId: "std-002",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-16T09:13:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-003 Emeka Nwachukwu
+  {
+    id: "doc-005",
+    studentId: "std-003",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-17T08:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-006",
+    studentId: "std-003",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-17T08:03:00Z",
+    uploadedBy: "parent",
+    status: "pending",
+  },
+
+  // std-004 Joseph Olabode
+  {
+    id: "doc-007",
+    studentId: "std-004",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-17T11:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-008",
+    studentId: "std-004",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-17T11:03:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-005 Amina Bello
+  {
+    id: "doc-009",
+    studentId: "std-005",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-18T09:00:00Z",
+    uploadedBy: "parent",
+    status: "pending",
+  },
+  // No birth certificate submitted yet for std-005
+
+  // std-006 Chukwudi Eze
+  {
+    id: "doc-010",
+    studentId: "std-006",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-19T10:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-011",
+    studentId: "std-006",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-19T10:03:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-007 Fatima Aliyu
+  {
+    id: "doc-012",
+    studentId: "std-007",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-20T08:30:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-013",
+    studentId: "std-007",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-20T08:33:00Z",
+    uploadedBy: "parent",
+    status: "pending",
+  },
+
+  // std-008 Tunde Akindele
+  {
+    id: "doc-014",
+    studentId: "std-008",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-21T09:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-015",
+    studentId: "std-008",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-21T09:03:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-009 Ngozi Obi
+  {
+    id: "doc-016",
+    studentId: "std-009",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-22T10:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-017",
+    studentId: "std-009",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-22T10:03:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-010 Yusuf Abdullahi — no photo submitted, birth cert pending
+  {
+    id: "doc-018",
+    studentId: "std-010",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-23T08:00:00Z",
+    uploadedBy: "parent",
+    status: "pending",
+  },
+
+  // std-011 Blessing Ochuko (withdrawn)
+  {
+    id: "doc-019",
+    studentId: "std-011",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-24T09:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-020",
+    studentId: "std-011",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-24T09:03:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+
+  // std-012 Adekunle Fashola
+  {
+    id: "doc-021",
+    studentId: "std-012",
+    name: "Passport Photograph",
+    category: "passport_photo",
+    fileType: "image",
+    uploadedAt: "2025-01-25T10:00:00Z",
+    uploadedBy: "parent",
+    status: "verified",
+  },
+  {
+    id: "doc-022",
+    studentId: "std-012",
+    name: "Birth Certificate",
+    category: "birth_certificate",
+    fileType: "pdf",
+    uploadedAt: "2025-01-25T10:03:00Z",
+    uploadedBy: "parent",
+    status: "rejected",
+    notes:
+      "Document is blurry and unreadable. Please re-upload a clearer scan.",
   },
 ];
 
@@ -201,6 +741,7 @@ export const MOCK_STAFF: Staff[] = [
     classIds: ["cls-001"],
     status: "active",
     createdAt: "2025-01-02T00:00:00Z",
+    permissionTemplateId: "tpl-001",
   },
   {
     id: "stf-003",
@@ -211,10 +752,138 @@ export const MOCK_STAFF: Staff[] = [
     email: "emeka@greenfieldacademy.com",
     phone: "+234 805 678 9012",
     role: "teacher",
-    position: "Class Teacher",
+    position: "Head of Department",
     classIds: ["cls-001"],
     status: "active",
     createdAt: "2025-01-03T00:00:00Z",
+    permissionTemplateId: "tpl-002",
+    employmentType: "part_time",
+  },
+  {
+    id: "stf-003b",
+    schoolId: "sch-002",
+    userId: "usr-003",
+    firstName: "Emeka",
+    lastName: "Obi",
+    email: "emeka@greenfieldacademy.com",
+    phone: "+234 805 678 9012",
+    role: "teacher",
+    position: "Class Teacher",
+    status: "active",
+    createdAt: "2025-06-01T00:00:00Z",
+    permissionTemplateId: "tpl-001",
+    employmentType: "part_time",
+  },
+  {
+    id: "stf-004",
+    schoolId: "sch-001",
+    userId: "usr-004",
+    firstName: "Chidi",
+    lastName: "Bankole",
+    email: "principal@greenfieldacademy.com",
+    phone: "+234 806 789 0123",
+    role: "principal",
+    position: "School Principal",
+    status: "active",
+    createdAt: "2024-09-01T00:00:00Z",
+    permissionTemplateId: "tpl-004",
+  },
+  {
+    id: "stf-005",
+    schoolId: "sch-001",
+    userId: "usr-005",
+    firstName: "Ngozi",
+    lastName: "Okonkwo",
+    email: "bursar@greenfieldacademy.com",
+    phone: "+234 807 890 1234",
+    role: "bursar",
+    position: "School Bursar",
+    status: "active",
+    createdAt: "2024-09-01T00:00:00Z",
+    permissionTemplateId: "tpl-003",
+    featureOverrides: { can_manage_admissions: true },
+  },
+  {
+    id: "stf-006",
+    schoolId: "sch-001",
+    userId: "usr-006",
+    firstName: "Tunde",
+    lastName: "Adesanya",
+    email: "registrar@greenfieldacademy.com",
+    phone: "+234 808 901 2345",
+    role: "registrar",
+    position: "School Registrar",
+    status: "active",
+    createdAt: "2024-09-01T00:00:00Z",
+    permissionTemplateId: "tpl-005",
+  },
+  {
+    id: "stf-007",
+    schoolId: "sch-001",
+    // no userId — invite not yet accepted
+    firstName: "Grace",
+    lastName: "Adeleke",
+    email: "grace.adeleke@gmail.com",
+    phone: "+234 809 012 3456",
+    role: "teacher",
+    position: "Class Teacher",
+    status: "pending",
+    createdAt: "2026-06-01T00:00:00Z",
+  },
+  {
+    id: "stf-008",
+    schoolId: "sch-001",
+    userId: "usr-008",
+    firstName: "Bola",
+    lastName: "Lawal",
+    email: "bola.lawal@gmail.com",
+    phone: "+234 810 123 4567",
+    role: "teacher",
+    position: "Class Teacher",
+    status: "inactive",
+    createdAt: "2024-09-01T00:00:00Z",
+  },
+];
+
+// Permission templates — named, reusable permission sets.
+// Seeded from role defaults but fully editable by the school admin.
+// When a template is updated, all staff on that template are affected immediately.
+export const MOCK_PERMISSION_TEMPLATES: PermissionTemplate[] = [
+  {
+    id: "tpl-001",
+    name: "Class Teacher",
+    description:
+      "Standard teaching access — attendance, grades, and exam papers for assigned classes.",
+    features: { ...ROLE_FEATURES.teacher },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "tpl-002",
+    name: "Head of Department",
+    description: "Teaching access plus visibility into all student records.",
+    features: { ...ROLE_FEATURES.teacher, can_view_student_records: true },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "tpl-003",
+    name: "Bursar",
+    description: "Full fee management and invoice access.",
+    features: { ...ROLE_FEATURES.bursar },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "tpl-004",
+    name: "School Leadership",
+    description: "School overview dashboard and staff attendance board.",
+    features: { ...ROLE_FEATURES.principal },
+    createdAt: "2025-01-01T00:00:00Z",
+  },
+  {
+    id: "tpl-005",
+    name: "Registrar",
+    description: "Admissions pipeline and student record management.",
+    features: { ...ROLE_FEATURES.registrar },
+    createdAt: "2025-01-01T00:00:00Z",
   },
 ];
 

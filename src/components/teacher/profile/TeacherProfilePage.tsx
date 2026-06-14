@@ -11,12 +11,16 @@ import {
   Check,
   X,
   ShieldCheck,
+  Clock,
 } from "lucide-react";
 import {
   getTeacherProfile,
   updateTeacherProfile,
 } from "@/src/lib/api/teacherProfile";
+import { getMyMonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
+import type { MonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
 import { useAuth } from "@/src/context/AuthContext";
+import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 import type { TeacherProfile } from "@/src/lib/api/teacherProfile";
 
 function Avatar({ name, size = 72 }: { name: string; size?: number }) {
@@ -93,8 +97,237 @@ function Field({
   );
 }
 
+const MONTH_STAT_CFG = {
+  present: { label: "Present", chip: "bg-[#f0fdf4] text-[#16a34a]" },
+  late: { label: "Late", chip: "bg-[#fefce8] text-[#ca8a04]" },
+  absent: { label: "Absent", chip: "bg-[#fef2f2] text-[#dc2626]" },
+} as const;
+
+type FilterMode = "7d" | "30d" | "this_month" | "last_month" | "custom";
+
+const FILTER_PRESETS: { value: FilterMode; label: string }[] = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "custom", label: "Custom range" },
+];
+
+function resolveRange(mode: FilterMode, from: string, to: string) {
+  const now = new Date();
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  if (mode === "7d") {
+    const f = new Date(now);
+    f.setDate(now.getDate() - 7);
+    return { from: fmt(f), to: fmt(now) };
+  }
+  if (mode === "30d") {
+    const f = new Date(now);
+    f.setDate(now.getDate() - 30);
+    return { from: fmt(f), to: fmt(now) };
+  }
+  if (mode === "this_month") {
+    return {
+      from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)),
+      to: fmt(now),
+    };
+  }
+  if (mode === "last_month") {
+    return {
+      from: fmt(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+      to: fmt(new Date(now.getFullYear(), now.getMonth(), 0)),
+    };
+  }
+  return { from, to };
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso + "T12:00:00").toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function AttendanceHistorySection({
+  userId,
+  activeSchoolId,
+  email,
+}: {
+  userId: string | undefined;
+  activeSchoolId: string | null;
+  email: string;
+}) {
+  const [months, setMonths] = useState<MonthlyAttendanceSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterMode, setFilterMode] = useState<FilterMode>("this_month");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [sentRange, setSentRange] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+      return;
+    }
+    getMyMonthlyAttendanceSummary(userId, activeSchoolId).then((m) => {
+      setMonths(m);
+      setLoading(false);
+    });
+  }, [userId, activeSchoolId]);
+
+  const canSend =
+    filterMode !== "custom" || (customFrom.length > 0 && customTo.length > 0);
+
+  function handleSend() {
+    const { from, to } = resolveRange(filterMode, customFrom, customTo);
+    setSentRange(`${fmtDate(from)} – ${fmtDate(to)}`);
+    setShowFilter(false);
+  }
+
+  return (
+    <div className="rounded-[16px] border border-[#e5e7eb] bg-white p-6">
+      <div className="mb-5 flex items-center gap-2">
+        <Clock className="h-[15px] w-[15px] text-[#9ca3af]" />
+        <h2 className="text-[15px] font-semibold text-text-heading">
+          Attendance History
+        </h2>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="h-[24px] w-[24px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
+        </div>
+      ) : months.length === 0 ? (
+        <p className="text-[13px] text-text-body">No attendance records yet.</p>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {months.map((m) => (
+            <div key={m.month}>
+              <p className="mb-2.5 text-[12px] font-semibold uppercase tracking-wide text-[#9ca3af]">
+                {m.label}
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {(["present", "late", "absent"] as const).map((s) => {
+                  const cfg = MONTH_STAT_CFG[s];
+                  return (
+                    <div
+                      key={s}
+                      className={`rounded-[10px] px-3 py-3 text-center ${cfg.chip}`}
+                    >
+                      <p className="text-[22px] font-bold">{m[s]}</p>
+                      <p className="text-[11px] font-medium">{cfg.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Report request footer */}
+          <div className="border-t border-[#f3f4f6] pt-4">
+            {sentRange ? (
+              <div>
+                <p className="text-[13px] text-[#16a34a]">
+                  Report for <span className="font-medium">{sentRange}</span>{" "}
+                  will be sent to <span className="font-medium">{email}</span>.
+                </p>
+                <button
+                  onClick={() => {
+                    setSentRange(null);
+                    setShowFilter(false);
+                  }}
+                  className="mt-2 text-[12px] text-[#9ca3af] transition-colors hover:text-text-body"
+                >
+                  Request another
+                </button>
+              </div>
+            ) : showFilter ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-[13px] font-medium text-text-heading">
+                  Select period
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {FILTER_PRESETS.map((p) => (
+                    <button
+                      key={p.value}
+                      onClick={() => setFilterMode(p.value)}
+                      className={`rounded-[8px] border px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                        filterMode === p.value
+                          ? "border-brand-green bg-[#f0fdf4] text-brand-green"
+                          : "border-[#e5e7eb] text-text-body hover:border-brand-green hover:text-brand-green"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {filterMode === "custom" && (
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="mb-1 block text-[11px] text-[#9ca3af]">
+                        From
+                      </label>
+                      <input
+                        type="date"
+                        value={customFrom}
+                        onChange={(e) => setCustomFrom(e.target.value)}
+                        className="h-[38px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] focus:border-brand-green focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="mb-1 block text-[11px] text-[#9ca3af]">
+                        To
+                      </label>
+                      <input
+                        type="date"
+                        value={customTo}
+                        onChange={(e) => setCustomTo(e.target.value)}
+                        className="h-[38px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] focus:border-brand-green focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSend}
+                    disabled={!canSend}
+                    className="rounded-[8px] bg-brand-green px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  >
+                    Send to email
+                  </button>
+                  <button
+                    onClick={() => setShowFilter(false)}
+                    className="rounded-[8px] border border-[#e5e7eb] px-4 py-2 text-[13px] text-text-body transition-colors hover:border-[#d1d5db]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowFilter(true)}
+                className="text-[13px] text-text-body underline-offset-2 transition-colors hover:text-brand-green hover:underline"
+              >
+                Request attendance report → sent to your email
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TeacherProfilePage() {
   const { user, setUser } = useAuth();
+  const { profile: staffCtx, activeSchoolId } = useStaffFeatures();
+  const effectiveUserId = staffCtx?.staff.userId ?? user?.id;
 
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -107,7 +340,7 @@ export default function TeacherProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
-    getTeacherProfile(user?.id).then((p) => {
+    getTeacherProfile(effectiveUserId, activeSchoolId).then((p) => {
       if (cancelled) return;
       setProfile(p);
       if (p) {
@@ -119,7 +352,7 @@ export default function TeacherProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [effectiveUserId, activeSchoolId]);
 
   const openEdit = () => {
     if (!profile) return;
@@ -148,12 +381,16 @@ export default function TeacherProfilePage() {
       return;
     }
     setSaving(true);
-    const updated = await updateTeacherProfile(user?.id, {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: profile!.email,
-      phone: profile!.phone,
-    });
+    const updated = await updateTeacherProfile(
+      effectiveUserId,
+      {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: profile!.email,
+        phone: profile!.phone,
+      },
+      activeSchoolId
+    );
     setProfile(updated);
     setUser({
       ...user!,
@@ -339,6 +576,12 @@ export default function TeacherProfilePage() {
               </div>
             )}
           </div>
+
+          <AttendanceHistorySection
+            userId={effectiveUserId}
+            activeSchoolId={activeSchoolId}
+            email={profile.email}
+          />
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
-import ChatButton from "./ChatButton";
 import NotificationButton from "./NotificationButton";
 import { useAuth } from "@/src/context/AuthContext";
 
@@ -40,8 +39,6 @@ export default function ParentTopbar() {
       </p>
 
       <div className="flex items-center gap-[16px]">
-        <ChatButton />
-
         <NotificationButton />
 
         {/* User menu */}

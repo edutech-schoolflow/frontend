@@ -1,5 +1,5 @@
 import { mockResponse } from "./mockClient";
-import { MOCK_STAFF, MOCK_SCHOOL, MOCK_CLASS_ARMS } from "./mock/schoolData";
+import { MOCK_STAFF, MOCK_SCHOOLS, MOCK_CLASS_ARMS } from "./mock/schoolData";
 
 export interface TeacherProfile {
   staffId: string;
@@ -17,14 +17,21 @@ export interface TeacherProfile {
 }
 
 export const getTeacherProfile = async (
-  userId: string | undefined
+  userId: string | undefined,
+  activeSchoolId?: string | null
 ): Promise<TeacherProfile | null> => {
-  const id = userId ?? "demo-user";
-  const staff =
-    MOCK_STAFF.find((s) => s.userId === id && s.role === "teacher") ??
-    MOCK_STAFF.find((s) => s.role === "teacher");
+  if (!userId) return mockResponse(null);
 
-  if (!staff) return mockResponse(null);
+  const records = MOCK_STAFF.filter(
+    (s) => s.userId === userId && s.status === "active"
+  );
+  if (!records.length) return mockResponse(null);
+
+  const staff =
+    (activeSchoolId && records.find((s) => s.schoolId === activeSchoolId)) ||
+    records[0];
+
+  const school = MOCK_SCHOOLS.find((sc) => sc.id === staff.schoolId);
 
   const assignedArms = Object.values(MOCK_CLASS_ARMS)
     .flat()
@@ -33,7 +40,7 @@ export const getTeacherProfile = async (
 
   return mockResponse({
     staffId: staff.id,
-    userId: staff.userId,
+    userId: staff.userId ?? "",
     firstName: staff.firstName,
     lastName: staff.lastName,
     email: staff.email,
@@ -41,7 +48,7 @@ export const getTeacherProfile = async (
     position: staff.position,
     status: staff.status,
     schoolId: staff.schoolId,
-    schoolName: MOCK_SCHOOL.name,
+    schoolName: school?.name ?? "Unknown School",
     joinedAt: staff.createdAt,
     assignedArms,
   });
@@ -49,18 +56,30 @@ export const getTeacherProfile = async (
 
 export const updateTeacherProfile = async (
   userId: string | undefined,
-  updates: { firstName: string; lastName: string; email: string; phone: string }
+  updates: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  },
+  activeSchoolId?: string | null
 ): Promise<TeacherProfile> => {
-  const id = userId ?? "demo-user";
-  const staffIdx =
-    MOCK_STAFF.findIndex((s) => s.userId === id && s.role === "teacher") >= 0
-      ? MOCK_STAFF.findIndex((s) => s.userId === id && s.role === "teacher")
-      : MOCK_STAFF.findIndex((s) => s.role === "teacher");
+  if (!userId) throw new Error("Staff not found");
 
+  const records = MOCK_STAFF.filter(
+    (s) => s.userId === userId && s.status === "active"
+  );
+  if (!records.length) throw new Error("Staff not found");
+
+  const target =
+    (activeSchoolId && records.find((s) => s.schoolId === activeSchoolId)) ||
+    records[0];
+
+  const staffIdx = MOCK_STAFF.indexOf(target);
   if (staffIdx < 0) throw new Error("Staff not found");
 
   MOCK_STAFF[staffIdx] = { ...MOCK_STAFF[staffIdx], ...updates };
 
-  const updated = await getTeacherProfile(userId);
+  const updated = await getTeacherProfile(userId, activeSchoolId);
   return updated!;
 };

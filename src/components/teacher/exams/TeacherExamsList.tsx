@@ -346,9 +346,7 @@ export default function TeacherExamsList() {
             <div
               key={paper.id}
               className="flex cursor-pointer items-center justify-between rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-4 transition-shadow hover:shadow-sm"
-              onClick={() =>
-                router.push(`/teacher/dashboard/exams/${paper.id}`)
-              }
+              onClick={() => router.push(`/staff/dashboard/exams/${paper.id}`)}
             >
               <div className="flex items-start gap-4">
                 <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-[#f0fdf4]">
@@ -438,7 +436,7 @@ export default function TeacherExamsList() {
           onClose={() => setShowNewModal(false)}
           onCreate={(paper) => {
             setShowNewModal(false);
-            router.push(`/teacher/dashboard/exams/${paper.id}`);
+            router.push(`/staff/dashboard/exams/${paper.id}`);
           }}
         />
       )}

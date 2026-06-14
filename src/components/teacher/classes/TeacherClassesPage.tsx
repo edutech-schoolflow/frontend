@@ -51,14 +51,14 @@ function ArmCard({ arm }: { arm: ArmDetail }) {
 
         <div className="flex items-center gap-3">
           <Link
-            href={`/teacher/dashboard/attendance?arm=${arm.armId}`}
+            href={`/staff/dashboard/attendance?arm=${arm.armId}`}
             className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#e5e7eb] px-4 text-[13px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
           >
             <ClipboardList className="h-[14px] w-[14px]" />
             Attendance
           </Link>
           <Link
-            href={`/teacher/dashboard/grades?arm=${arm.armId}`}
+            href={`/staff/dashboard/grades?arm=${arm.armId}`}
             className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#e5e7eb] px-4 text-[13px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
           >
             <BarChart2 className="h-[14px] w-[14px]" />

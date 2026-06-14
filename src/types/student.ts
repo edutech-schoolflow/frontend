@@ -1,3 +1,21 @@
+export type StudentStatus = "active" | "withdrawn";
+
+export type DocumentCategory = "passport_photo" | "birth_certificate";
+
+export type DocumentStatus = "pending" | "verified" | "rejected";
+
+export interface StudentDocument {
+  id: string;
+  studentId: string;
+  name: string;
+  category: DocumentCategory;
+  fileType: "pdf" | "image";
+  uploadedAt: string;
+  uploadedBy: "parent" | "staff";
+  status: DocumentStatus;
+  notes?: string;
+}
+
 export interface Guardian {
   name: string;
   phone: string;
@@ -18,6 +36,8 @@ export interface Student {
   medicalNotes?: string;
   admissionNumber?: string;
   classId?: string;
+  status?: StudentStatus;
+  guardians?: Guardian[];
   createdAt: string;
 }
 
