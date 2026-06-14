@@ -59,8 +59,6 @@ export const MOCK_SCHOOL_2: School = {
 
 export const MOCK_SCHOOLS: School[] = [MOCK_SCHOOL, MOCK_SCHOOL_2];
 
-const _today = new Date().toISOString().slice(0, 10);
-
 export const MOCK_ATTENDANCE_SETTINGS: StaffAttendanceSettings = {
   schoolLocation: { lat: 9.0608, lng: 7.4896 },
   geofenceRadius: 200,
@@ -68,56 +66,7 @@ export const MOCK_ATTENDANCE_SETTINGS: StaffAttendanceSettings = {
   workStartTime: "07:30",
 };
 
-export const MOCK_STAFF_CHECKINS: StaffCheckIn[] = [
-  {
-    id: "chk-001",
-    staffId: "stf-002",
-    date: _today,
-    checkInTime: "07:52",
-    lat: 9.0612,
-    lng: 7.4896,
-    distanceMeters: 44,
-    status: "present",
-    isManualOverride: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "chk-002",
-    staffId: "stf-003",
-    date: _today,
-    checkInTime: "08:14",
-    lat: 9.0615,
-    lng: 7.4898,
-    distanceMeters: 87,
-    status: "late",
-    isManualOverride: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "chk-003",
-    staffId: "stf-004",
-    date: _today,
-    checkInTime: "07:45",
-    lat: 9.0609,
-    lng: 7.4896,
-    distanceMeters: 11,
-    status: "present",
-    isManualOverride: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "chk-004",
-    staffId: "stf-005",
-    date: _today,
-    checkInTime: "07:58",
-    lat: 9.0611,
-    lng: 7.4897,
-    distanceMeters: 33,
-    status: "present",
-    isManualOverride: false,
-    createdAt: new Date().toISOString(),
-  },
-];
+export const MOCK_STAFF_CHECKINS: StaffCheckIn[] = [];
 
 // Returns the last `count` weekday dates (Mon–Fri) going backwards from today.
 function _pastWorkdays(count: number): string[] {
