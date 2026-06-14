@@ -9,7 +9,7 @@ import type {
   Application,
   ApplicationPaymentDetails,
 } from "@/src/types/application";
-import type { Grade } from "@/src/types/grade";
+import type { Grade } from "@/src/types/reportCard";
 import type {
   ParentFeeSummary,
   Invoice,

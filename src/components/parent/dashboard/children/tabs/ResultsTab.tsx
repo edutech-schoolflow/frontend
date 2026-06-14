@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getChildCaScoresByChild } from "@/src/lib/api/grades";
-import type { Grade } from "@/src/types/grade";
+import type { Grade } from "@/src/types/reportCard";
 import Spinner from "./Spinner";
 
 function gradeColor(g?: string) {

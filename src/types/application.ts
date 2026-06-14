@@ -41,6 +41,7 @@ export interface Application {
   assessmentRating?: "excellent" | "good" | "fair" | "poor";
   assessmentNotes?: string;
   rejectionReason?: string;
+  admissionNumber?: string; // assigned only upon admission, never before
   submittedAt: string;
   updatedAt: string;
 }

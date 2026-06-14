@@ -52,8 +52,23 @@ export const getSchoolApplication = async (_id: string): Promise<Application> =>
 export const scheduleExam = async (_id: string, _payload: unknown) =>
   mockResponse({ message: "Exam scheduled. Parent notified via WhatsApp." });
 
-export const admitApplication = async (_id: string) =>
-  mockResponse({ message: "Application admitted. Parent notified." });
+export const admitApplication = async (id: string): Promise<Application> => {
+  const idx = MOCK_APPLICATIONS.findIndex((a) => a.id === id);
+  if (idx >= 0) {
+    const admissionNumber = MOCK_APPLICATIONS[idx].referenceNumber.replace(
+      /-/g,
+      "/"
+    );
+    MOCK_APPLICATIONS[idx] = {
+      ...MOCK_APPLICATIONS[idx],
+      status: "admitted",
+      admissionNumber,
+      updatedAt: new Date().toISOString(),
+    };
+    return mockResponse(MOCK_APPLICATIONS[idx]);
+  }
+  return mockResponse({ ...MOCK_APPLICATIONS[0], status: "admitted" });
+};
 
 export const rejectApplication = async (_id: string, _reason?: string) =>
   mockResponse({ message: "Application rejected. Parent notified." });

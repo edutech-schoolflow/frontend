@@ -1,4 +1,4 @@
-import type { Grade } from "@/src/types/grade";
+import type { Grade } from "@/src/types/reportCard";
 import GradeBadge from "../report/GradeBadge";
 
 export default function SubjectBreakdown({ grades }: { grades: Grade[] }) {

@@ -69,26 +69,12 @@ export const schoolRoutes: Route[] = [
       <Image src="/icons/pen-paper.svg" alt="grades" width={20} height={20} />
     ),
     label: "Grades & Results",
-    link: null,
-    children: [
-      { label: "Enter CA Scores", link: "grades/ca" },
-      { label: "Enter Exam Scores", link: "grades/exam" },
-      { label: "Publish Results", link: "grades/results" },
-    ],
+    link: "grades",
   },
   {
-    icon: (
-      <Image src="/icons/calendar.svg" alt="timetable" width={20} height={20} />
-    ),
-    label: "Timetable",
-    link: "timetable",
-  },
-  {
-    icon: (
-      <Image src="/icons/drafts.svg" alt="assignments" width={20} height={20} />
-    ),
-    label: "Assignments",
-    link: "assignments",
+    icon: <Image src="/icons/drafts.svg" alt="exams" width={20} height={20} />,
+    label: "Exam Questions",
+    link: "exams",
   },
 
   // ── People ────────────────────────────────────────────────────────────

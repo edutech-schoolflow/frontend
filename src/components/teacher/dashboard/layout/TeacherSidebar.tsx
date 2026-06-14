@@ -7,14 +7,12 @@ import Logo from "@/src/components/ui/Logo";
 import { useAuth } from "@/src/context/AuthContext";
 
 const MAIN_NAV = [
+  { label: "Compliance", href: "/teacher/dashboard/compliance" },
   { label: "Home", href: "/teacher/dashboard" },
   { label: "My Classes", href: "/teacher/dashboard/classes" },
   { label: "Attendance", href: "/teacher/dashboard/attendance" },
-  { label: "Score Entry", href: "/teacher/dashboard/scores" },
-  { label: "Assignments", href: "/teacher/dashboard/assignments" },
+  { label: "Grades", href: "/teacher/dashboard/grades" },
   { label: "Exam Questions", href: "/teacher/dashboard/exams" },
-  { label: "Parent Messages", href: "/teacher/dashboard/messages" },
-  { label: "Timetable", href: "/teacher/dashboard/timetable" },
   { label: "My Schools", href: "/teacher/dashboard/schools" },
 ];
 

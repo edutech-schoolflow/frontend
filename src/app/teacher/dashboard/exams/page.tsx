@@ -1,20 +1,16 @@
-import InProgress from "@/src/shared/InProgress";
+import { Suspense } from "react";
+import TeacherExamsList from "@/src/components/teacher/exams/TeacherExamsList";
 
-export default function TeacherExamsPage() {
+export default function TeacherExamsRoute() {
   return (
-    <div className="p-[30px]">
-      <InProgress
-        title="Exam Questions"
-        subtitle="Type exam papers directly in the portal and submit to your HOD for review — no printing required."
-        features={[
-          "Question editor: multiple choice, theory, fill-in-blank, essay",
-          "Question bank — save and reuse questions by topic",
-          "Compose a paper from bank or write fresh",
-          "Submit to HOD for digital review and approval",
-          "Admin downloads print-ready PDF of approved paper",
-          "Auto-shuffle: generate variant A and variant B",
-        ]}
-      />
-    </div>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-[80px]">
+          <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
+        </div>
+      }
+    >
+      <TeacherExamsList />
+    </Suspense>
   );
 }

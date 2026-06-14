@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Circle,
+  CalendarClock,
+  ClipboardList,
+  UserCheck,
+  ChevronRight,
+} from "lucide-react";
 import {
   getSchoolApplication,
   admitApplication,
@@ -14,6 +23,121 @@ import RejectModal from "./RejectModal";
 import RecordAssessmentModal from "./RecordAssessmentModal";
 
 type Modal = "schedule" | "reject" | "assess" | null;
+
+// ─── Pipeline step config ───────────────────────────────────────────────────────
+
+interface PipelineStep {
+  key: string;
+  label: string;
+  isDone: (app: Application) => boolean;
+}
+
+const PIPELINE: PipelineStep[] = [
+  {
+    key: "review",
+    label: "Under Review",
+    isDone: () => true,
+  },
+  {
+    key: "exam",
+    label: "Exam Scheduled",
+    isDone: (app) =>
+      ["exam_scheduled", "admitted", "not_admitted"].includes(app.status),
+  },
+  {
+    key: "assessed",
+    label: "Assessed",
+    isDone: (app) =>
+      !!app.assessmentRating &&
+      ["exam_scheduled", "admitted", "not_admitted"].includes(app.status),
+  },
+  {
+    key: "decision",
+    label: "Decision",
+    isDone: (app) => app.status === "admitted" || app.status === "not_admitted",
+  },
+];
+
+function getActiveStep(app: Application): number {
+  if (app.status === "admitted" || app.status === "not_admitted") return 3;
+  if (app.assessmentRating) return 2;
+  if (app.status === "exam_scheduled") return 1;
+  return 0;
+}
+
+// ─── Next-action callout ────────────────────────────────────────────────────────
+
+function NextActionBanner({
+  app,
+  onAction,
+}: {
+  app: Application;
+  onAction: (modal: Modal) => void;
+}) {
+  if (app.status === "under_review") {
+    return (
+      <div className="mb-5 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+        <CalendarClock className="h-[18px] w-[18px] shrink-0 text-blue-600" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-blue-800">
+            Next step: Schedule an exam or interview
+          </p>
+          <p className="text-[12px] text-blue-600">
+            The applicant is waiting. Schedule their assessment to move forward.
+          </p>
+        </div>
+        <button
+          onClick={() => onAction("schedule")}
+          className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90"
+        >
+          Schedule now
+        </button>
+      </div>
+    );
+  }
+
+  if (app.status === "exam_scheduled" && !app.assessmentRating) {
+    return (
+      <div className="mb-5 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <ClipboardList className="h-[18px] w-[18px] shrink-0 text-amber-600" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-amber-800">
+            Next step: Record the assessment outcome
+          </p>
+          <p className="text-[12px] text-amber-600">
+            Exam has been scheduled. Record how the applicant performed.
+          </p>
+        </div>
+        <button
+          onClick={() => onAction("assess")}
+          className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90"
+        >
+          Record now
+        </button>
+      </div>
+    );
+  }
+
+  if (app.status === "exam_scheduled" && app.assessmentRating) {
+    return (
+      <div className="mb-5 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+        <UserCheck className="h-[18px] w-[18px] shrink-0 text-brand-green" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-green-800">
+            Assessment recorded — ready for a decision
+          </p>
+          <p className="text-[12px] text-green-600">
+            Use the Admit or Reject buttons above to finalise this application.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function InfoRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -42,6 +166,8 @@ function Card({
   );
 }
 
+// ─── Main component ─────────────────────────────────────────────────────────────
+
 export default function ApplicationDetail({ id }: { id: string }) {
   const router = useRouter();
   const [app, setApp] = useState<Application | null>(null);
@@ -62,10 +188,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
   async function handleAdmit() {
     if (!app) return;
     setAdmitting(true);
-    await admitApplication(app.id);
+    const updated = await admitApplication(app.id);
     setAdmitting(false);
     setDone("admitted");
-    setApp((prev) => (prev ? { ...prev, status: "admitted" } : prev));
+    setApp(updated);
   }
 
   function handleModalDone(type: "scheduled" | "rejected" | "assessed") {
@@ -75,6 +201,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
       setApp((prev) => (prev ? { ...prev, status: "exam_scheduled" } : prev));
     if (type === "rejected")
       setApp((prev) => (prev ? { ...prev, status: "not_admitted" } : prev));
+    if (type === "assessed")
+      setApp((prev) => (prev ? { ...prev, assessmentRating: "good" } : prev));
   }
 
   if (loading) return <p className="text-[13px] text-grey-text">Loading…</p>;
@@ -87,10 +215,19 @@ export default function ApplicationDetail({ id }: { id: string }) {
     month: "long",
     year: "numeric",
   });
+  const isTerminal = app.status === "admitted" || app.status === "not_admitted";
+  const activeStep = getActiveStep(app);
+
+  // Action buttons depend on pipeline stage
+  const showSchedule = app.status === "under_review";
+  const showAssess = app.status === "exam_scheduled" && !app.assessmentRating;
+  const showAdmit = app.status === "exam_scheduled" && !!app.assessmentRating;
+  const showReject =
+    app.status === "under_review" || app.status === "exam_scheduled";
 
   return (
     <>
-      {/* Back + header */}
+      {/* Back */}
       <button
         onClick={() => router.push("/school/dashboard/applications")}
         className="mb-5 flex items-center gap-[6px] text-[13px] text-grey-text hover:text-dark-blue"
@@ -98,7 +235,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
         <ArrowLeft className="h-[14px] w-[14px]" /> Back to Applications
       </button>
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      {/* Header */}
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-[20px] font-semibold text-dark-blue">
@@ -107,7 +245,17 @@ export default function ApplicationDetail({ id }: { id: string }) {
             <AppStatusChip status={app.status} />
           </div>
           <p className="mt-1 text-[13px] text-grey-text">
-            Ref: {app.referenceNumber} · Applied{" "}
+            {app.admissionNumber ? (
+              <>
+                <span className="font-medium text-brand-green">
+                  Admission No: {app.admissionNumber}
+                </span>
+                {" · "}App. Ref: {app.referenceNumber}
+              </>
+            ) : (
+              <>App. No: {app.referenceNumber}</>
+            )}
+            {" · Applied "}
             {new Date(app.submittedAt).toLocaleDateString("en-NG", {
               day: "numeric",
               month: "short",
@@ -116,10 +264,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
           </p>
         </div>
 
-        {/* Action buttons — context-aware */}
-        {app.status !== "admitted" && app.status !== "not_admitted" && (
+        {/* Action buttons — context-sequenced */}
+        {!isTerminal && (
           <div className="flex flex-wrap gap-2">
-            {app.status === "under_review" && (
+            {showSchedule && (
               <button
                 onClick={() => setModal("schedule")}
                 className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-medium text-blue-700 hover:bg-blue-100"
@@ -127,32 +275,84 @@ export default function ApplicationDetail({ id }: { id: string }) {
                 Schedule Exam
               </button>
             )}
-            {app.status === "exam_scheduled" && (
+            {showAssess && (
               <button
                 onClick={() => setModal("assess")}
-                className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-[13px] font-medium text-blue-700 hover:bg-blue-100"
+                className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-[13px] font-medium text-amber-700 hover:bg-amber-100"
               >
                 Record Assessment
               </button>
             )}
-            <button
-              onClick={handleAdmit}
-              disabled={admitting}
-              className="rounded-lg bg-brand-green px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
-            >
-              {admitting ? "Admitting…" : "Admit"}
-            </button>
-            <button
-              onClick={() => setModal("reject")}
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-[13px] font-medium text-[#e84040] hover:bg-red-100"
-            >
-              Reject
-            </button>
+            {showAdmit && (
+              <button
+                onClick={handleAdmit}
+                disabled={admitting}
+                className="rounded-lg bg-brand-green px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
+              >
+                {admitting ? "Admitting…" : "Admit"}
+              </button>
+            )}
+            {showReject && (
+              <button
+                onClick={() => setModal("reject")}
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-[13px] font-medium text-[#e84040] hover:bg-red-100"
+              >
+                Reject
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* Success banners */}
+      {/* Pipeline progress */}
+      <div className="mb-6 overflow-hidden rounded-xl border border-border-default bg-white px-6 py-4">
+        <div className="flex items-center">
+          {PIPELINE.map((step, idx) => {
+            const done = step.isDone(app);
+            const active = idx === activeStep;
+            return (
+              <div key={step.key} className="flex flex-1 items-center min-w-0">
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  {done ? (
+                    <CheckCircle2
+                      className={`h-[20px] w-[20px] ${
+                        active ? "text-brand-green" : "text-brand-green"
+                      }`}
+                    />
+                  ) : (
+                    <Circle
+                      className={`h-[20px] w-[20px] ${
+                        active ? "text-brand-green" : "text-[#d1d5db]"
+                      }`}
+                    />
+                  )}
+                  <span
+                    className={`text-[11px] font-medium whitespace-nowrap ${
+                      done || active ? "text-dark-blue" : "text-[#9ca3af]"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {idx < PIPELINE.length - 1 && (
+                  <ChevronRight
+                    className={`mx-2 h-[14px] w-[14px] shrink-0 ${
+                      PIPELINE[idx + 1].isDone(app)
+                        ? "text-brand-green"
+                        : "text-[#d1d5db]"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Next-action callout */}
+      {!isTerminal && <NextActionBanner app={app} onAction={setModal} />}
+
+      {/* Outcome banners */}
       {done === "admitted" && (
         <div className="mb-5 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-brand-green" />
@@ -245,7 +445,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
           )}
         </Card>
 
-        {/* Payment + exam + outcome */}
+        {/* Right column: payment + exam + assessment + outcome */}
         <div className="space-y-4">
           <Card title="Payment">
             <InfoRow
@@ -258,7 +458,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
             />
           </Card>
 
-          {app.status === "exam_scheduled" && app.examDate && (
+          {/* Exam details — shown whenever an exam was scheduled, regardless of current status */}
+          {app.examDate && (
             <Card title="Exam Details">
               <InfoRow
                 label="Date"

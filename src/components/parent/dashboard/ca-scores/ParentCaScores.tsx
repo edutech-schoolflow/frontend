@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { getChildProfiles } from "@/src/lib/api/parents";
 import { getChildCaScoresByChild } from "@/src/lib/api/grades";
 import type { ChildProfile } from "@/src/types/parent";
-import type { Grade } from "@/src/types/grade";
+import type { Grade } from "@/src/types/reportCard";
 import ChildAvatar from "../shared/ChildAvatar";
 import CaScoreView from "./CaScoreView";
 

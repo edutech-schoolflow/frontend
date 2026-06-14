@@ -5,117 +5,168 @@ import Link from "next/link";
 import {
   CheckSquare,
   ClipboardList,
-  FileText,
-  MessageCircle,
   BookOpen,
   School,
+  Users,
+  ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
-import {
-  getTeacherDashboardStats,
-  getTeacherTodaySchedule,
-} from "@/src/lib/api/teachers";
-import type { TeacherDashboardStats, TimetableSlot } from "@/src/types/teacher";
+import { getTeacherDashboardStats } from "@/src/lib/api/teachers";
+import { getTeacherArms, getStudentsForArm } from "@/src/lib/api/attendance";
+import { useAuth } from "@/src/context/AuthContext";
+import type { TeacherDashboardStats } from "@/src/types/teacher";
+import type { ArmSelectOption } from "@/src/lib/api/attendance";
+import type { AttendanceStudentRow } from "@/src/types/attendance";
 
 const QUICK_ACTIONS = [
   {
     label: "Take Attendance",
     href: "/teacher/dashboard/attendance",
     icon: CheckSquare,
-    color: "bg-[#e8f5ee] text-[#1ca95c]",
+    bg: "bg-[#e8f5ee]",
+    color: "text-[#1ca95c]",
   },
   {
     label: "Enter Scores",
-    href: "/teacher/dashboard/scores",
+    href: "/teacher/dashboard/grades",
     icon: ClipboardList,
-    color: "bg-[#e8f0ff] text-[#4a6cf7]",
-  },
-  {
-    label: "Post Assignment",
-    href: "/teacher/dashboard/assignments",
-    icon: FileText,
-    color: "bg-[#fff3e8] text-[#ff8d28]",
-  },
-  {
-    label: "Message Parent",
-    href: "/teacher/dashboard/messages",
-    icon: MessageCircle,
-    color: "bg-[#fce8e8] text-[#e84040]",
+    bg: "bg-[#e8f0ff]",
+    color: "text-[#4a6cf7]",
   },
   {
     label: "Exam Questions",
     href: "/teacher/dashboard/exams",
     icon: BookOpen,
-    color: "bg-[#e8f5ee] text-[#1ca95c]",
+    bg: "bg-[#fff3e8]",
+    color: "text-[#f97316]",
+  },
+  {
+    label: "My Classes",
+    href: "/teacher/dashboard/classes",
+    icon: Users,
+    bg: "bg-[#fce8ff]",
+    color: "text-[#a855f7]",
   },
   {
     label: "My Schools",
     href: "/teacher/dashboard/schools",
     icon: School,
-    color: "bg-[#f5f5f5] text-[#666]",
+    bg: "bg-[#f0f4ff]",
+    color: "text-[#6366f1]",
+  },
+  {
+    label: "Compliance",
+    href: "/teacher/dashboard/compliance",
+    icon: ShieldCheck,
+    bg: "bg-[#fefce8]",
+    color: "text-[#ca8a04]",
   },
 ];
 
+interface ArmSummary extends ArmSelectOption {
+  students: AttendanceStudentRow[];
+}
+
 export default function TeacherDashboardHome() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<TeacherDashboardStats | undefined>(
     undefined
   );
-  const [schedule, setSchedule] = useState<TimetableSlot[] | undefined>(
-    undefined
-  );
+  const [arms, setArms] = useState<ArmSummary[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    getTeacherDashboardStats().then(setStats);
-    getTeacherTodaySchedule().then(setSchedule);
-  }, []);
+    let cancelled = false;
+    Promise.all([
+      getTeacherDashboardStats(user?.id),
+      getTeacherArms(user?.id).then((opts) =>
+        Promise.all(
+          opts.map((opt) =>
+            getStudentsForArm(opt.armId).then((students) => ({
+              ...opt,
+              students,
+            }))
+          )
+        )
+      ),
+    ]).then(([s, a]) => {
+      if (cancelled) return;
+      setStats(s);
+      setArms(a);
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
-  if (stats === undefined || schedule === undefined) {
+  if (!loaded) {
     return (
       <div className="flex items-center justify-center py-[80px]">
-        <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-[#1ca95c] border-t-transparent" />
+        <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
       </div>
     );
   }
 
   const statCards = [
-    { label: "Classes Today", value: stats.classesToday },
-    { label: "Students Taught", value: stats.totalStudents },
-    { label: "Pending Tasks", value: stats.pendingTasks },
+    { label: "Assigned Arms", value: stats!.armsCount },
+    { label: "Students", value: stats!.totalStudents },
+    { label: "Exams Submitted", value: stats!.examsSubmitted },
+    {
+      label: "Attendance Today",
+      value: stats!.attendanceMarkedToday ? "Done" : "Pending",
+      highlight: !stats!.attendanceMarkedToday,
+    },
   ];
 
   return (
     <div className="p-[30px]">
-      {/* Stats row */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
+      {/* Greeting */}
+      <div className="mb-7">
+        <h1 className="text-[22px] font-semibold text-text-heading">
+          Welcome back, {user?.name?.split(" ")[0] ?? "Teacher"}
+        </h1>
+        <p className="mt-0.5 text-[14px] text-text-body">
+          Here&apos;s an overview of your classes this term.
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {statCards.map((s) => (
           <div
             key={s.label}
-            className="rounded-[10px] border border-[#e0e0e0] bg-white px-6 py-5"
+            className="rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-5"
           >
-            <p className="text-[28px] font-semibold text-text-heading">
+            <p
+              className={`text-[26px] font-semibold ${
+                s.highlight ? "text-[#f97316]" : "text-text-heading"
+              }`}
+            >
               {s.value}
             </p>
-            <p className="mt-1 text-[13px] text-text-body">{s.label}</p>
+            <p className="mt-1 text-[12px] text-text-body">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Quick actions */}
-      <h2 className="mb-4 text-[16px] font-semibold text-text-heading">
+      <h2 className="mb-4 text-[15px] font-semibold text-text-heading">
         Quick actions
       </h2>
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {QUICK_ACTIONS.map((a) => {
           const Icon = a.icon;
           return (
             <Link
               key={a.href}
               href={a.href}
-              className="flex items-center gap-3 rounded-[10px] border border-[#e0e0e0] bg-white px-5 py-4 transition-shadow hover:shadow-md"
+              className="flex items-center gap-3 rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-4 transition-shadow hover:shadow-md"
             >
               <div
-                className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full ${a.color}`}
+                className={`flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] ${a.bg}`}
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className={`h-[18px] w-[18px] ${a.color}`} />
               </div>
               <span className="text-[14px] font-medium text-text-heading">
                 {a.label}
@@ -125,39 +176,60 @@ export default function TeacherDashboardHome() {
         })}
       </div>
 
-      {/* Today's schedule */}
-      <h2 className="mb-4 text-[16px] font-semibold text-text-heading">
-        Today&apos;s schedule
-      </h2>
-      {schedule.length === 0 ? (
-        <div className="rounded-[10px] border border-[#e0e0e0] bg-white px-6 py-8 text-center">
+      {/* Assigned classes */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[15px] font-semibold text-text-heading">
+          Assigned classes
+        </h2>
+        <Link
+          href="/teacher/dashboard/classes"
+          className="flex items-center gap-1 text-[13px] font-medium text-brand-green hover:underline"
+        >
+          View all <ChevronRight className="h-[13px] w-[13px]" />
+        </Link>
+      </div>
+
+      {arms.length === 0 ? (
+        <div className="rounded-[12px] border border-dashed border-[#e5e7eb] bg-white px-6 py-8 text-center">
           <p className="text-[14px] text-text-body">
-            No classes scheduled today. Your timetable will appear here once
-            your school assigns your classes.
+            No classes assigned yet. Your school admin will assign arms to you.
           </p>
-          <Link
-            href="/teacher/dashboard/timetable"
-            className="mt-3 inline-block text-[13px] font-medium text-brand-green hover:underline"
-          >
-            View full timetable →
-          </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {schedule.map((slot) => (
+        <div className="flex flex-col gap-3">
+          {arms.map((arm) => (
             <div
-              key={`${slot.period}-${slot.classArm}`}
-              className="flex items-center gap-4 rounded-[10px] border border-[#e0e0e0] bg-white px-5 py-4"
+              key={arm.armId}
+              className="flex items-center justify-between rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-4"
             >
-              <span className="w-[80px] shrink-0 text-[12px] text-text-body">
-                {slot.time}
-              </span>
-              <span className="text-[14px] font-medium text-text-heading">
-                {slot.subject}
-              </span>
-              <span className="ml-auto text-[13px] text-text-body">
-                {slot.classArm}
-              </span>
+              <div className="flex items-center gap-4">
+                <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px] bg-[#f0fdf4]">
+                  <BookOpen className="h-[18px] w-[18px] text-brand-green" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold text-text-heading">
+                    {arm.armName}
+                  </p>
+                  <p className="text-[12px] text-text-body">
+                    {arm.students.length} student
+                    {arm.students.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href={`/teacher/dashboard/attendance?arm=${arm.armId}`}
+                  className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
+                >
+                  Attendance
+                </Link>
+                <Link
+                  href={`/teacher/dashboard/grades?arm=${arm.armId}`}
+                  className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
+                >
+                  Grades
+                </Link>
+              </div>
             </div>
           ))}
         </div>

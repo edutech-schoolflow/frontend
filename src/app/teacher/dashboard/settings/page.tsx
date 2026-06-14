@@ -1,18 +1,5 @@
-import InProgress from "@/src/shared/InProgress";
+import TeacherSettingsPage from "@/src/components/teacher/settings/TeacherSettingsPage";
 
-export default function TeacherSettingsPage() {
-  return (
-    <div className="p-[30px]">
-      <InProgress
-        title="Settings"
-        subtitle="Manage your account, password, and notification preferences."
-        features={[
-          "Update email and phone number",
-          "Change password",
-          "Notification preferences: email, WhatsApp, in-app",
-          "Delete account",
-        ]}
-      />
-    </div>
-  );
+export default function SettingsPage() {
+  return <TeacherSettingsPage />;
 }

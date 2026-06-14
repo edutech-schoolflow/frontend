@@ -126,6 +126,7 @@ import {
   MOCK_RECENT_ACTIVITY,
   MOCK_SCHOOL_CLASSES,
   MOCK_CLASS_ARMS,
+  MOCK_STAFF,
 } from "./mock/schoolData";
 
 export const getSchoolDashboard = async (): Promise<{
@@ -161,3 +162,44 @@ export const createSchoolClass = async (
 
 export const deleteSchoolClass = async (_classId: string): Promise<void> =>
   mockResponse(undefined);
+
+export const assignClassTeacher = async (
+  armId: string,
+  staffId: string | null
+): Promise<ClassArm> => {
+  const staff = staffId
+    ? (MOCK_STAFF.find((s) => s.id === staffId) ?? null)
+    : null;
+  const classTeacher = staff
+    ? { id: staff.id, name: `${staff.firstName} ${staff.lastName}` }
+    : null;
+
+  for (const arms of Object.values(MOCK_CLASS_ARMS)) {
+    const idx = arms.findIndex((a) => a.id === armId);
+    if (idx >= 0) {
+      arms[idx] = { ...arms[idx], classTeacher };
+      return mockResponse(arms[idx]);
+    }
+  }
+
+  // Arm was created locally but not yet in mock store — return a patched shell
+  return mockResponse({
+    id: armId,
+    classId: "",
+    className: "",
+    arm: "",
+    fullName: "",
+    classTeacher,
+    studentsCount: 0,
+    subjectTeachers: [],
+  });
+};
+
+export const getSchoolTeachers = async (): Promise<
+  { id: string; name: string }[]
+> => {
+  const teachers = MOCK_STAFF.filter(
+    (s) => s.role === "teacher" && s.status === "active"
+  ).map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }));
+  return mockResponse(teachers);
+};
