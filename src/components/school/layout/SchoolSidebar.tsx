@@ -10,10 +10,33 @@ import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
 
 const BASE = "/school/dashboard";
 
+const SETTINGS_ITEMS = [
+  { label: "Permission Templates", link: `${BASE}/settings/templates` },
+  { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
+  { label: "Onboarding", link: `${BASE}/settings/onboarding` },
+];
+
+const SettingsIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+  </svg>
+);
+
 export default function SchoolSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+  const inSettings = pathname.includes("/settings");
 
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const set = new Set<string>();
@@ -25,14 +48,13 @@ export default function SchoolSidebar() {
     return set;
   });
 
+  const [settingsOpen, setSettingsOpen] = useState(inSettings);
+
   const toggle = (label: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(label)) {
-        next.delete(label);
-      } else {
-        next.add(label);
-      }
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
       return next;
     });
 
@@ -73,9 +95,6 @@ export default function SchoolSidebar() {
           ) : null;
 
           if (route.children) {
-            const isGroupActive = route.children.some((c) =>
-              pathname.startsWith(`${BASE}/${c.link}`)
-            );
             const isOpen = expanded.has(route.label);
 
             return (
@@ -84,7 +103,7 @@ export default function SchoolSidebar() {
                 <button
                   type="button"
                   onClick={() => toggle(route.label)}
-                  className={itemCls(isGroupActive)}
+                  className={itemCls(false)}
                 >
                   <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
                     {route.icon}
@@ -140,28 +159,43 @@ export default function SchoolSidebar() {
 
       {/* Bottom: settings + user */}
       <div className="border-t border-white/10 px-[12px] py-[16px]">
-        <Link
-          href="/school/dashboard/settings/onboarding"
-          className={itemCls(pathname.includes("/settings"))}
+        {/* Settings — expandable */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen((v) => !v)}
+          className={itemCls(false)}
         >
           <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
+            <SettingsIcon />
           </span>
-          Settings
-        </Link>
+          <span className="flex-1 text-left">Settings</span>
+          <ChevronDown
+            className={`h-[13px] w-[13px] opacity-50 transition-transform ${settingsOpen ? "rotate-180" : ""}`}
+          />
+        </button>
 
+        {settingsOpen && (
+          <div className="ml-[34px] mt-[2px] mb-[2px] flex flex-col gap-[1px]">
+            {SETTINGS_ITEMS.map((item) => {
+              const isActive = pathname.startsWith(item.link);
+              return (
+                <Link
+                  key={item.link}
+                  href={item.link}
+                  className={`flex h-[34px] items-center rounded-[5px] px-[10px] text-[12.5px] transition-colors ${
+                    isActive
+                      ? "bg-[#1ca95c] text-white"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {/* User row */}
         <div className="mt-[12px] flex items-center gap-[10px] px-[4px]">
           <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white">
             {initials}

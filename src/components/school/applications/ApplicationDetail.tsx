@@ -168,7 +168,13 @@ function Card({
 
 // ─── Main component ─────────────────────────────────────────────────────────────
 
-export default function ApplicationDetail({ id }: { id: string }) {
+export default function ApplicationDetail({
+  id,
+  backPath = "/school/dashboard/applications",
+}: {
+  id: string;
+  backPath?: string;
+}) {
   const router = useRouter();
   const [app, setApp] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
@@ -229,7 +235,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
     <>
       {/* Back */}
       <button
-        onClick={() => router.push("/school/dashboard/applications")}
+        onClick={() => router.push(backPath)}
         className="mb-5 flex items-center gap-[6px] text-[13px] text-grey-text hover:text-dark-blue"
       >
         <ArrowLeft className="h-[14px] w-[14px]" /> Back to Applications

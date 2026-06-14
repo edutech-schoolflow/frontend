@@ -27,8 +27,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if (subdomain === "teacher") {
-    url.pathname = `/teacher${pathname}`;
+  if (subdomain === "staff") {
+    url.pathname = `/staff${pathname}`;
     return NextResponse.rewrite(url);
   }
 

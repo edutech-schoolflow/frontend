@@ -30,7 +30,7 @@ export default function TeacherLoginForm() {
 
   const onSubmit = async (_values: loginFormType) => {
     // TODO: call teacher login API
-    router.push("/teacher/dashboard");
+    router.push("/staff/dashboard");
   };
 
   return (
@@ -51,7 +51,7 @@ export default function TeacherLoginForm() {
         <div className="flex items-center justify-between">
           <FormCheckbox name="rememberMe" label="Remember me" />
           <Link
-            href="/teacher/forgot-password"
+            href="/staff/forgot-password"
             className="text-sm text-brand-green hover:underline"
           >
             Forgot password?
@@ -69,7 +69,7 @@ export default function TeacherLoginForm() {
       <p className="mt-6 text-center text-sm text-text-body">
         Don&apos;t have an account?{" "}
         <Link
-          href="/teacher/register"
+          href="/staff/register"
           className="font-medium text-brand-green hover:underline"
         >
           Create one free

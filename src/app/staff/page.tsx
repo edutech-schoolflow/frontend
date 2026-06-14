@@ -3,9 +3,9 @@ import Link from "next/link";
 import Logo from "@/src/components/ui/Logo";
 
 export const metadata: Metadata = {
-  title: "Teacher Portal — Oneschoolplatform",
+  title: "Staff Portal — Oneschoolplatform",
   description:
-    "Your professional teaching identity. Manage attendance, scores, assignments, and parent communication from one portable portal.",
+    "Your professional staff identity. Manage attendance, scores, fees, and communication from one portable portal.",
 };
 
 const features = [
@@ -20,14 +20,14 @@ const features = [
     desc: "Enter CA and exam scores directly. Totals, grades, and positions calculate automatically.",
   },
   {
-    icon: "📝",
-    title: "Assignments",
-    desc: "Post assignments, track submissions, and record marks — all without paper.",
-  },
-  {
     icon: "📋",
     title: "Exam Questions",
     desc: "Type and submit exam papers digitally to your HOD for review. Build a question bank.",
+  },
+  {
+    icon: "📍",
+    title: "Geo-fence Check-in",
+    desc: "Check in to school with one tap. Your location is verified against the school geo-fence automatically.",
   },
   {
     icon: "💬",
@@ -41,7 +41,7 @@ const features = [
   },
 ];
 
-export default function TeacherLandingPage() {
+export default function StaffLandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
@@ -51,13 +51,13 @@ export default function TeacherLandingPage() {
         </Link>
         <div className="flex items-center gap-3">
           <Link
-            href="/teacher/login"
+            href="/staff/login"
             className="rounded-[5px] border border-brand-green px-5 py-2 text-[14px] font-medium text-brand-green transition-opacity hover:opacity-80"
           >
             Log in
           </Link>
           <Link
-            href="/teacher/register"
+            href="/staff/register"
             className="rounded-[5px] bg-brand-green px-5 py-2 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
           >
             Create account
@@ -68,27 +68,27 @@ export default function TeacherLandingPage() {
       {/* Hero */}
       <section className="mx-auto max-w-4xl px-6 py-20 text-center md:py-28">
         <span className="mb-4 inline-block rounded-full bg-brand-mint px-4 py-1 text-[13px] font-medium text-brand-green">
-          For teachers & educators
+          For all school staff
         </span>
         <h1 className="mt-4 text-[42px] font-semibold leading-[1.15] tracking-tight text-text-heading md:text-[56px]">
-          Your teaching career,
+          Your professional identity,
           <br />
           all in one portal
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-text-body">
-          Take attendance, enter scores, set exam questions, and message parents
-          — without paper or spreadsheets. Your professional profile stays with
-          you wherever you teach.
+          Teaching staff, bursars, registrars — everyone on the team has their
+          own portal. Check in, manage responsibilities, and take your
+          professional profile to every school you work at.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/teacher/register"
+            href="/staff/register"
             className="rounded-[5px] bg-brand-green px-8 py-3 text-[16px] font-medium text-white transition-opacity hover:opacity-90"
           >
             Create a free account
           </Link>
           <Link
-            href="/teacher/login"
+            href="/staff/login"
             className="rounded-[5px] border border-border-default px-8 py-3 text-[16px] font-medium text-text-body transition-colors hover:border-text-body"
           >
             Sign in to your portal
@@ -100,7 +100,7 @@ export default function TeacherLandingPage() {
       <section className="border-t border-border-default bg-[#f9fafb] px-6 py-16 md:px-12">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-10 text-center text-[26px] font-semibold text-text-heading">
-            Everything a teacher needs
+            Everything school staff need
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
             {features.map((f) => (
@@ -124,14 +124,14 @@ export default function TeacherLandingPage() {
       {/* Bottom CTA */}
       <section className="px-6 py-16 text-center">
         <h2 className="text-[26px] font-semibold text-text-heading">
-          One profile. Every school you ever teach at.
+          One profile. Every school you ever work at.
         </h2>
         <p className="mt-2 text-[15px] text-text-body">
-          Register once. Get invited by schools. Resign and move on — your
-          records stay yours.
+          Register once. Get invited by schools. Move on — your records stay
+          yours.
         </p>
         <Link
-          href="/teacher/register"
+          href="/staff/register"
           className="mt-6 inline-block rounded-[5px] bg-brand-green px-10 py-3 text-[16px] font-medium text-white transition-opacity hover:opacity-90"
         >
           Create a free account

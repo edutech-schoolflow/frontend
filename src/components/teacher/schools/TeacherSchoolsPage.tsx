@@ -1,107 +1,85 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  Building2,
-  MapPin,
-  Phone,
-  Mail,
-  BookOpen,
-  ShieldCheck,
-} from "lucide-react";
-import { getTeacherSchools } from "@/src/lib/api/teacherSchools";
-import { useAuth } from "@/src/context/AuthContext";
-import type { TeacherSchoolAffiliation } from "@/src/lib/api/teacherSchools";
+import { Building2, MapPin, Phone, Mail, CheckCircle2 } from "lucide-react";
+import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
+import { ROLE_LABELS } from "@/src/types/staff";
+import type { StaffSchoolEntry } from "@/src/lib/api/staffProfile";
 
-const STATUS_STYLES: Record<
-  TeacherSchoolAffiliation["status"],
-  { label: string; color: string; bg: string }
-> = {
-  active: { label: "Active", color: "#16a34a", bg: "#f0fdf4" },
-  invited: { label: "Invite pending", color: "#d97706", bg: "#fffbeb" },
-  resigned: { label: "Resigned", color: "#6b7280", bg: "#f3f4f6" },
-};
-
-function AffiliationCard({
-  affiliation,
+function SchoolCard({
+  entry,
+  isActive,
+  isPartTime,
+  onSwitch,
 }: {
-  affiliation: TeacherSchoolAffiliation;
+  entry: StaffSchoolEntry;
+  isActive: boolean;
+  isPartTime: boolean;
+  onSwitch: () => void;
 }) {
-  const st = STATUS_STYLES[affiliation.status];
+  const { staff, school } = entry;
 
   return (
-    <div className="rounded-[14px] border border-[#e5e7eb] bg-white p-6">
+    <div
+      className={`rounded-[14px] border bg-white p-6 transition-shadow ${
+        isActive ? "border-brand-green shadow-sm" : "border-[#e5e7eb]"
+      }`}
+    >
       <div className="flex items-start justify-between gap-4">
-        {/* School logo / initials */}
         <div className="flex items-start gap-4">
           <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-[12px] bg-[#f0fdf4]">
             <Building2 className="h-[24px] w-[24px] text-brand-green" />
           </div>
           <div>
-            <p className="text-[17px] font-semibold text-text-heading">
-              {affiliation.schoolName}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[17px] font-semibold text-text-heading">
+                {school.name}
+              </p>
+              {isActive && (
+                <span className="flex items-center gap-1 rounded-full bg-[#f0fdf4] px-2.5 py-0.5 text-[11px] font-medium text-brand-green">
+                  <CheckCircle2 className="h-[11px] w-[11px]" />
+                  Active
+                </span>
+              )}
+            </div>
             <p className="mt-0.5 text-[13px] text-text-body">
-              {affiliation.position}
+              {staff.position} · {ROLE_LABELS[staff.role]}
             </p>
+            {staff.employmentType === "part_time" && (
+              <span className="mt-1.5 inline-block rounded-full bg-[#eff6ff] px-2.5 py-0.5 text-[11px] font-medium text-[#2563eb]">
+                Part-time
+              </span>
+            )}
           </div>
         </div>
-
-        <span
-          className="shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold"
-          style={{ color: st.color, backgroundColor: st.bg }}
-        >
-          {st.label}
-        </span>
       </div>
 
-      {/* Details grid */}
+      {/* School details */}
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {affiliation.address && (
-          <div className="flex items-start gap-2 text-[13px] text-text-body">
-            <MapPin className="mt-0.5 h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
-            <span>{affiliation.address}</span>
-          </div>
-        )}
-        {affiliation.phone && (
-          <div className="flex items-center gap-2 text-[13px] text-text-body">
-            <Phone className="h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
-            <span>{affiliation.phone}</span>
-          </div>
-        )}
-        {affiliation.email && (
-          <div className="flex items-center gap-2 text-[13px] text-text-body">
-            <Mail className="h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
-            <span>{affiliation.email}</span>
-          </div>
-        )}
-        {affiliation.assignedArms.length > 0 && (
-          <div className="flex items-start gap-2 text-[13px] text-text-body">
-            <BookOpen className="mt-0.5 h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
-            <span>{affiliation.assignedArms.join(", ")}</span>
-          </div>
-        )}
+        <div className="flex items-start gap-2 text-[13px] text-text-body">
+          <MapPin className="mt-0.5 h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
+          <span>
+            {school.address}, {school.city}, {school.state}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-[13px] text-text-body">
+          <Phone className="h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
+          <span>{school.phone}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[13px] text-text-body">
+          <Mail className="h-[14px] w-[14px] shrink-0 text-[#9ca3af]" />
+          <span>{school.email}</span>
+        </div>
       </div>
 
-      {/* Invite actions */}
-      {affiliation.status === "invited" && (
-        <div className="mt-5 flex gap-3 border-t border-[#f3f4f6] pt-5">
-          <button className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[14px] font-medium text-white hover:opacity-90 transition-opacity">
-            Accept invitation
+      {/* Switch button for part-time */}
+      {isPartTime && !isActive && (
+        <div className="mt-5 border-t border-[#f3f4f6] pt-5">
+          <button
+            onClick={onSwitch}
+            className="w-full rounded-[8px] bg-brand-green py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+          >
+            Switch to {school.name}
           </button>
-          <button className="flex-1 rounded-[8px] border border-[#e5e7eb] py-2.5 text-[14px] font-medium text-text-body hover:border-[#dc2626] hover:text-[#dc2626] transition-colors">
-            Decline
-          </button>
-        </div>
-      )}
-
-      {/* Compliance note */}
-      {affiliation.status === "active" && affiliation.complianceVerified && (
-        <div className="mt-4 flex items-center gap-2 rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2.5">
-          <ShieldCheck className="h-[14px] w-[14px] shrink-0 text-brand-green" />
-          <p className="text-[12px] text-[#15803d]">
-            Compliance verified for this school
-          </p>
         </div>
       )}
     </div>
@@ -109,30 +87,15 @@ function AffiliationCard({
 }
 
 export default function TeacherSchoolsPage() {
-  const { user } = useAuth();
-  const [affiliations, setAffiliations] = useState<TeacherSchoolAffiliation[]>(
-    []
-  );
-  const [loaded, setLoaded] = useState(false);
+  const {
+    mySchools: schools,
+    activeSchoolId,
+    isPartTime,
+    switchSchool,
+    loading,
+  } = useStaffFeatures();
 
-  useEffect(() => {
-    let cancelled = false;
-    getTeacherSchools(user?.id).then((data) => {
-      if (!cancelled) {
-        setAffiliations(data);
-        setLoaded(true);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  const active = affiliations.filter((a) => a.status === "active");
-  const invited = affiliations.filter((a) => a.status === "invited");
-  const resigned = affiliations.filter((a) => a.status === "resigned");
-
-  if (!loaded) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
@@ -147,11 +110,13 @@ export default function TeacherSchoolsPage() {
           My Schools
         </h1>
         <p className="mt-0.5 text-[14px] text-text-body">
-          Schools you are affiliated with and pending invitations.
+          {isPartTime
+            ? "You are a part-time staff member. Switch between schools to view each school's dashboard and features."
+            : "The school you are currently affiliated with."}
         </p>
       </div>
 
-      {affiliations.length === 0 ? (
+      {schools.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-[14px] border border-dashed border-[#e5e7eb] py-[60px] text-center">
           <Building2 className="mb-3 h-[36px] w-[36px] text-[#d1d5db]" />
           <p className="text-[15px] font-medium text-text-heading">
@@ -162,45 +127,21 @@ export default function TeacherSchoolsPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {invited.length > 0 && (
-            <section>
-              <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-text-body">
-                Pending invitations ({invited.length})
-              </p>
-              <div className="flex flex-col gap-4">
-                {invited.map((a) => (
-                  <AffiliationCard key={a.schoolId} affiliation={a} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {active.length > 0 && (
-            <section>
-              <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-text-body">
-                Active ({active.length})
-              </p>
-              <div className="flex flex-col gap-4">
-                {active.map((a) => (
-                  <AffiliationCard key={a.schoolId} affiliation={a} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {resigned.length > 0 && (
-            <section>
-              <p className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-text-body">
-                Past schools ({resigned.length})
-              </p>
-              <div className="flex flex-col gap-4">
-                {resigned.map((a) => (
-                  <AffiliationCard key={a.schoolId} affiliation={a} />
-                ))}
-              </div>
-            </section>
-          )}
+        <div className="flex flex-col gap-4">
+          {schools.map((entry) => {
+            const isActive =
+              entry.school.id === activeSchoolId ||
+              (!activeSchoolId && entry === schools[0]);
+            return (
+              <SchoolCard
+                key={entry.staff.id}
+                entry={entry}
+                isActive={isActive}
+                isPartTime={isPartTime}
+                onSwitch={() => switchSchool(entry.school.id)}
+              />
+            );
+          })}
         </div>
       )}
     </div>

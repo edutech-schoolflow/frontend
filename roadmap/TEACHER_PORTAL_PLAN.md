@@ -458,3 +458,17 @@ Lesson planning, scheme of work, invigilation scheduling, textbook tracking, mat
 ---
 
 _Last updated: 2026-06-12_
+
+Invoices — bursar core workflow, needs student invoice list with payment status
+Timetable — teachers need their weekly schedule
+
+Scores — unclear if this is separate from Grades or the same thing under a different name
+
+Staff onboarding — when a school admin invites a teacher (via the school's Staff tab), how does that person receive the invite, create an account, and get linked to the school? The registration page exists at /staff/register but the flow connecting invite → account creation → school link isn't built
+Notification/alerts — e.g. "You haven't checked in today" banner, upcoming exam reminders
+The most impactful things to build next (in order):
+
+Invoices — bursar's second core page after Fee Management
+Students — registrar needs this alongside Admissions
+Staff onboarding flow — without this the whole invite system has a dead end
+Timetable — teachers check this daily

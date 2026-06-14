@@ -17,46 +17,47 @@ import { useAuth } from "@/src/context/AuthContext";
 import type { TeacherDashboardStats } from "@/src/types/teacher";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
+import StaffCheckInWidget from "./StaffCheckInWidget";
 
 const QUICK_ACTIONS = [
   {
     label: "Take Attendance",
-    href: "/teacher/dashboard/attendance",
+    href: "/staff/dashboard/attendance",
     icon: CheckSquare,
     bg: "bg-[#e8f5ee]",
     color: "text-[#1ca95c]",
   },
   {
     label: "Enter Scores",
-    href: "/teacher/dashboard/grades",
+    href: "/staff/dashboard/grades",
     icon: ClipboardList,
     bg: "bg-[#e8f0ff]",
     color: "text-[#4a6cf7]",
   },
   {
     label: "Exam Questions",
-    href: "/teacher/dashboard/exams",
+    href: "/staff/dashboard/exams",
     icon: BookOpen,
     bg: "bg-[#fff3e8]",
     color: "text-[#f97316]",
   },
   {
     label: "My Classes",
-    href: "/teacher/dashboard/classes",
+    href: "/staff/dashboard/classes",
     icon: Users,
     bg: "bg-[#fce8ff]",
     color: "text-[#a855f7]",
   },
   {
     label: "My Schools",
-    href: "/teacher/dashboard/schools",
+    href: "/staff/dashboard/schools",
     icon: School,
     bg: "bg-[#f0f4ff]",
     color: "text-[#6366f1]",
   },
   {
     label: "Compliance",
-    href: "/teacher/dashboard/compliance",
+    href: "/staff/dashboard/compliance",
     icon: ShieldCheck,
     bg: "bg-[#fefce8]",
     color: "text-[#ca8a04]",
@@ -150,6 +151,9 @@ export default function TeacherDashboardHome() {
         ))}
       </div>
 
+      {/* Staff check-in widget */}
+      <StaffCheckInWidget />
+
       {/* Quick actions */}
       <h2 className="mb-4 text-[15px] font-semibold text-text-heading">
         Quick actions
@@ -182,7 +186,7 @@ export default function TeacherDashboardHome() {
           Assigned classes
         </h2>
         <Link
-          href="/teacher/dashboard/classes"
+          href="/staff/dashboard/classes"
           className="flex items-center gap-1 text-[13px] font-medium text-brand-green hover:underline"
         >
           View all <ChevronRight className="h-[13px] w-[13px]" />
@@ -218,13 +222,13 @@ export default function TeacherDashboardHome() {
               </div>
               <div className="flex gap-2">
                 <Link
-                  href={`/teacher/dashboard/attendance?arm=${arm.armId}`}
+                  href={`/staff/dashboard/attendance?arm=${arm.armId}`}
                   className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                 >
                   Attendance
                 </Link>
                 <Link
-                  href={`/teacher/dashboard/grades?arm=${arm.armId}`}
+                  href={`/staff/dashboard/grades?arm=${arm.armId}`}
                   className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                 >
                   Grades

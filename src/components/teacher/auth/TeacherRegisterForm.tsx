@@ -50,7 +50,7 @@ export default function TeacherRegisterForm() {
 
   const onSubmit = async (_values: FormValues) => {
     // TODO: call teacher registration API
-    router.push("/teacher/dashboard");
+    router.push("/staff/dashboard");
   };
 
   return (
@@ -97,7 +97,7 @@ export default function TeacherRegisterForm() {
       <p className="mt-6 text-center text-sm text-text-body">
         Already have an account?{" "}
         <Link
-          href="/teacher/login"
+          href="/staff/login"
           className="font-medium text-brand-green hover:underline"
         >
           Sign in

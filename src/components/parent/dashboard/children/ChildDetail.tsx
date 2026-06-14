@@ -8,15 +8,12 @@ import type { ParentChild } from "@/src/types/parent";
 import FeesTab from "./tabs/FeesTab";
 import ResultsTab from "./tabs/ResultsTab";
 import AttendanceTab from "./tabs/AttendanceTab";
-import MessagesTab from "./tabs/MessagesTab";
-
-type Tab = "fees" | "results" | "attendance" | "messages";
+type Tab = "fees" | "results" | "attendance";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "fees", label: "Fees" },
   { id: "results", label: "Results" },
   { id: "attendance", label: "Attendance" },
-  { id: "messages", label: "Messages" },
 ];
 
 export default function ChildDetail() {
@@ -99,7 +96,6 @@ export default function ChildDetail() {
       {activeTab === "fees" && <FeesTab studentId={studentId} />}
       {activeTab === "results" && <ResultsTab studentId={studentId} />}
       {activeTab === "attendance" && <AttendanceTab studentId={studentId} />}
-      {activeTab === "messages" && <MessagesTab studentId={studentId} />}
     </div>
   );
 }

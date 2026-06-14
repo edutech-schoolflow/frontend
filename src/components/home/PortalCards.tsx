@@ -14,10 +14,10 @@ const PARENT_FEATURES = [
   "Apply to schools and track applications",
 ];
 
-const TEACHER_FEATURES = [
-  "Take attendance digitally in under a minute",
-  "Enter scores — totals and grades auto-calculated",
-  "Set exam questions and submit to HOD digitally",
+const STAFF_FEATURES = [
+  "Geo-fence check-in — verified against school location",
+  "Teachers: attendance, scores, and exam questions digitally",
+  "Bursars & registrars: manage fees and student records",
   "Your professional profile stays with you across schools",
 ];
 
@@ -34,7 +34,7 @@ export default function PortalCards() {
             Built for everyone in the school
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-text-body">
-            Schools, parents, and teachers — each with their own portal, all
+            Schools, parents, and staff — each with their own portal, all
             connected on one platform.
           </p>
         </div>
@@ -153,7 +153,7 @@ export default function PortalCards() {
             </div>
           </div>
 
-          {/* Teacher card */}
+          {/* Staff card */}
           <div className="flex flex-col rounded-[14px] border border-border-default bg-[#f5f4ff] p-8">
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#e0ddff]">
               <svg
@@ -166,19 +166,20 @@ export default function PortalCards() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
               </svg>
             </div>
             <h3 className="mt-5 text-[24px] font-semibold text-text-heading">
-              For teachers
+              For staff
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-text-body">
-              Your professional teaching identity — portable across every school
-              you teach at.
+              Teaching and non-teaching staff — one portable professional
+              identity across every school you work at.
             </p>
             <ul className="mt-6 space-y-3">
-              {TEACHER_FEATURES.map((f) => (
+              {STAFF_FEATURES.map((f) => (
                 <li
                   key={f}
                   className="flex items-start gap-2.5 text-[14px] text-text-body"
@@ -192,15 +193,15 @@ export default function PortalCards() {
             </ul>
             <div className="mt-auto pt-8">
               <Link
-                href="/teacher/register"
+                href="/staff/register"
                 className="flex h-[48px] w-full items-center justify-center rounded-[8px] border border-[#5b4fcf] text-[14px] font-medium text-[#5b4fcf] transition-colors hover:bg-[#e0ddff]"
               >
-                Create teacher account
+                Create staff account
               </Link>
               <p className="mt-3 text-center text-[13px] text-text-body">
                 Already registered?{" "}
                 <Link
-                  href="/teacher/login"
+                  href="/staff/login"
                   className="font-medium text-[#5b4fcf] hover:underline"
                 >
                   Sign in

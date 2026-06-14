@@ -18,6 +18,7 @@ export interface School {
   phone: string;
   email: string;
   logoUrl?: string;
+  location?: { lat: number; lng: number };
   status: SchoolStatus;
   kycStatus: KycStatus;
   visibility: SchoolVisibility;
