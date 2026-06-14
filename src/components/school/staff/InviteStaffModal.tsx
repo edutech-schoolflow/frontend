@@ -20,6 +20,7 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
   const [position, setPosition] = useState("");
   const [saving, setSaving] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [savedStaff, setSavedStaff] = useState<Staff | null>(null);
   const [copied, setCopied] = useState(false);
 
   const canSave =
@@ -41,8 +42,8 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
       position: position.trim(),
     });
     setSaving(false);
+    setSavedStaff(result.staff);
     setInviteLink(result.inviteLink);
-    onDone(result.staff);
   }
 
   async function copyLink() {
@@ -62,7 +63,10 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
               Invitation sent
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => {
+                if (savedStaff) onDone(savedStaff);
+                onClose();
+              }}
               className="text-[#9ca3af] hover:text-text-heading"
             >
               <X className="h-[18px] w-[18px]" />
@@ -102,7 +106,10 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
           </p>
 
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (savedStaff) onDone(savedStaff);
+              onClose();
+            }}
             className="mt-5 w-full rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90"
           >
             Done

@@ -22,11 +22,30 @@ function maskPhone(phone: string): string {
   return `${prefix} ****${suffix}`;
 }
 
+function restoreFromStorage(token: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem("mock_pending_invites") ?? "{}"
+    );
+    const entry = stored[token];
+    if (!entry) return;
+    MOCK_INVITE_TOKENS[token] = { staffId: entry.staffId };
+    if (!MOCK_STAFF.find((s) => s.id === entry.staffId)) {
+      MOCK_STAFF.push(entry.staff);
+    }
+  } catch {
+    // ignore malformed storage
+  }
+}
+
 // Validates a token from the invite link. Returns invite details or null if
 // the token is invalid.
 export const validateInviteToken = async (
   token: string
 ): Promise<InviteDetails | null> => {
+  if (!MOCK_INVITE_TOKENS[token]) restoreFromStorage(token);
+
   const record = MOCK_INVITE_TOKENS[token];
   if (!record) return mockResponse(null);
 
@@ -81,5 +100,18 @@ export const completeRegistration = async (
   };
 
   delete MOCK_INVITE_TOKENS[token];
+
+  if (typeof window !== "undefined") {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem("mock_pending_invites") ?? "{}"
+      );
+      delete stored[token];
+      localStorage.setItem("mock_pending_invites", JSON.stringify(stored));
+    } catch {
+      // ignore
+    }
+  }
+
   return mockResponse({ userId });
 };

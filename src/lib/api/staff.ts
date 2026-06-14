@@ -57,6 +57,15 @@ export const inviteStaff = async (
   MOCK_STAFF.push(newStaff);
   MOCK_INVITE_TOKENS[token] = { staffId: id };
 
+  // Persist so the token survives a page reload when the link is opened
+  if (typeof window !== "undefined") {
+    const stored = JSON.parse(
+      localStorage.getItem("mock_pending_invites") ?? "{}"
+    );
+    stored[token] = { staffId: id, staff: newStaff };
+    localStorage.setItem("mock_pending_invites", JSON.stringify(stored));
+  }
+
   const origin =
     typeof window !== "undefined"
       ? window.location.origin
