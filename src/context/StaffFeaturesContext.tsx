@@ -48,15 +48,16 @@ export function StaffFeaturesProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<MyStaffProfile | null>(null);
   const [mySchools, setMySchools] = useState<StaffSchoolEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [testUserId, setTestUserId] = useState<string | null>(null);
-  const [activeSchoolId, setActiveSchoolId] = useState<string | null>(null);
-
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      setTestUserId(localStorage.getItem(STAFF_TEST_USER_KEY));
-      setActiveSchoolId(localStorage.getItem(STAFF_ACTIVE_SCHOOL_KEY));
-    });
-  }, []);
+  const [testUserId] = useState<string | null>(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(STAFF_TEST_USER_KEY)
+      : null
+  );
+  const [activeSchoolId, setActiveSchoolId] = useState<string | null>(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(STAFF_ACTIVE_SCHOOL_KEY)
+      : null
+  );
 
   const effectiveUserId = testUserId ?? user?.id;
 
