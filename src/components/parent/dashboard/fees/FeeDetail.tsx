@@ -170,9 +170,16 @@ export default function FeeDetail({
                         </div>
                       )}
                     </div>
-                    <p className="text-[14px] text-[#1b1b1b]">
-                      {line.feeTypeName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[14px] text-[#1b1b1b]">
+                        {line.feeTypeName}
+                      </p>
+                      {line.source === "store" && (
+                        <span className="rounded-[4px] bg-[#eff6ff] px-[6px] py-[2px] text-[10px] font-medium text-[#2563eb]">
+                          Store
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[14px] text-[#1b1b1b]">
                       {formatCurrency(line.amount)}
                     </p>

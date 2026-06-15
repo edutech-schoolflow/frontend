@@ -27,21 +27,31 @@ export const getFeeTypes = async (_params?: {
 
 export const createFeeType = async (
   payload: Omit<FeeType, "id" | "schoolId" | "createdAt">
-): Promise<FeeType> =>
-  mockResponse({
+): Promise<FeeType> => {
+  const item: FeeType = {
     ...payload,
     id: `ft-${Date.now()}`,
     schoolId: "sch-001",
     createdAt: new Date().toISOString(),
-  });
+  };
+  MOCK_FEE_TYPES.push(item);
+  return mockResponse(item);
+};
 
 export const updateFeeType = async (
-  _id: string,
+  id: string,
   payload: Partial<FeeType>
-): Promise<FeeType> => mockResponse({ ...MOCK_FEE_TYPES[0], ...payload });
+): Promise<FeeType> => {
+  const idx = MOCK_FEE_TYPES.findIndex((f) => f.id === id);
+  if (idx !== -1) Object.assign(MOCK_FEE_TYPES[idx], payload);
+  return mockResponse(MOCK_FEE_TYPES[idx !== -1 ? idx : 0]);
+};
 
-export const deleteFeeType = async (_id: string) =>
-  mockResponse({ message: "Fee type deleted." });
+export const deleteFeeType = async (id: string) => {
+  const idx = MOCK_FEE_TYPES.findIndex((f) => f.id === id);
+  if (idx !== -1) MOCK_FEE_TYPES.splice(idx, 1);
+  return mockResponse({ message: "Fee type deleted." });
+};
 
 export const generateInvoices = async (_classId: string, _termId: string) =>
   mockResponse({ message: "Invoices generated for 35 students." });

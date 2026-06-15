@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ShoppingBag } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface RouteChild {
@@ -117,6 +118,14 @@ export const schoolRoutes: Route[] = [
     ),
     label: "PTA Group",
     link: "pta",
+  },
+
+  // ── Store ──────────────────────────────────────────────────────────────
+  {
+    icon: <ShoppingBag size={18} />,
+    label: "School Store",
+    link: "store",
+    section: "Store",
   },
 
   // ── Finance ────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ const MAIN_NAV = [
   { label: "Find a school", href: "/parent/dashboard/search" },
   { label: "Enrol your child", href: "/parent/dashboard/enrol" },
   { label: "Track application", href: "/parent/dashboard/track" },
+  { label: "School Store", href: "/parent/dashboard/store" },
   { label: "Fees", href: "/parent/dashboard/fees" },
   { label: "CA scores", href: "/parent/dashboard/ca-scores" },
   { label: "Report card", href: "/parent/dashboard/report-card" },

@@ -17,6 +17,7 @@ export interface InvoiceLine {
   paid: number;
   balance: number;
   status: InvoiceLineStatus;
+  source?: "fee" | "store";
 }
 
 export type InvoiceStatus = "paid" | "partial" | "unpaid";
