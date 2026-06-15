@@ -67,6 +67,21 @@ const NAV_ITEMS: Array<{
     href: "/staff/dashboard/staff-attendance",
     feature: "can_view_staff_attendance_board",
   },
+  {
+    label: "School Store",
+    href: "/staff/dashboard/store",
+    feature: "can_view_store",
+  },
+  {
+    label: "Permission Templates",
+    href: "/staff/dashboard/templates",
+    feature: "can_manage_permissions",
+  },
+  {
+    label: "Staff Permissions",
+    href: "/staff/dashboard/permissions",
+    feature: "can_manage_permissions",
+  },
   { label: "My Schools", href: "/staff/dashboard/schools" },
   { label: "Compliance", href: "/staff/dashboard/compliance" },
 ];

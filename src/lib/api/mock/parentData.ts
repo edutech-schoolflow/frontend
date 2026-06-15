@@ -679,6 +679,16 @@ export const MOCK_PARENT_CHILDREN: ParentChild[] = [
     hasNewResult: false,
     hasNewMessage: false,
   },
+  {
+    studentId: "std-013",
+    studentName: "Chisom Okafor",
+    schoolId: "sch-002",
+    schoolName: "Sunrise Academy",
+    className: "JSS 1",
+    outstandingFees: 45000,
+    hasNewResult: false,
+    hasNewMessage: false,
+  },
 ];
 
 export const MOCK_PARENT_CA_SCORES: Record<string, Record<string, Grade[]>> = {

@@ -208,7 +208,7 @@ export default function StaffCheckInWidget() {
           href="/staff/dashboard/profile"
           className="flex items-center gap-1 text-[12px] text-[#9ca3af] transition-colors hover:text-brand-green"
         >
-          View attendance history
+          View attendance history in My Profile
           <ChevronRight className="h-[12px] w-[12px]" />
         </Link>
       </div>

@@ -11,6 +11,9 @@ export interface StaffFeatures {
   can_view_student_records: boolean;
   can_view_school_overview: boolean;
   can_view_staff_attendance_board: boolean;
+  can_manage_permissions: boolean;
+  can_view_store: boolean;
+  can_manage_store: boolean;
 }
 
 const NONE: StaffFeatures = {
@@ -24,6 +27,25 @@ const NONE: StaffFeatures = {
   can_view_student_records: false,
   can_view_school_overview: false,
   can_view_staff_attendance_board: false,
+  can_manage_permissions: false,
+  can_view_store: false,
+  can_manage_store: false,
+};
+
+export const SCHOOL_OWNER_FEATURES: StaffFeatures = {
+  can_mark_student_attendance: true,
+  can_enter_grades: true,
+  can_submit_exam_papers: true,
+  can_view_my_classes: true,
+  can_manage_fees: true,
+  can_view_invoices: true,
+  can_manage_admissions: true,
+  can_view_student_records: true,
+  can_view_school_overview: true,
+  can_view_staff_attendance_board: true,
+  can_manage_permissions: true,
+  can_view_store: true,
+  can_manage_store: true,
 };
 
 const ALL: StaffFeatures = {
@@ -37,6 +59,9 @@ const ALL: StaffFeatures = {
   can_view_student_records: true,
   can_view_school_overview: true,
   can_view_staff_attendance_board: true,
+  can_manage_permissions: true,
+  can_view_store: true,
+  can_manage_store: true,
 };
 
 export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
@@ -58,6 +83,7 @@ export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
     can_view_student_records: true,
     can_manage_admissions: true,
     can_view_invoices: true,
+    can_view_store: true,
   },
 
   // VP assists the principal. Typically handles academic scheduling,
@@ -68,15 +94,19 @@ export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
     can_view_staff_attendance_board: true,
     can_view_student_records: true,
     can_view_invoices: true,
+    can_view_store: true,
   },
 
   // Bursar manages fees end-to-end: types, amounts, invoices, payments.
   // Needs student records to know who to bill. No access to grades or admissions.
   bursar: {
     ...NONE,
+    can_view_school_overview: true,
     can_manage_fees: true,
     can_view_invoices: true,
     can_view_student_records: true,
+    can_view_store: true,
+    can_manage_store: true,
   },
 
   // Registrar handles the full admissions pipeline and student record
@@ -85,6 +115,7 @@ export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
     ...NONE,
     can_manage_admissions: true,
     can_view_student_records: true,
+    can_view_store: true,
   },
 
   // ICT / school admin manages the software. Broad view access for system
@@ -92,10 +123,12 @@ export const ROLE_FEATURES: Record<StaffRole, StaffFeatures> = {
   // no marking registers). Teaching features are separate.
   school_admin: {
     ...NONE,
-    can_view_school_overview: true,
     can_view_staff_attendance_board: true,
     can_view_student_records: true,
     can_view_invoices: true,
+    can_manage_permissions: true,
+    can_view_store: true,
+    can_manage_store: true,
   },
 
   super_admin: ALL,
@@ -114,6 +147,9 @@ export const FEATURE_LABELS: Record<keyof StaffFeatures, string> = {
   can_view_student_records: "View student records",
   can_view_school_overview: "View school overview",
   can_view_staff_attendance_board: "View staff attendance board",
+  can_manage_permissions: "Manage staff permissions",
+  can_view_store: "View school store",
+  can_manage_store: "Manage school store",
 };
 
 // Plain-language descriptions shown next to each toggle in the permissions UI.
@@ -135,6 +171,12 @@ export const FEATURE_DESCRIPTIONS: Record<keyof StaffFeatures, string> = {
     "See school-wide statistics, performance, and daily snapshot",
   can_view_staff_attendance_board:
     "See daily staff check-in and check-out status",
+  can_manage_permissions:
+    "Create and edit permission templates, and assign permissions to individual staff members",
+  can_view_store:
+    "Browse the school store catalogue and view what materials have been assigned to students",
+  can_manage_store:
+    "Add items to the school store, set prices, and assign materials to students for billing",
 };
 
 // Feature groups for the permissions UI — one section per group.
@@ -175,6 +217,11 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
   {
     label: "Staff Management",
     hint: "For leadership monitoring staff punctuality and attendance",
-    keys: ["can_view_staff_attendance_board"],
+    keys: ["can_view_staff_attendance_board", "can_manage_permissions"],
+  },
+  {
+    label: "Store",
+    hint: "Control who can browse or manage the school store",
+    keys: ["can_view_store", "can_manage_store"],
   },
 ];

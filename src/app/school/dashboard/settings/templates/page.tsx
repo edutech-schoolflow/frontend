@@ -8,11 +8,14 @@ import {
   deletePermissionTemplate,
   getTemplateStaffCount,
 } from "@/src/lib/api/permissionTemplates";
-import { FEATURE_LABELS, DEFAULT_FEATURES } from "@/src/types/staffFeatures";
+import {
+  FEATURE_LABELS,
+  FEATURE_DESCRIPTIONS,
+  FEATURE_GROUPS,
+  DEFAULT_FEATURES,
+} from "@/src/types/staffFeatures";
 import type { PermissionTemplate } from "@/src/types/permissionTemplate";
 import type { StaffFeatures } from "@/src/types/staffFeatures";
-
-const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as (keyof StaffFeatures)[];
 
 function enabledCount(f: StaffFeatures) {
   return (Object.values(f) as boolean[]).filter(Boolean).length;
@@ -94,31 +97,47 @@ function TemplateEditor({
         </div>
       </div>
 
-      <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-text-heading">
-        Features
-      </p>
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {FEATURE_KEYS.map((key) => (
-          <label
-            key={key}
-            className="flex cursor-pointer items-center gap-3 rounded-[8px] border border-[#e5e7eb] px-3 py-2.5 hover:border-[#d1d5db] transition-colors"
-          >
-            <div
-              onClick={() => toggle(key)}
-              className={`relative h-[18px] w-[32px] shrink-0 rounded-full transition-colors ${
-                features[key] ? "bg-brand-green" : "bg-[#d1d5db]"
-              }`}
-            >
-              <div
-                className={`absolute top-[1px] h-[16px] w-[16px] rounded-full bg-white shadow transition-transform ${
-                  features[key] ? "translate-x-[15px]" : "translate-x-[1px]"
-                }`}
-              />
+      <div className="mb-4 space-y-5">
+        {FEATURE_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="mb-2 flex items-baseline gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-text-heading">
+                {group.label}
+              </p>
+              <p className="text-[11px] text-[#c4c4c4]">— {group.hint}</p>
             </div>
-            <span className="text-[12px] text-text-heading">
-              {FEATURE_LABELS[key]}
-            </span>
-          </label>
+            <div className="flex flex-col gap-2">
+              {group.keys.map((key) => (
+                <div
+                  key={key}
+                  onClick={() => toggle(key)}
+                  className="flex cursor-pointer items-start gap-3 rounded-[10px] border border-[#e5e7eb] bg-white px-4 py-3 hover:border-[#d1d5db] transition-colors"
+                >
+                  <div
+                    className={`relative mt-0.5 h-[18px] w-[32px] shrink-0 rounded-full transition-colors ${
+                      features[key] ? "bg-brand-green" : "bg-[#d1d5db]"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-[1px] h-[16px] w-[16px] rounded-full bg-white shadow transition-transform ${
+                        features[key]
+                          ? "translate-x-[15px]"
+                          : "translate-x-[1px]"
+                      }`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-text-heading">
+                      {FEATURE_LABELS[key]}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-text-body leading-relaxed">
+                      {FEATURE_DESCRIPTIONS[key]}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

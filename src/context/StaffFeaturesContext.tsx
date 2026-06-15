@@ -31,7 +31,7 @@ interface Value {
   switchSchool: (schoolId: string) => void;
 }
 
-const StaffFeaturesContext = createContext<Value>({
+export const StaffFeaturesContext = createContext<Value>({
   features: DEFAULT_FEATURES,
   profile: null,
   loading: true,
