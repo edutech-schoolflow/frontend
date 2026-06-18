@@ -22,6 +22,15 @@ const STATUS_CONFIG: Record<
   not_admitted: { label: "Not admitted", className: "bg-[#e84040] text-white" },
 };
 
+// ─── tabs ─────────────────────────────────────────────────────────────────────
+
+const TABS: { id: ApplicationStatus; label: string }[] = [
+  { id: "under_review", label: "Under Review" },
+  { id: "exam_scheduled", label: "Exam / Interview Scheduled" },
+  { id: "admitted", label: "Admitted" },
+  { id: "not_admitted", label: "Not Admitted" },
+];
+
 // ─── application card ─────────────────────────────────────────────────────────
 
 function ApplicationCard({ app }: { app: Application }) {
@@ -94,10 +103,20 @@ function ApplicationCard({ app }: { app: Application }) {
 
 export default function ParentTrackApplication() {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [activeTab, setActiveTab] = useState<ApplicationStatus>("under_review");
 
   useEffect(() => {
     getMyApplications().then(setApplications);
   }, []);
+
+  const counts = Object.fromEntries(
+    TABS.map(({ id }) => [
+      id,
+      applications.filter((a) => a.status === id).length,
+    ])
+  ) as Record<ApplicationStatus, number>;
+
+  const visible = applications.filter((a) => a.status === activeTab);
 
   return (
     <div className="px-[88px] py-[31px] pb-[60px]">
@@ -105,11 +124,56 @@ export default function ParentTrackApplication() {
         Track application
       </h1>
 
-      {applications.length === 0 ? (
-        <p className="text-[14px] text-[#888]">No applications yet.</p>
+      {/* Tabs */}
+      <div className="mb-[28px] flex flex-wrap gap-[8px] border-b border-[#eee] pb-[16px]">
+        {TABS.map(({ id, label }) => {
+          const isActive = activeTab === id;
+          const count = counts[id];
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-[6px] rounded-[8px] px-[14px] py-[8px] text-[13px] font-medium transition-colors ${
+                isActive
+                  ? "bg-[#1b1b1b] text-white"
+                  : "border border-[#e5e7eb] text-[#666] hover:border-[#ccc] hover:text-[#1b1b1b]"
+              }`}
+            >
+              {label}
+              <span
+                className={`rounded-full px-[7px] py-[1px] text-[11px] font-semibold ${
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-[#f3f4f6] text-[#6b7280]"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      {visible.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#e5e7eb] py-[60px]">
+          <p className="text-[15px] font-medium text-[#1b1b1b]">
+            No applications here
+          </p>
+          <p className="mt-[6px] text-[13px] text-[#888]">
+            {activeTab === "under_review" &&
+              "Applications being reviewed will appear here."}
+            {activeTab === "exam_scheduled" &&
+              "Children scheduled for an exam or interview will appear here."}
+            {activeTab === "admitted" && "Admitted children will appear here."}
+            {activeTab === "not_admitted" &&
+              "Applications that were not successful will appear here."}
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-[20px]">
-          {applications.map((app) => (
+          {visible.map((app) => (
             <ApplicationCard key={app.id} app={app} />
           ))}
         </div>

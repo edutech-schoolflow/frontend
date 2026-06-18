@@ -105,7 +105,7 @@ export default function SchoolSidebar() {
                   onClick={() => toggle(route.label)}
                   className={itemCls(false)}
                 >
-                  <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
+                  <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                     {route.icon}
                   </span>
                   <span className="flex-1 text-left">{route.label}</span>
@@ -147,7 +147,7 @@ export default function SchoolSidebar() {
             <div key={route.label}>
               {header}
               <Link href={href} className={itemCls(isActive)}>
-                <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
+                <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                   {route.icon}
                 </span>
                 {route.label}
@@ -165,7 +165,7 @@ export default function SchoolSidebar() {
           onClick={() => setSettingsOpen((v) => !v)}
           className={itemCls(false)}
         >
-          <span className="shrink-0 [filter:brightness(0)_invert(1)] opacity-60">
+          <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
             <SettingsIcon />
           </span>
           <span className="flex-1 text-left">Settings</span>

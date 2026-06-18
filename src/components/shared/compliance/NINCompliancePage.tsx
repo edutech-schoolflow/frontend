@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, ShieldCheck, AlertCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  ShieldCheck,
+  AlertCircle,
+  Camera,
+} from "lucide-react";
 import { getComplianceRecord, submitNIN } from "@/src/lib/api/compliance";
 import { useAuth } from "@/src/context/AuthContext";
 import type { StepStatus } from "@/src/types/compliance";
@@ -58,6 +64,20 @@ const STATUS_CONFIG: Record<
   },
 };
 
+const TIPS_BULLETS = [
+  "Have your NIN ready",
+  "Ensure your face is well-lit for the liveness check",
+  "The name must match your ID document exactly",
+  "NIN must be exactly 11 digits",
+];
+
+const FACE_BULLETS = [
+  "Ensure you are in a well-lit environment",
+  "Keep your face clearly visible",
+  "Remove glasses or face coverings",
+  "Hold your device steady during capture",
+];
+
 export default function NINCompliancePage() {
   const { user } = useAuth();
 
@@ -69,7 +89,9 @@ export default function NINCompliancePage() {
   const [verifiedAt, setVerifiedAt] = useState<string | undefined>();
   const [loaded, setLoaded] = useState(false);
 
-  const [ninInput, setNinInput] = useState("");
+  const [nin, setNin] = useState("");
+  const [address, setAddress] = useState("");
+  const [faceDone, setFaceDone] = useState(false);
   const [inputError, setInputError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -89,31 +111,32 @@ export default function NINCompliancePage() {
     };
   }, [actorType, user?.id]);
 
-  const validateNIN = (val: string) => {
-    if (val.length === 0) return "NIN is required";
-    if (!/^\d+$/.test(val)) return "NIN must contain digits only";
-    if (val.length !== 11) return "NIN must be exactly 11 digits";
-    return "";
-  };
+  const idReady = nin.length === 11;
+  const canSubmit = idReady && address.trim().length > 0 && faceDone;
 
   const handleSubmit = async () => {
-    const err = validateNIN(ninInput);
-    if (err) {
-      setInputError(err);
+    if (nin.length !== 11) {
+      setInputError("NIN must be exactly 11 digits");
       return;
     }
     setSubmitting(true);
-    const record = await submitNIN(actorType, user?.id, ninInput);
+    const record = await submitNIN(actorType, user?.id, nin);
     const ninStep = record.steps.find((s) => s.id === "nin");
     setNinStatus(ninStep?.status ?? "pending");
     setSubmittedNIN(ninStep?.data?.nin);
     setSubmittedAt(ninStep?.data?.submittedAt);
-    setNinInput("");
+    setNin("");
+    setAddress("");
+    setFaceDone(false);
     setInputError("");
     setSubmitting(false);
   };
 
   const cfg = STATUS_CONFIG[ninStatus];
+
+  const inputCls =
+    "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
+  const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
 
   if (!loaded) {
     return (
@@ -168,24 +191,22 @@ export default function NINCompliancePage() {
         </p>
       </div>
 
-      {/* NIN card */}
-      <div className="rounded-[14px] border border-[#e5e7eb] bg-white p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px] bg-[#f0fdf4]">
-            <ShieldCheck className="h-[20px] w-[20px] text-brand-green" />
+      {/* Submitted state */}
+      {(ninStatus === "pending" || ninStatus === "verified") && submittedNIN ? (
+        <div className="rounded-[14px] border border-[#e5e7eb] bg-white p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px] bg-[#f0fdf4]">
+              <ShieldCheck className="h-[20px] w-[20px] text-brand-green" />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-text-heading">
+                National Identification Number (NIN)
+              </p>
+              <p className="text-[12px] text-text-body">
+                Your 11-digit NIN issued by NIMC
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[15px] font-semibold text-text-heading">
-              National Identification Number (NIN)
-            </p>
-            <p className="text-[12px] text-text-body">
-              Your 11-digit NIN issued by NIMC
-            </p>
-          </div>
-        </div>
-
-        {(ninStatus === "pending" || ninStatus === "verified") &&
-        submittedNIN ? (
           <div className="flex items-center justify-between rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] px-4 py-3">
             <div>
               <p className="text-[13px] text-text-body">Submitted NIN</p>
@@ -200,29 +221,33 @@ export default function NINCompliancePage() {
               {cfg.label}
             </span>
           </div>
-        ) : (
-          <div>
-            <label className="mb-1.5 block text-[13px] font-medium text-text-body">
-              Enter your NIN
-            </label>
-            <div className="flex gap-3">
-              <div className="flex-1">
+        </div>
+      ) : (
+        /* Form + tips */
+        <div className="flex gap-6">
+          {/* Form card */}
+          <div className="flex-1 rounded-[14px] border border-[#e5e7eb] bg-white p-6">
+            <h2 className="mb-5 text-[17px] font-semibold text-text-heading">
+              Identity Verification
+            </h2>
+            <div className="flex flex-col gap-5">
+              <div>
+                <label className={labelCls}>
+                  National Identity Number (NIN)
+                </label>
                 <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={11}
-                  value={ninInput}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    setNinInput(val);
-                    if (inputError) setInputError("");
-                  }}
-                  placeholder="e.g. 12345678901"
-                  className={`h-[44px] w-full rounded-[8px] border px-4 font-mono text-[16px] tracking-widest text-text-heading focus:outline-none ${
+                  className={`h-[46px] w-full rounded-[8px] border bg-white px-4 text-[14px] text-text-heading outline-none focus:ring-1 focus:ring-brand-green/20 ${
                     inputError
                       ? "border-[#dc2626] focus:border-[#dc2626]"
                       : "border-[#e5e7eb] focus:border-brand-green"
                   }`}
+                  placeholder="Enter 11-digit NIN"
+                  maxLength={11}
+                  value={nin}
+                  onChange={(e) => {
+                    setNin(e.target.value.replace(/\D/g, ""));
+                    if (inputError) setInputError("");
+                  }}
                 />
                 {inputError && (
                   <p className="mt-1 text-[12px] text-[#dc2626]">
@@ -230,21 +255,103 @@ export default function NINCompliancePage() {
                   </p>
                 )}
               </div>
+
+              <div>
+                <label className={labelCls}>Address</label>
+                <input
+                  className={inputCls}
+                  placeholder="Enter your address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </div>
+
+              {/* Liveness check */}
+              <div>
+                <p className={labelCls}>Liveliness Check</p>
+                <div className="flex items-center gap-4 rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
+                  <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full bg-[#f3f4f6]">
+                    <Camera className="h-[20px] w-[20px] text-[#9ca3af]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[13px] font-medium text-text-heading">
+                      Face verification
+                    </p>
+                    <p className="text-[12px] text-text-body">
+                      {idReady
+                        ? "Click to start face check"
+                        : "Complete NIN verification first"}
+                    </p>
+                  </div>
+                  {faceDone ? (
+                    <span className="text-[12px] font-medium text-brand-green">
+                      Done ✓
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!idReady}
+                      onClick={() => setFaceDone(true)}
+                      className="rounded-[6px] border border-[#e5e7eb] px-4 py-1.5 text-[12px] font-medium text-text-heading transition-colors hover:border-brand-green hover:text-brand-green disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Start check
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <button
                 onClick={handleSubmit}
-                disabled={submitting || ninInput.length === 0}
-                className="h-[44px] rounded-[8px] bg-brand-green px-5 text-[14px] font-medium text-white hover:opacity-90 disabled:opacity-50"
+                disabled={!canSubmit || submitting}
+                className="mt-1 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {submitting ? "Submitting…" : "Submit"}
               </button>
             </div>
-            <p className="mt-2 text-[12px] text-[#9ca3af]">
-              Your NIN is kept confidential and used only for identity
-              verification purposes.
-            </p>
           </div>
-        )}
-      </div>
+
+          {/* Tips panel */}
+          <div className="w-[240px] shrink-0 rounded-[14px] border border-[#e5e7eb] bg-[#f9fafb] px-6 py-6">
+            <p className="mb-3 text-[13px] font-semibold text-text-heading">
+              Identity Verification
+            </p>
+            <ul className="flex flex-col gap-2">
+              {TIPS_BULLETS.map((b) => (
+                <li
+                  key={b}
+                  className="flex items-start gap-2 text-[13px] text-text-body"
+                >
+                  <span className="mt-[3px] h-[6px] w-[6px] shrink-0 rounded-full bg-brand-green" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-5 mb-3 text-[13px] font-semibold text-text-heading">
+              Face Verification
+            </p>
+            <ul className="flex flex-col gap-2">
+              {FACE_BULLETS.map((b) => (
+                <li
+                  key={b}
+                  className="flex items-start gap-2 text-[13px] text-text-body"
+                >
+                  <span className="mt-[3px] h-[6px] w-[6px] shrink-0 rounded-full bg-brand-green" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 rounded-[8px] bg-[#fef3c7] px-4 py-3">
+              <p className="text-[12px] text-[#92400e]">
+                <span className="font-semibold">Important Notes:</span>{" "}
+                Providing incorrect or mismatched details may cause verification
+                to fail.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

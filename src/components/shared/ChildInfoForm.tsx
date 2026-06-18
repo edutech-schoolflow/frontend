@@ -22,7 +22,7 @@ export const childInfoSchema = z.object({
   desiredClass: z.string().min(1, "Required"),
   gender: z.enum(["male", "female"]),
   previousSchool: z.string().optional(),
-  medicalInfo: z.string().optional(),
+  medicalInfo: z.string().min(1, "Required"),
   guardianName: z.string().optional(),
   guardianPhone: z.string().optional(),
   guardianRelationship: z.string().optional(),
@@ -110,7 +110,7 @@ export function DropZone({
               or <span className="text-[#ff8d28]">browse</span> to choose a file
             </p>
             <p className="text-[12px] text-[#1b1b1b]">
-              JPEG or PNG and 1mb image size
+              JPEG, PNG or PDF — max 1 MB
             </p>
           </>
         )}
@@ -128,7 +128,8 @@ type ChildInfoFormProps = {
   onSubmit: (
     values: ChildInfoValues,
     photo: File | null,
-    birthCert: File | null
+    birthCert: File | null,
+    medicalDoc: File | null
   ) => void | Promise<void>;
 };
 
@@ -140,6 +141,9 @@ export default function ChildInfoForm({
 }: ChildInfoFormProps) {
   const [childPhoto, setChildPhoto] = useState<File | null>(null);
   const [birthCert, setBirthCert] = useState<File | null>(null);
+  const [birthCertError, setBirthCertError] = useState("");
+  const [medicalDoc, setMedicalDoc] = useState<File | null>(null);
+  const [medicalDocError, setMedicalDocError] = useState("");
   const [showGuardian, setShowGuardian] = useState(
     !!defaultValues?.guardianName
   );
@@ -169,7 +173,17 @@ export default function ChildInfoForm({
   });
 
   const handleFormSubmit = async (values: ChildInfoValues) => {
-    await onSubmit(values, childPhoto, birthCert);
+    let hasError = false;
+    if (!birthCert) {
+      setBirthCertError("Birth certificate is required");
+      hasError = true;
+    }
+    if (!medicalDoc) {
+      setMedicalDocError("Medical / fitness record is required");
+      hasError = true;
+    }
+    if (hasError) return;
+    await onSubmit(values, childPhoto, birthCert, medicalDoc);
   };
 
   return (
@@ -307,13 +321,18 @@ export default function ChildInfoForm({
       {/* Medical info */}
       <div className="flex flex-col gap-[5px]">
         <p className="flex h-[23px] items-center text-[16px] text-[#666]">
-          Medical information (Optional)
+          Medical information
         </p>
         <textarea
           {...register("medicalInfo")}
-          placeholder="Please list any allergies or health conditions."
+          placeholder="List any allergies, health conditions, or special needs."
           className="h-[76px] w-full resize-none rounded-[10px] border border-[#ccc] px-[17px] py-[12px] text-[14px] text-[#1b1b1b] placeholder:text-[#aaa] outline-none focus:border-[#1ca95c] transition-colors"
         />
+        {errors.medicalInfo && (
+          <p className="text-[11px] text-red-500">
+            {errors.medicalInfo.message}
+          </p>
+        )}
       </div>
 
       {/* File uploads */}
@@ -363,11 +382,36 @@ export default function ChildInfoForm({
             />
           )}
         </div>
+
+        {/* Birth certificate (required) */}
+        <div className="flex flex-col gap-[5px]">
+          <DropZone
+            label="Upload child's birth certificate"
+            file={birthCert}
+            onChange={(f) => {
+              setBirthCert(f);
+              if (f) setBirthCertError("");
+            }}
+          />
+          {birthCertError && (
+            <p className="text-[11px] text-red-500">{birthCertError}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Medical record upload (required) */}
+      <div className="flex flex-col gap-[5px]">
         <DropZone
-          label="Upload child's birth certificate (Optional)"
-          file={birthCert}
-          onChange={setBirthCert}
+          label="Upload medical / fitness record"
+          file={medicalDoc}
+          onChange={(f) => {
+            setMedicalDoc(f);
+            if (f) setMedicalDocError("");
+          }}
         />
+        {medicalDocError && (
+          <p className="text-[11px] text-red-500">{medicalDocError}</p>
+        )}
       </div>
 
       {/* Add guardian toggle */}
@@ -419,7 +463,7 @@ export default function ChildInfoForm({
       {/* Submit */}
       <button
         type="submit"
-        disabled={!isValid || isSubmitting}
+        disabled={!isValid || !birthCert || !medicalDoc || isSubmitting}
         className="mx-auto flex h-[59px] w-[447px] items-center justify-center rounded-[5px] text-[20px] font-normal transition-colors disabled:cursor-not-allowed disabled:bg-[#eee] disabled:text-[#888] enabled:bg-[#1ca95c] enabled:text-white enabled:hover:opacity-90"
       >
         {isSubmitting ? (

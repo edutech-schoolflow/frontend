@@ -150,15 +150,27 @@ export const getClassArms = async (_classId: string): Promise<ClassArm[]> =>
 
 export const createSchoolClass = async (
   _payload: CreateClassPayload
-): Promise<SchoolClass> =>
-  mockResponse({
+): Promise<SchoolClass> => {
+  const teacherMap = _payload.teacherPerArm ?? {};
+  const teacherNames = _payload.arms
+    .map((arm) => {
+      const staffId = teacherMap[arm];
+      if (!staffId) return null;
+      const staff = MOCK_STAFF.find((s) => s.id === staffId);
+      return staff ? `${staff.firstName} ${staff.lastName}` : null;
+    })
+    .filter((n): n is string => n !== null);
+
+  return mockResponse({
     id: `cls-${Date.now()}`,
     name: _payload.name,
     level: _payload.level,
     order: 0,
     armsCount: _payload.arms.length,
     studentsCount: 0,
+    teacherNames,
   });
+};
 
 export const deleteSchoolClass = async (_classId: string): Promise<void> =>
   mockResponse(undefined);

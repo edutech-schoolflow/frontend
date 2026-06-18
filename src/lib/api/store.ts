@@ -168,6 +168,7 @@ export interface StudentOption {
   id: string;
   name: string;
   className: string;
+  photoUrl?: string;
 }
 
 export async function getClassOptions(): Promise<ClassOption[]> {
@@ -187,6 +188,7 @@ export async function getStudentOptions(): Promise<StudentOption[]> {
       id: s.id,
       name: `${s.firstName} ${s.lastName}`,
       className: cls?.name ?? "Unknown class",
+      photoUrl: s.photoUrl,
     };
   });
 }
