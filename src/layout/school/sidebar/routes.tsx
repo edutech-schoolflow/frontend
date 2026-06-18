@@ -21,7 +21,7 @@ export const schoolRoutes: Route[] = [
   // ── Top-level (no section) ───────────────────────────────────────────
   {
     icon: (
-      <Image src="/icons/secure.svg" alt="compliance" width={20} height={20} />
+      <Image src="/icons/secure.svg" alt="compliance" width={18} height={18} />
     ),
     label: "Compliance",
     link: "compliance",

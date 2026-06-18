@@ -14,6 +14,7 @@ export const MOCK_STORE_ITEMS: StoreItem[] = [
     stock: 45,
     isActive: true,
     createdAt: "2025-01-10T00:00:00Z",
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
   },
   {
     id: "item-002",
@@ -28,6 +29,7 @@ export const MOCK_STORE_ITEMS: StoreItem[] = [
     stock: 38,
     isActive: true,
     createdAt: "2025-01-10T00:00:00Z",
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
   },
   {
     id: "item-003",
@@ -157,6 +159,7 @@ MOCK_STORE_ITEMS.push(
     stock: 30,
     isActive: true,
     createdAt: "2025-01-15T00:00:00Z",
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
   },
   {
     id: "item-012",

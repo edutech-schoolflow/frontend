@@ -137,6 +137,7 @@ export interface SchoolClass {
   order: number; // for sorting within a level
   armsCount: number;
   studentsCount: number;
+  teacherNames: string[]; // class-teachers across all arms; empty = none assigned
 }
 
 export interface SubjectTeacher {
@@ -182,4 +183,5 @@ export interface CreateClassPayload {
   name: string;
   level: ClassLevel;
   arms: string[]; // ["A", "B", "C"]
+  teacherPerArm?: Record<string, string>; // arm name → staff id
 }

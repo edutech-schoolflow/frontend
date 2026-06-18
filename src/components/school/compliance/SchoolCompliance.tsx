@@ -5,14 +5,11 @@ import {
   ChevronRight,
   Upload,
   Trash2,
-  ExternalLink,
-  UserCheck,
-  UserPlus,
+  Camera,
   MapPin,
   Navigation,
   Link2,
 } from "lucide-react";
-import { inviteProprietor } from "@/src/lib/api/schools";
 import {
   getComplianceRecord,
   updateComplianceStep,
@@ -47,10 +44,10 @@ const TIPS: Record<
   proprietor: {
     heading: "Identity Verification",
     bullets: [
-      "Verification is powered by Dojah",
       "Have your BVN or NIN ready",
-      "Ensure your face is well-lit for liveness check",
+      "Ensure your face is well-lit for the liveness check",
       "The name must match your ID document exactly",
+      "NIN and BVN must each be 11 digits",
     ],
     note: "Your data is encrypted and never shared with third parties.",
   },
@@ -145,6 +142,23 @@ function FileUploadRow({
 // ─── Section forms ────────────────────────────────────────────────────────────
 
 function SchoolProfileForm({ onSave }: { onSave: () => void }) {
+  const [schoolName, setSchoolName] = useState("");
+  const [schoolType, setSchoolType] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+
+  const canSave =
+    schoolName.trim() &&
+    schoolType &&
+    phone.trim() &&
+    email.trim() &&
+    address.trim() &&
+    city.trim() &&
+    state;
+
   const TYPES = [
     { value: "nursery", label: "Nursery / Creche" },
     { value: "primary", label: "Primary School" },
@@ -200,11 +214,20 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
     <div className="flex flex-col gap-5">
       <div>
         <label className={labelCls}>School Name</label>
-        <input className={inputCls} placeholder="e.g. Greenfield Academy" />
+        <input
+          className={inputCls}
+          placeholder="e.g. Greenfield Academy"
+          value={schoolName}
+          onChange={(e) => setSchoolName(e.target.value)}
+        />
       </div>
       <div>
         <label className={labelCls}>School Type</label>
-        <select className={selectCls} defaultValue="">
+        <select
+          className={selectCls}
+          value={schoolType}
+          onChange={(e) => setSchoolType(e.target.value)}
+        >
           <option value="" disabled>
             Select school type
           </option>
@@ -217,7 +240,13 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
       </div>
       <div>
         <label className={labelCls}>School Phone</label>
-        <input className={inputCls} placeholder="e.g. 08012345678" type="tel" />
+        <input
+          className={inputCls}
+          placeholder="e.g. 08012345678"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
       </div>
       <div>
         <label className={labelCls}>School Email</label>
@@ -225,6 +254,8 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
           className={inputCls}
           placeholder="e.g. info@greenfield.com"
           type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div>
@@ -232,16 +263,27 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
         <input
           className={inputCls}
           placeholder="e.g. 12 Adeola Odeku Street, Victoria Island"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelCls}>City</label>
-          <input className={inputCls} placeholder="e.g. Lagos" />
+          <input
+            className={inputCls}
+            placeholder="e.g. Lagos"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
         </div>
         <div>
           <label className={labelCls}>State</label>
-          <select className={selectCls} defaultValue="">
+          <select
+            className={selectCls}
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+          >
             <option value="" disabled>
               Select state
             </option>
@@ -255,7 +297,8 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
       </div>
       <button
         onClick={onSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+        disabled={!canSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Save & Continue
       </button>
@@ -266,6 +309,10 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
 type LocationData = { lat: number; lng: number } | null;
 
 function ContactSetupForm({ onSave }: { onSave: () => void }) {
+  const [contactName, setContactName] = useState("");
+  const [position, setPosition] = useState("");
+  const [officialEmail, setOfficialEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [mapsUrl, setMapsUrl] = useState("");
   const [location, setLocation] = useState<LocationData>(null);
   const [locating, setLocating] = useState(false);
@@ -307,17 +354,33 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
   }
 
   const locationSet = !!location;
+  const canSave =
+    contactName.trim() &&
+    position.trim() &&
+    officialEmail.trim() &&
+    phone.trim() &&
+    locationSet;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelCls}>Contact Name</label>
-          <input className={inputCls} placeholder="e.g. Chukwuemeka Okonkwo" />
+          <input
+            className={inputCls}
+            placeholder="e.g. Chukwuemeka Okonkwo"
+            value={contactName}
+            onChange={(e) => setContactName(e.target.value)}
+          />
         </div>
         <div>
           <label className={labelCls}>Position / Title</label>
-          <input className={inputCls} placeholder="e.g. Principal, Director" />
+          <input
+            className={inputCls}
+            placeholder="e.g. Principal, Director"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+          />
         </div>
       </div>
 
@@ -328,6 +391,8 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
             className={inputCls}
             placeholder="e.g. info@greenfield.com"
             type="email"
+            value={officialEmail}
+            onChange={(e) => setOfficialEmail(e.target.value)}
           />
         </div>
         <div>
@@ -347,6 +412,8 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
             className={inputCls}
             placeholder="e.g. 08012345678"
             type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
         </div>
         <div>
@@ -435,7 +502,8 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
 
       <button
         onClick={onSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+        disabled={!canSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Save & Continue
       </button>
@@ -443,157 +511,101 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
   );
 }
 
-type ProprietorPath = "self" | "other" | null;
-
 function ProprietorForm({ onSave }: { onSave: () => void }) {
-  const [path, setPath] = useState<ProprietorPath>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [invited, setInvited] = useState(false);
+  const [nin, setNin] = useState("");
+  const [bvn, setBvn] = useState("");
+  const [address, setAddress] = useState("");
+  const [faceDone, setFaceDone] = useState(false);
 
   const inputCls =
     "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
   const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
 
-  async function handleSendInvite() {
-    if (!name.trim() || !email.trim()) return;
-    setSending(true);
-    await inviteProprietor({ name, email, phone: "" });
-    setSending(false);
-    setInvited(true);
-    onSave();
-  }
+  const idReady = nin.length === 11 && bvn.length === 11;
+  const canSubmit = idReady && address.trim().length > 0 && faceDone;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Path selector */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setPath("self")}
-          className={`flex flex-col items-center gap-2 rounded-[10px] border-2 px-4 py-5 text-center transition-colors ${
-            path === "self"
-              ? "border-brand-green bg-[#f0faf4]"
-              : "border-[#e5e7eb] hover:border-brand-green/40"
-          }`}
-        >
-          <UserCheck
-            className={`h-[28px] w-[28px] ${path === "self" ? "text-brand-green" : "text-[#9ca3af]"}`}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className={labelCls}>National Identity Number (NIN)</label>
+          <input
+            className={inputCls}
+            placeholder="Enter 11-digit NIN"
+            maxLength={11}
+            value={nin}
+            onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))}
           />
-          <span className="text-[13px] font-medium text-text-heading">
-            I am the proprietor
-          </span>
-          <span className="text-[11px] text-text-body">
-            Verify your identity with Dojah
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setPath("other")}
-          className={`flex flex-col items-center gap-2 rounded-[10px] border-2 px-4 py-5 text-center transition-colors ${
-            path === "other"
-              ? "border-brand-green bg-[#f0faf4]"
-              : "border-[#e5e7eb] hover:border-brand-green/40"
-          }`}
-        >
-          <UserPlus
-            className={`h-[28px] w-[28px] ${path === "other" ? "text-brand-green" : "text-[#9ca3af]"}`}
+        </div>
+        <div>
+          <label className={labelCls}>Bank Verification Number (BVN)</label>
+          <input
+            className={inputCls}
+            placeholder="Enter 11-digit BVN"
+            maxLength={11}
+            value={bvn}
+            onChange={(e) => setBvn(e.target.value.replace(/\D/g, ""))}
           />
-          <span className="text-[13px] font-medium text-text-heading">
-            Someone else is the proprietor
-          </span>
-          <span className="text-[11px] text-text-body">
-            Send them a verification invite
-          </span>
-        </button>
+        </div>
       </div>
 
-      {/* Path A — self KYC via Dojah */}
-      {path === "self" && (
-        <div className="rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] p-5">
-          <p className="text-[13px] text-text-body">
-            You will need a valid government-issued ID — BVN, NIN, or Passport.
-            Have it ready before starting.
-          </p>
-          <button
-            onClick={onSave}
-            className="mt-4 flex h-[44px] items-center gap-2 rounded-[8px] bg-brand-green px-6 text-[14px] font-medium text-white transition-opacity hover:opacity-90"
-          >
-            <ExternalLink className="h-[15px] w-[15px]" />
-            Start Verification with Dojah
-          </button>
-          <p className="mt-3 text-[11px] text-text-body opacity-70">
-            Your data is encrypted and never shared with third parties.
-          </p>
-        </div>
-      )}
+      <div>
+        <label className={labelCls}>Address</label>
+        <input
+          className={inputCls}
+          placeholder="Enter your address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+      </div>
 
-      {/* Path B — invite someone else */}
-      {path === "other" && (
-        <>
-          {invited ? (
-            <div className="flex items-start gap-3 rounded-[10px] border border-green-200 bg-green-50 px-5 py-4">
-              <div className="mt-0.5 flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full bg-brand-green text-white text-[11px] font-bold">
-                ✓
-              </div>
-              <div>
-                <p className="text-[14px] font-medium text-text-heading">
-                  Invitation sent to {name}
-                </p>
-                <p className="mt-0.5 text-[12px] text-text-body">
-                  They will receive an email at{" "}
-                  <span className="font-medium">{email}</span> with a link to
-                  verify their identity via Dojah. No platform account needed.
-                </p>
-              </div>
-            </div>
+      {/* Liveness check */}
+      <div>
+        <p className={labelCls}>Liveliness Check</p>
+        <div className="flex items-center gap-4 rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
+          <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full bg-[#f3f4f6]">
+            <Camera className="h-[20px] w-[20px] text-[#9ca3af]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[13px] font-medium text-text-heading">
+              Face verification
+            </p>
+            <p className="text-[12px] text-text-body">
+              {idReady
+                ? "Click to start face check"
+                : "Complete NIN & BVN verification first"}
+            </p>
+          </div>
+          {faceDone ? (
+            <span className="text-[12px] font-medium text-brand-green">
+              Done ✓
+            </span>
           ) : (
-            <div className="flex flex-col gap-4 rounded-[10px] border border-[#e5e7eb] p-5">
-              <p className="text-[13px] text-text-body">
-                Enter the proprietor&apos;s details. They will receive an email
-                with a secure link to complete identity verification — no
-                platform account required.
-              </p>
-              <div>
-                <label className={labelCls}>Proprietor&apos;s full name</label>
-                <input
-                  className={inputCls}
-                  placeholder="e.g. Mrs. Grace Okafor"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>
-                  Proprietor&apos;s email address
-                </label>
-                <input
-                  className={inputCls}
-                  type="email"
-                  placeholder="e.g. grace@greenfield.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleSendInvite}
-                disabled={!name.trim() || !email.trim() || sending}
-                className="h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {sending ? "Sending invite…" : "Send Verification Invite"}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={!idReady}
+              onClick={() => setFaceDone(true)}
+              className="rounded-[6px] border border-[#e5e7eb] px-4 py-1.5 text-[12px] font-medium text-text-heading transition-colors hover:border-brand-green hover:text-brand-green disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Start check
+            </button>
           )}
-        </>
-      )}
+        </div>
+      </div>
+
+      <button
+        onClick={onSave}
+        disabled={!canSubmit}
+        className="mt-1 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Submit
+      </button>
     </div>
   );
 }
 
 function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
+  const [businessName, setBusinessName] = useState("");
   const [docs, setDocs] = useState<Record<string, File | null>>({
     cac: null,
     tin_cert: null,
@@ -603,6 +615,8 @@ function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
 
   const setDoc = (key: string, file: File | null) =>
     setDocs((prev) => ({ ...prev, [key]: file }));
+
+  const canSave = businessName.trim() && docs.cac;
 
   const inputCls =
     "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
@@ -614,7 +628,12 @@ function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
         <label className={labelCls}>
           Business Name (as registered with CAC)
         </label>
-        <input className={inputCls} placeholder="e.g. Greenfield Academy Ltd" />
+        <input
+          className={inputCls}
+          placeholder="e.g. Greenfield Academy Ltd"
+          value={businessName}
+          onChange={(e) => setBusinessName(e.target.value)}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -668,7 +687,8 @@ function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
 
       <button
         onClick={onSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+        disabled={!canSave}
+        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Save & Continue
       </button>

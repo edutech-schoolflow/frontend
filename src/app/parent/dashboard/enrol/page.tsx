@@ -1,5 +1,5 @@
-import EnrolStep1 from "@/src/components/parent/dashboard/enrol/EnrolStep1";
+import { redirect } from "next/navigation";
 
 export default function EnrolPage() {
-  return <EnrolStep1 />;
+  redirect("/parent/dashboard/search");
 }

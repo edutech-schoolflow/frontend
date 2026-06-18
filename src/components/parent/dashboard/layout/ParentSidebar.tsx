@@ -1,22 +1,64 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/src/context/AuthContext";
 import Logo from "@/src/components/ui/Logo";
+import type { ReactNode } from "react";
 
-const MAIN_NAV = [
-  { label: "Compliance", href: "/parent/dashboard/compliance" },
-  { label: "Find a school", href: "/parent/dashboard/search" },
-  { label: "Enrol your child", href: "/parent/dashboard/enrol" },
-  { label: "Track application", href: "/parent/dashboard/track" },
-  { label: "School Store", href: "/parent/dashboard/store" },
-  { label: "Fees", href: "/parent/dashboard/fees" },
-  { label: "CA scores", href: "/parent/dashboard/ca-scores" },
-  { label: "Report card", href: "/parent/dashboard/report-card" },
-  { label: "Performance trend", href: "/parent/dashboard/performance" },
-  { label: "Payment history", href: "/parent/dashboard/payment-history" },
+const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
+  {
+    label: "Compliance",
+    href: "/parent/dashboard/compliance",
+    icon: <Image src="/icons/secure.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "My Children",
+    href: "/parent/dashboard/children",
+    icon: <Image src="/icons/user-group.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "Find a school",
+    href: "/parent/dashboard/search",
+    icon: <Image src="/icons/folder.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "Track application",
+    href: "/parent/dashboard/track",
+    icon: <Image src="/icons/check-circle.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "School Store",
+    href: "/parent/dashboard/store",
+    icon: <ShoppingBag size={18} />,
+  },
+  {
+    label: "Fees",
+    href: "/parent/dashboard/fees",
+    icon: <Image src="/icons/finance.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "CA scores",
+    href: "/parent/dashboard/ca-scores",
+    icon: <Image src="/icons/pen-paper.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "Report card",
+    href: "/parent/dashboard/report-card",
+    icon: <Image src="/icons/drafts.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "Performance trend",
+    href: "/parent/dashboard/performance",
+    icon: <Image src="/icons/barchart.svg" alt="" width={18} height={18} />,
+  },
+  {
+    label: "Payment history",
+    href: "/parent/dashboard/payment-history",
+    icon: <Image src="/icons/receipt.svg" alt="" width={18} height={18} />,
+  },
 ];
 
 export default function ParentSidebar() {
@@ -35,42 +77,46 @@ export default function ParentSidebar() {
   const isActive = (href: string) => pathname.startsWith(href);
 
   const itemCls = (href: string) =>
-    `flex h-[45px] w-full items-center rounded-[5px] px-[18px] text-[14px] font-normal text-white transition-colors ${
+    `flex h-[42px] w-full items-center gap-[10px] rounded-[6px] px-[10px] text-[13.5px] font-normal text-white transition-colors ${
       isActive(href) ? "bg-[#1ca95c]" : "hover:bg-white/10"
     }`;
 
   return (
     <aside className="flex h-screen w-[243px] shrink-0 flex-col bg-[#00512d]">
       {/* Logo */}
-      <Link href="/parent/dashboard" className="px-[29px] pt-[59px] pb-[46px]">
-        <Logo size={30} textColor="white" />
+      <Link href="/parent/dashboard" className="px-[20px] pt-[28px] pb-[24px]">
+        <Logo size={28} textColor="white" />
       </Link>
 
       {/* Main nav */}
-      <nav className="flex flex-col gap-px px-[29px]">
+      <nav className="flex flex-col gap-px overflow-y-auto px-[12px]">
         {MAIN_NAV.map((item) => (
           <Link key={item.href} href={item.href} className={itemCls(item.href)}>
+            <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
+              {item.icon}
+            </span>
             {item.label}
           </Link>
         ))}
       </nav>
 
-      {/* Spacer pushes bottom section down */}
+      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Bottom section: Settings + user profile */}
-      <div className="px-[29px] pb-[32px]">
+      {/* Bottom section */}
+      <div className="border-t border-white/10 px-[12px] py-[16px]">
         <Link
           href="/parent/dashboard/settings"
           className={itemCls("/parent/dashboard/settings")}
         >
+          <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
+            <Image src="/icons/chip.svg" alt="" width={18} height={18} />
+          </span>
           Settings
         </Link>
 
-        <div className="my-4 h-px bg-white/20" />
-
-        <div className="flex items-center gap-[10px]">
-          <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[13px] font-medium text-white">
+        <div className="mt-[12px] flex items-center gap-[10px] px-[4px]">
+          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
@@ -84,7 +130,7 @@ export default function ParentSidebar() {
             className="shrink-0 text-white/60 transition-colors hover:text-white"
             aria-label="Log out"
           >
-            <LogOut className="h-[16px] w-[16px]" />
+            <LogOut className="h-[15px] w-[15px]" />
           </button>
         </div>
       </div>

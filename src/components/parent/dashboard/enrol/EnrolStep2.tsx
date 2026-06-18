@@ -31,7 +31,8 @@ export default function EnrolStep2() {
   const handleSubmit = async (
     _values: ChildInfoValues,
     _photo: File | null,
-    _birthCert: File | null
+    _birthCert: File | null,
+    _medicalDoc: File | null
   ) => {
     router.push("/parent/dashboard/enrol/review");
   };

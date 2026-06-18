@@ -63,7 +63,8 @@ function EditModal({
     id: string,
     values: ChildInfoValues,
     photo: File | null,
-    birthCert: File | null
+    birthCert: File | null,
+    medicalDoc: File | null
   ) => void;
   onClose: () => void;
 }) {
@@ -107,8 +108,8 @@ function EditModal({
             submitLabel="Save changes"
             defaultValues={child}
             existingPhotoUrl={child.photoUrl}
-            onSubmit={(values, photo, birthCert) =>
-              onSave(child.id, values, photo, birthCert)
+            onSubmit={(values, photo, birthCert, medicalDoc) =>
+              onSave(child.id, values, photo, birthCert, medicalDoc)
             }
           />
         </div>
@@ -156,7 +157,12 @@ export default function ParentMyChildren() {
     getChildProfiles().then(setChildren);
   }, []);
 
-  const handleAdd = (values: ChildInfoValues, photo: File | null) => {
+  const handleAdd = (
+    values: ChildInfoValues,
+    photo: File | null,
+    _birthCert: File | null,
+    _medicalDoc: File | null
+  ) => {
     const photoUrl = photo ? URL.createObjectURL(photo) : null;
     setChildren((prev) => [
       ...prev,
@@ -168,7 +174,9 @@ export default function ParentMyChildren() {
   const handleUpdate = (
     id: string,
     values: ChildInfoValues,
-    photo: File | null
+    photo: File | null,
+    _birthCert: File | null,
+    _medicalDoc: File | null
   ) => {
     setChildren((prev) =>
       prev.map((c) =>

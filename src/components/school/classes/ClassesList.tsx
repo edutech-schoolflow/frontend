@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Users, ChevronRight, BookOpen, Trash2, X } from "lucide-react";
+import {
+  Plus,
+  Users,
+  ChevronRight,
+  BookOpen,
+  Trash2,
+  X,
+  UserCheck,
+} from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +18,7 @@ import {
   getSchoolClasses,
   createSchoolClass,
   deleteSchoolClass,
+  getSchoolTeachers,
 } from "@/src/lib/api/schools";
 import type { SchoolClass, ClassLevel } from "@/src/types/school";
 
@@ -49,6 +58,15 @@ function AddClassModal({
   onCreated: (c: SchoolClass) => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
+  // arm index → selected teacher id
+  const [teacherPerArm, setTeacherPerArm] = useState<Record<number, string>>(
+    {}
+  );
+
+  useEffect(() => {
+    getSchoolTeachers().then(setTeachers);
+  }, []);
 
   const {
     register,
@@ -69,10 +87,18 @@ function AddClassModal({
   const onSubmit = async (values: FormValues) => {
     setSaving(true);
     try {
+      const armNames = values.arms.map((a) => a.value);
+      const teacherByName: Record<string, string> = {};
+      armNames.forEach((arm, idx) => {
+        if (teacherPerArm[idx]) teacherByName[arm] = teacherPerArm[idx];
+      });
+
       const created = await createSchoolClass({
         name: values.name,
         level: values.level,
-        arms: values.arms.map((a) => a.value),
+        arms: armNames,
+        teacherPerArm:
+          Object.keys(teacherByName).length > 0 ? teacherByName : undefined,
       });
       onCreated(created);
     } finally {
@@ -129,7 +155,7 @@ function AddClassModal({
             </select>
           </div>
 
-          {/* Arms */}
+          {/* Arms + teacher assignment */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-[13px] font-medium text-text-heading">
@@ -143,22 +169,52 @@ function AddClassModal({
                 + Add arm
               </button>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {fields.map((field, idx) => (
-                <div key={field.id} className="flex items-center gap-2">
-                  <input
-                    {...register(`arms.${idx}.value`)}
-                    placeholder={`e.g. ${String.fromCharCode(65 + idx)}`}
-                    className="h-[38px] flex-1 rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
-                  />
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(idx)}
-                      className="text-[#d1d5db] hover:text-red-400"
+                <div key={field.id} className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      {...register(`arms.${idx}.value`)}
+                      placeholder={`e.g. ${String.fromCharCode(65 + idx)}`}
+                      className="h-[38px] flex-1 rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+                    />
+                    {fields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          remove(idx);
+                          setTeacherPerArm((prev) => {
+                            const next = { ...prev };
+                            delete next[idx];
+                            return next;
+                          });
+                        }}
+                        className="text-[#d1d5db] hover:text-red-400"
+                      >
+                        <X className="h-[15px] w-[15px]" />
+                      </button>
+                    )}
+                  </div>
+                  {teachers.length > 0 && (
+                    <select
+                      value={teacherPerArm[idx] ?? ""}
+                      onChange={(e) =>
+                        setTeacherPerArm((prev) => ({
+                          ...prev,
+                          [idx]: e.target.value,
+                        }))
+                      }
+                      className="h-[36px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 text-[12px] text-text-body outline-none focus:border-brand-green"
                     >
-                      <X className="h-[15px] w-[15px]" />
-                    </button>
+                      <option value="">
+                        — Assign class teacher (optional) —
+                      </option>
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 </div>
               ))}
@@ -216,6 +272,11 @@ function ClassCard({
     onDelete(cls.id);
   };
 
+  const teacherLabel =
+    cls.teacherNames.length === 0
+      ? "No teacher assigned"
+      : cls.teacherNames.join(", ");
+
   return (
     <Link
       href={`/school/dashboard/classes/${cls.id}?name=${encodeURIComponent(cls.name)}`}
@@ -244,6 +305,19 @@ function ClassCard({
       >
         {LEVEL_LABELS[cls.level]}
       </span>
+
+      <div className="mt-2 flex items-center gap-1.5">
+        <UserCheck className="h-[12px] w-[12px] shrink-0 text-[#9ca3af]" />
+        <span
+          className={`truncate text-[12px] ${
+            cls.teacherNames.length === 0
+              ? "text-[#9ca3af] italic"
+              : "text-text-body"
+          }`}
+        >
+          {teacherLabel}
+        </span>
+      </div>
 
       <div className="mt-4 flex items-center gap-4 border-t border-[#f3f4f6] pt-4">
         <div className="flex items-center gap-1.5 text-[12px] text-text-body">

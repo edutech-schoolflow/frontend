@@ -17,6 +17,17 @@ export interface StoreItem {
   stock: number | null; // null = unlimited
   isActive: boolean;
   createdAt: string;
+  sizes?: string[]; // available sizes, e.g. ["XS","S","M","L","XL","XXL"]
+}
+
+export interface CartLine {
+  storeItem: StoreItem;
+  studentId: string;
+  studentName: string;
+  schoolId: string;
+  schoolName: string;
+  quantity: number;
+  selectedSize?: string;
 }
 
 export type AssignmentStatus = "pending" | "invoiced" | "paid";
