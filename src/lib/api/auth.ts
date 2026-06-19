@@ -29,11 +29,31 @@ const MOCK_ADMIN_USER: AuthUser = {
   role: "super_admin",
 };
 
-export const loginStaff = async (_payload: {
+const MOCK_TEACHER_USERS: Record<string, AuthUser> = {
+  "amaka@greenfieldacademy.com": {
+    id: "usr-002",
+    name: "Amaka Adeyemi",
+    email: "amaka@greenfieldacademy.com",
+    role: "teacher",
+    schoolId: "sch-001",
+    subdomain: "greenfield",
+  },
+  "emeka@greenfieldacademy.com": {
+    id: "usr-003",
+    name: "Emeka Obi",
+    email: "emeka@greenfieldacademy.com",
+    role: "teacher",
+    schoolId: "sch-001",
+    subdomain: "greenfield",
+  },
+};
+
+export const loginStaff = async (payload: {
   email: string;
   password: string;
 }) => {
-  return mockResponse(MOCK_SCHOOL_USER);
+  const teacher = MOCK_TEACHER_USERS[payload.email.toLowerCase()];
+  return mockResponse(teacher ?? MOCK_SCHOOL_USER);
 };
 
 export const requestOtp = async (_payload: { phone: string }) => {

@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, ChevronDown, Trash2 } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  ChevronDown,
+  Trash2,
+  MessageSquare,
+} from "lucide-react";
 import {
   getTeacherExamPapers,
   createExamPaper,
@@ -382,6 +388,13 @@ export default function StaffExamsList() {
                     <p className="mt-1.5 text-[12px] font-medium text-[#dc2626]">
                       Rejected: {paper.reviewComment}
                     </p>
+                  )}
+                  {(paper.adminFeedback ||
+                    paper.questions.some((q) => q.reviewNote)) && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-medium text-[#059669]">
+                      <MessageSquare className="h-[12px] w-[12px]" />
+                      Feedback from admin
+                    </span>
                   )}
                 </div>
               </div>

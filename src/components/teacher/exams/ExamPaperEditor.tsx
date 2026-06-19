@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   GripVertical,
+  MessageSquare,
 } from "lucide-react";
 import {
   getExamPaper,
@@ -273,6 +274,12 @@ function QuestionCard({
                 {opt.id === question.answer && " ✓"}
               </span>
             ))}
+          </div>
+        )}
+        {question.reviewNote && (
+          <div className="mt-2.5 flex items-start gap-1.5 rounded-[6px] border border-[#d1fae5] bg-[#ecfdf5] px-2.5 py-2">
+            <MessageSquare className="mt-0.5 h-[12px] w-[12px] shrink-0 text-[#059669]" />
+            <p className="text-[12px] text-[#065f46]">{question.reviewNote}</p>
           </div>
         )}
       </div>
@@ -595,6 +602,19 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
           <p className="text-[13px] text-[#15803d]">
             Approved by school admin. This exam paper is ready for use.
           </p>
+        </div>
+      )}
+
+      {/* Admin feedback banner */}
+      {paper.adminFeedback && (
+        <div className="mb-5 flex items-start gap-2.5 rounded-[10px] border border-[#d1fae5] bg-[#ecfdf5] px-4 py-3">
+          <MessageSquare className="mt-0.5 h-[16px] w-[16px] shrink-0 text-[#059669]" />
+          <div>
+            <p className="text-[13px] font-medium text-[#065f46]">
+              Feedback from school admin
+            </p>
+            <p className="text-[13px] text-[#047857]">{paper.adminFeedback}</p>
+          </div>
         </div>
       )}
 

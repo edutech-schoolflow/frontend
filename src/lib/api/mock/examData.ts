@@ -123,6 +123,8 @@ export const MOCK_EXAM_PAPERS: ExamPaper[] = [
         type: "theory",
         text: "Write the numbers 1 to 20 in words.",
         marks: 20,
+        reviewNote:
+          "Consider reducing this to 10 marks — 20 marks for this question unbalances the paper relative to the MC section.",
       },
     ],
     status: "approved",
@@ -130,6 +132,8 @@ export const MOCK_EXAM_PAPERS: ExamPaper[] = [
     createdAt: "2026-06-08T09:00:00Z",
     updatedAt: "2026-06-10T11:00:00Z",
     submittedAt: "2026-06-09T11:00:00Z",
+    adminFeedback:
+      "Good paper overall. Please review the mark allocation on Q4 — the weighting is too heavy for a single theory question at this level.",
   },
 
   // ── Primary 1B papers (Emeka Obi) ────────────────────────────────────────────
