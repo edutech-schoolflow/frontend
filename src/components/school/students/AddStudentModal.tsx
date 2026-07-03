@@ -1,27 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, CheckCircle2, UserPlus } from "lucide-react";
-import { createStudent } from "@/src/lib/api/students";
-import { searchParentByPhone, inviteNewParent } from "@/src/lib/api/parents";
-import type { Class, Student } from "@/src/types/student";
-import type { Parent } from "@/src/types/parent";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import { useCreateStudent } from "@/src/lib/api/useSchoolStudents";
+import { useClassArms } from "@/src/lib/api/useSchoolClasses";
+import type { SchoolClass } from "@/src/types/school";
 
 type Props = {
-  classes: Class[];
-  onDone: (student: Student) => void;
+  classes: SchoolClass[];
+  onDone: () => void;
   onClose: () => void;
 };
-
-type ParentMode = "existing" | "new";
 
 const INPUT =
   "w-full rounded-lg border border-border-default px-3 py-2.5 text-[13px] text-dark-blue outline-none focus:border-brand-green";
 
+const RELATIONSHIPS = ["mother", "father", "guardian"] as const;
+
 export default function AddStudentModal({ classes, onDone, onClose }: Props) {
+  const create = useCreateStudent();
   const [step, setStep] = useState<1 | 2>(1);
 
-  // Step 1 — student fields
+  // Step 1 — student
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -29,31 +30,29 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
     dateOfBirth: "",
     gender: "male" as "male" | "female",
     classId: classes[0]?.id ?? "",
+    armId: "",
     previousSchool: "",
     medicalNotes: "",
   });
 
-  // Step 2 — parent linking
-  const [parentMode, setParentMode] = useState<ParentMode>("existing");
-  const [phoneQuery, setPhoneQuery] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [foundParent, setFoundParent] = useState<Parent | null | undefined>(
-    undefined
-  );
-  const [linkedParent, setLinkedParent] = useState<Parent | null>(null);
-  const [newParent, setNewParent] = useState({
+  // Step 2 — primary parent (resolved/created by phone on the backend)
+  const [parent, setParent] = useState({
+    phone: "",
     firstName: "",
     lastName: "",
-    phone: "",
-    email: "",
+    relationship: "mother" as (typeof RELATIONSHIPS)[number],
   });
 
-  const [saving, setSaving] = useState(false);
+  // Arms (streams) the school explicitly created for this class. May be empty —
+  // a class can take students directly without any arm.
+  const { data: arms = [] } = useClassArms(form.classId);
 
   const set = (k: keyof typeof form, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
-  const setNP = (k: keyof typeof newParent, v: string) =>
-    setNewParent((p) => ({ ...p, [k]: v }));
+
+  // The arm is optional: a student belongs to the class, and only sits in an arm
+  // if the school created one and assigned them to it.
+  const effectiveArmId = form.armId || undefined;
 
   const step1Valid =
     form.firstName.trim() &&
@@ -61,49 +60,34 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
     form.dateOfBirth &&
     form.classId;
 
-  const step2Valid =
-    parentMode === "existing"
-      ? linkedParent !== null
-      : newParent.firstName.trim() &&
-        newParent.lastName.trim() &&
-        newParent.phone.trim();
-
-  async function handleSearch() {
-    if (!phoneQuery.trim()) return;
-    setSearching(true);
-    setFoundParent(undefined);
-    setLinkedParent(null);
-    const result = await searchParentByPhone(phoneQuery);
-    setFoundParent(result);
-    setSearching(false);
-  }
+  const step2Valid = /^(\+?234|0)\d{10}$/.test(parent.phone.trim());
 
   async function handleSave() {
-    setSaving(true);
-
-    // If new parent, send invitation first
-    if (parentMode === "new" && !linkedParent) {
-      await inviteNewParent({
-        firstName: newParent.firstName.trim(),
-        lastName: newParent.lastName.trim(),
-        phone: newParent.phone.trim(),
-        email: newParent.email.trim() || undefined,
+    try {
+      await create.mutateAsync({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        middleName: form.middleName.trim() || undefined,
+        dateOfBirth: form.dateOfBirth,
+        gender: form.gender,
+        classId: form.classId,
+        classArmId: effectiveArmId,
+        previousSchool: form.previousSchool.trim() || undefined,
+        medicalNotes: form.medicalNotes.trim() || undefined,
+        parent: {
+          phone: parent.phone.trim(),
+          firstName: parent.firstName.trim() || undefined,
+          lastName: parent.lastName.trim() || undefined,
+          relationship: parent.relationship,
+        },
       });
+      toast.success("Student enrolled.");
+      onDone();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not enrol student."
+      );
     }
-
-    const student = await createStudent({
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      middleName: form.middleName.trim() || undefined,
-      dateOfBirth: form.dateOfBirth,
-      gender: form.gender,
-      classId: form.classId,
-      previousSchool: form.previousSchool.trim() || undefined,
-      medicalNotes: form.medicalNotes.trim() || undefined,
-    });
-
-    setSaving(false);
-    onDone(student);
   }
 
   return (
@@ -206,21 +190,54 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                Class <span className="text-[#e84040]">*</span>
-              </label>
-              <select
-                className={INPUT}
-                value={form.classId}
-                onChange={(e) => set("classId", e.target.value)}
-              >
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className={arms.length > 0 ? "grid grid-cols-2 gap-3" : ""}>
+              <div>
+                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                  Class <span className="text-[#e84040]">*</span>
+                </label>
+                <select
+                  className={INPUT}
+                  value={form.classId}
+                  onChange={(e) => {
+                    set("classId", e.target.value);
+                    set("armId", "");
+                  }}
+                >
+                  {classes.length === 0 && (
+                    <option value="">No classes yet</option>
+                  )}
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Arm picker only when the class has streams — and it's optional:
+                  a student can be enrolled into the class without an arm. */}
+              {arms.length > 0 && (
+                <div>
+                  <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                    Arm / Stream{" "}
+                    <span className="text-[12px] font-normal text-grey-text">
+                      (optional)
+                    </span>
+                  </label>
+                  <select
+                    className={INPUT}
+                    value={form.armId}
+                    onChange={(e) => set("armId", e.target.value)}
+                  >
+                    <option value="">No specific arm</option>
+                    {arms.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.arm || "Main"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div>
@@ -256,187 +273,86 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
           </div>
         )}
 
-        {/* ── STEP 2: Parent / Guardian ───────────────────────────── */}
+        {/* ── STEP 2: Primary parent ──────────────────────────────── */}
         {step === 2 && (
-          <div className="px-6 py-5 space-y-5">
-            {/* Mode toggle */}
-            <div className="flex gap-2 rounded-xl border border-border-default bg-surface-muted p-1">
-              {(
-                [
-                  { key: "existing", label: "Existing parent account" },
-                  { key: "new", label: "New parent" },
-                ] as { key: ParentMode; label: string }[]
-              ).map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => {
-                    setParentMode(opt.key);
-                    setFoundParent(undefined);
-                    setLinkedParent(null);
-                  }}
-                  className={`flex-1 rounded-lg py-2 text-[13px] font-medium transition-colors ${parentMode === opt.key ? "bg-white text-dark-blue shadow-sm" : "text-grey-text hover:text-dark-blue"}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+          <div className="space-y-4 px-6 py-5">
+            <p className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] text-blue-700">
+              Enter the student&apos;s primary parent/guardian phone. If it
+              already has a SchoolFlow account we&apos;ll link it; otherwise we
+              create a pending account they activate via OTP.
+            </p>
+
+            <div>
+              <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                Parent phone <span className="text-[#e84040]">*</span>
+              </label>
+              <input
+                className={INPUT}
+                placeholder="e.g. 08012345678"
+                value={parent.phone}
+                onChange={(e) =>
+                  setParent((p) => ({
+                    ...p,
+                    phone: e.target.value.replace(/[^\d+]/g, ""),
+                  }))
+                }
+              />
             </div>
 
-            {/* Existing parent search */}
-            {parentMode === "existing" && (
-              <div className="space-y-3">
-                <p className="text-[13px] text-grey-text">
-                  Search by the parent&apos;s registered phone number.
-                </p>
-
-                <div className="flex gap-2">
-                  <input
-                    className={`${INPUT} flex-1`}
-                    placeholder="+234 801 234 5678"
-                    value={phoneQuery}
-                    onChange={(e) => {
-                      setPhoneQuery(e.target.value);
-                      setFoundParent(undefined);
-                      setLinkedParent(null);
-                    }}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSearch}
-                    disabled={searching || !phoneQuery.trim()}
-                    className="flex items-center gap-[6px] rounded-lg bg-brand-green px-4 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
-                  >
-                    <Search className="h-[14px] w-[14px]" />
-                    {searching ? "Searching…" : "Search"}
-                  </button>
-                </div>
-
-                {/* Result */}
-                {foundParent === null && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
-                    No account found with this number. Switch to{" "}
-                    <button
-                      type="button"
-                      onClick={() => setParentMode("new")}
-                      className="font-semibold underline"
-                    >
-                      New parent
-                    </button>{" "}
-                    to invite them.
-                  </div>
-                )}
-
-                {foundParent && !linkedParent && (
-                  <div className="flex items-center justify-between rounded-lg border border-border-default bg-surface-muted px-4 py-3">
-                    <div>
-                      <p className="text-[13px] font-medium text-dark-blue">
-                        {foundParent.firstName} {foundParent.lastName}
-                      </p>
-                      <p className="text-[12px] text-grey-text">
-                        {foundParent.phone}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLinkedParent(foundParent)}
-                      className="rounded-lg bg-brand-green px-4 py-1.5 text-[12px] font-medium text-white hover:opacity-90"
-                    >
-                      Link
-                    </button>
-                  </div>
-                )}
-
-                {linkedParent && (
-                  <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-brand-green" />
-                    <div>
-                      <p className="text-[13px] font-medium text-green-700">
-                        {linkedParent.firstName} {linkedParent.lastName} will be
-                        linked
-                      </p>
-                      <p className="text-[12px] text-green-600">
-                        {linkedParent.phone}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLinkedParent(null)}
-                      className="ml-auto text-[12px] text-grey-text hover:text-dark-blue"
-                    >
-                      Change
-                    </button>
-                  </div>
-                )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                  Parent first name{" "}
+                  <span className="text-[12px] font-normal text-grey-text">
+                    (new accounts)
+                  </span>
+                </label>
+                <input
+                  className={INPUT}
+                  placeholder="e.g. John"
+                  value={parent.firstName}
+                  onChange={(e) =>
+                    setParent((p) => ({ ...p, firstName: e.target.value }))
+                  }
+                />
               </div>
-            )}
-
-            {/* New parent form */}
-            {parentMode === "new" && (
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-                  <UserPlus className="mt-[1px] h-4 w-4 shrink-0 text-blue-600" />
-                  <p className="text-[13px] text-blue-700">
-                    A WhatsApp invitation will be sent to this number. The
-                    parent can activate their account and set a PIN to access
-                    the portal.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                      First name <span className="text-[#e84040]">*</span>
-                    </label>
-                    <input
-                      className={INPUT}
-                      placeholder="e.g. John"
-                      value={newParent.firstName}
-                      onChange={(e) => setNP("firstName", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                      Last name <span className="text-[#e84040]">*</span>
-                    </label>
-                    <input
-                      className={INPUT}
-                      placeholder="e.g. Okafor"
-                      value={newParent.lastName}
-                      onChange={(e) => setNP("lastName", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                    Phone number <span className="text-[#e84040]">*</span>
-                  </label>
-                  <input
-                    className={INPUT}
-                    placeholder="+234 801 234 5678"
-                    value={newParent.phone}
-                    onChange={(e) => setNP("phone", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                    Email{" "}
-                    <span className="text-[12px] font-normal text-grey-text">
-                      (optional)
-                    </span>
-                  </label>
-                  <input
-                    type="email"
-                    className={INPUT}
-                    placeholder="john@example.com"
-                    value={newParent.email}
-                    onChange={(e) => setNP("email", e.target.value)}
-                  />
-                </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                  Parent last name
+                </label>
+                <input
+                  className={INPUT}
+                  placeholder="e.g. Okafor"
+                  value={parent.lastName}
+                  onChange={(e) =>
+                    setParent((p) => ({ ...p, lastName: e.target.value }))
+                  }
+                />
               </div>
-            )}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                Relationship
+              </label>
+              <select
+                className={INPUT}
+                value={parent.relationship}
+                onChange={(e) =>
+                  setParent((p) => ({
+                    ...p,
+                    relationship: e.target
+                      .value as (typeof RELATIONSHIPS)[number],
+                  }))
+                }
+              >
+                {RELATIONSHIPS.map((r) => (
+                  <option key={r} value={r} className="capitalize">
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
 
@@ -472,14 +388,10 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!step2Valid || saving}
+                disabled={!step2Valid || create.isPending}
                 className="flex-1 rounded-lg bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
               >
-                {saving
-                  ? "Adding…"
-                  : parentMode === "new"
-                    ? "Add Student & Invite Parent"
-                    : "Add Student"}
+                {create.isPending ? "Enrolling…" : "Add Student"}
               </button>
             </>
           )}

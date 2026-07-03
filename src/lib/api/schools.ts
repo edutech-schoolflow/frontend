@@ -169,6 +169,7 @@ export const createSchoolClass = async (
     armsCount: _payload.arms.length,
     studentsCount: 0,
     teacherNames,
+    classTeacher: null,
   });
 };
 

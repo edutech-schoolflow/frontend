@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Users, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
-import { getAttendanceOverview } from "@/src/lib/api/attendance";
-import type { AttendanceOverview } from "@/src/types/attendance";
+import { useState } from "react";
+import {
+  Users,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Plus,
+} from "lucide-react";
+import { useAttendanceOverview } from "@/src/lib/api/useSchoolAttendance";
+import { unitKey } from "@/src/lib/api/schoolAttendance";
+import TakeRegisterModal from "./TakeRegisterModal";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -19,14 +27,11 @@ function formatDate(iso: string) {
 }
 
 export default function SchoolAttendanceOverview() {
-  const [data, setData] = useState<AttendanceOverview | null>(null);
   const today = todayIso();
+  const { data, isPending } = useAttendanceOverview(today);
+  const [showTake, setShowTake] = useState(false);
 
-  useEffect(() => {
-    getAttendanceOverview(today).then(setData);
-  }, [today]);
-
-  if (!data) {
+  if (isPending || !data) {
     return (
       <div className="flex items-center justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
@@ -40,11 +45,22 @@ export default function SchoolAttendanceOverview() {
   return (
     <div className="px-[32px] py-[28px] pb-[60px]">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[22px] font-semibold text-text-heading">
-          Attendance
-        </h1>
-        <p className="mt-0.5 text-[13px] text-text-body">{formatDate(today)}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-[22px] font-semibold text-text-heading">
+            Attendance
+          </h1>
+          <p className="mt-0.5 text-[13px] text-text-body">
+            {formatDate(today)}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowTake(true)}
+          className="flex items-center gap-2 rounded-[8px] bg-brand-green px-4 py-2.5 text-[13px] font-medium text-white hover:opacity-90"
+        >
+          <Plus className="h-[14px] w-[14px]" />
+          Take register
+        </button>
       </div>
 
       {/* Pending notice */}
@@ -54,9 +70,9 @@ export default function SchoolAttendanceOverview() {
           <p className="text-[13px] text-amber-800">
             <strong>
               {pendingCount} class{" "}
-              {pendingCount === 1 ? "arm has" : "arms have"} not submitted
+              {pendingCount === 1 ? "unit has" : "units have"} not submitted
             </strong>{" "}
-            attendance yet today. Teachers mark attendance from their portal.
+            attendance yet today. Use “Take register” to submit one.
           </p>
         </div>
       )}
@@ -146,7 +162,7 @@ export default function SchoolAttendanceOverview() {
             <tbody className="divide-y divide-[#f3f4f6]">
               {data.arms.map((arm) => (
                 <tr
-                  key={arm.armId}
+                  key={unitKey(arm)}
                   className={!arm.submitted ? "opacity-50" : ""}
                 >
                   <td className="py-3.5 pl-5 text-[13px] font-medium text-text-heading">
@@ -241,10 +257,18 @@ export default function SchoolAttendanceOverview() {
             No attendance submitted yet today
           </p>
           <p className="max-w-[340px] text-[13px] text-text-body">
-            Teachers mark attendance from the teacher portal. Results will
-            appear here once submitted.
+            Use “Take register” to submit a class&apos;s attendance. Teachers
+            can also submit from their portal. Results appear here once
+            submitted.
           </p>
         </div>
+      )}
+
+      {showTake && (
+        <TakeRegisterModal
+          initialDate={today}
+          onClose={() => setShowTake(false)}
+        />
       )}
     </div>
   );

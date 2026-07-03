@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Search, Users } from "lucide-react";
-import { getSchoolStaff } from "@/src/lib/api/staff";
+import {
+  useStaffDirectory,
+  useInvalidateStaffDirectory,
+} from "@/src/lib/api/useSchoolStaffDirectory";
 import type { Staff, StaffRole } from "@/src/types/staff";
 import { ROLE_LABELS } from "@/src/types/staff";
 import InviteStaffModal from "./InviteStaffModal";
@@ -125,26 +128,17 @@ function StaffCard({
 
 export default function StaffPage() {
   const [view, setView] = useState<PageView>("directory");
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [armsByStaff, setArmsByStaff] = useState<Record<string, string[]>>({});
-  const [loadedTerm, setLoadedTerm] = useState(false);
   const [filter, setFilter] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Staff | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    getSchoolStaff().then(({ staff: s, armsByStaff: arms }) => {
-      if (cancelled) return;
-      setStaff(s);
-      setArmsByStaff(arms);
-      setLoadedTerm(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: staffData, isPending } = useStaffDirectory();
+  const invalidateDirectory = useInvalidateStaffDirectory();
+  const staff = staffData ?? [];
+  // Class-assignment counts come from the Classes module (not wired yet).
+  const armsByStaff: Record<string, string[]> = {};
+  const loadedTerm = !isPending;
 
   const tabCounts: Record<FilterTab, number> = {
     all: staff.length,
@@ -180,13 +174,13 @@ export default function StaffPage() {
     (s) => s.role === "teacher" && s.status === "active"
   ).length;
 
-  function handleInviteDone(newStaff: Staff) {
-    setStaff((prev) => [newStaff, ...prev]);
+  function handleInviteDone() {
+    invalidateDirectory();
     setInviteOpen(false);
   }
 
   function handleStaffUpdate(updated: Staff) {
-    setStaff((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    // The list auto-refreshes via the mutation's query invalidation; keep the open modal in sync.
     setSelected(updated);
   }
 

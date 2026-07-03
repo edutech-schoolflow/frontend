@@ -2,19 +2,25 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { rejectApplication } from "@/src/lib/api/applications";
+import { toast } from "sonner";
+import { useRejectApplication } from "@/src/lib/api/useSchoolApplications";
 
 type Props = { applicationId: string; onDone: () => void; onClose: () => void };
 
 export default function RejectModal({ applicationId, onDone, onClose }: Props) {
   const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
+  const reject = useRejectApplication(applicationId);
+  const saving = reject.isPending;
 
   async function handleReject() {
-    setSaving(true);
-    await rejectApplication(applicationId, reason);
-    setSaving(false);
-    onDone();
+    try {
+      await reject.mutateAsync(reason);
+      onDone();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not reject the application."
+      );
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -12,17 +12,15 @@ import {
   UserCheck,
   ChevronRight,
 } from "lucide-react";
-import {
-  getSchoolApplication,
-  admitApplication,
-} from "@/src/lib/api/applications";
+import { useApplication } from "@/src/lib/api/useSchoolApplications";
 import type { Application } from "@/src/types/application";
 import AppStatusChip from "./AppStatusChip";
 import ScheduleExamModal from "./ScheduleExamModal";
 import RejectModal from "./RejectModal";
 import RecordAssessmentModal from "./RecordAssessmentModal";
+import AdmitModal from "./AdmitModal";
 
-type Modal = "schedule" | "reject" | "assess" | null;
+type Modal = "schedule" | "reject" | "assess" | "admit" | null;
 
 // ─── Pipeline step config ───────────────────────────────────────────────────────
 
@@ -176,39 +174,19 @@ export default function ApplicationDetail({
   backPath?: string;
 }) {
   const router = useRouter();
-  const [app, setApp] = useState<Application | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: app, isPending: loading } = useApplication(id);
   const [modal, setModal] = useState<Modal>(null);
-  const [admitting, setAdmitting] = useState(false);
   const [done, setDone] = useState<
     "admitted" | "rejected" | "scheduled" | "assessed" | null
   >(null);
 
-  useEffect(() => {
-    getSchoolApplication(id).then((data) => {
-      setApp(data);
-      setLoading(false);
-    });
-  }, [id]);
-
-  async function handleAdmit() {
-    if (!app) return;
-    setAdmitting(true);
-    const updated = await admitApplication(app.id);
-    setAdmitting(false);
-    setDone("admitted");
-    setApp(updated);
-  }
-
-  function handleModalDone(type: "scheduled" | "rejected" | "assessed") {
+  // Each action mutation invalidates the application query, so the view refetches
+  // the authoritative state — we only flip the success banner here.
+  function handleModalDone(
+    type: "scheduled" | "rejected" | "assessed" | "admitted"
+  ) {
     setModal(null);
     setDone(type);
-    if (type === "scheduled")
-      setApp((prev) => (prev ? { ...prev, status: "exam_scheduled" } : prev));
-    if (type === "rejected")
-      setApp((prev) => (prev ? { ...prev, status: "not_admitted" } : prev));
-    if (type === "assessed")
-      setApp((prev) => (prev ? { ...prev, assessmentRating: "good" } : prev));
   }
 
   if (loading) return <p className="text-[13px] text-grey-text">Loading…</p>;
@@ -291,11 +269,10 @@ export default function ApplicationDetail({
             )}
             {showAdmit && (
               <button
-                onClick={handleAdmit}
-                disabled={admitting}
-                className="rounded-lg bg-brand-green px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
+                onClick={() => setModal("admit")}
+                className="rounded-lg bg-brand-green px-4 py-2 text-[13px] font-medium text-white hover:opacity-90"
               >
-                {admitting ? "Admitting…" : "Admit"}
+                Admit
               </button>
             )}
             {showReject && (
@@ -523,6 +500,14 @@ export default function ApplicationDetail({
         <RecordAssessmentModal
           applicationId={app.id}
           onDone={() => handleModalDone("assessed")}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal === "admit" && (
+        <AdmitModal
+          applicationId={app.id}
+          childName={childName}
+          onDone={() => handleModalDone("admitted")}
           onClose={() => setModal(null)}
         />
       )}

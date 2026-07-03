@@ -2,16 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  validateInviteToken,
-  sendOTP,
-  verifyOTP,
-  completeRegistration,
-} from "@/src/lib/api/invite";
-import { STAFF_TEST_USER_KEY } from "@/src/context/StaffFeaturesContext";
-import type { InviteDetails } from "@/src/lib/api/invite";
+import Link from "next/link";
+import { toast } from "sonner";
 
-type Step = "loading" | "invalid" | "welcome" | "otp" | "password" | "success";
+import {
+  useValidateInvite,
+  useSendInviteOtp,
+  useAcceptInvite,
+} from "@/src/lib/api/useStaffInvite";
+import { EMPLOYMENT_LABELS } from "@/src/lib/api/staffInvite";
+import { ROLE_LABELS } from "@/src/types/staff";
+import type { StaffRole } from "@/src/types/staff";
+
+type Step = "welcome" | "otp" | "password";
+
+const roleLabel = (role: string) =>
+  ROLE_LABELS[role as StaffRole] ?? role.replace(/_/g, " ");
+const employmentLabel = (t: string) =>
+  EMPLOYMENT_LABELS[t as keyof typeof EMPLOYMENT_LABELS] ?? t;
 
 // ── Password strength ─────────────────────────────────────────────────────────
 
@@ -21,10 +29,10 @@ function passwordStrength(pw: string): {
   color: string;
 } {
   if (pw.length < 6) return { level: 0, label: "", color: "" };
-  const hasUpper = /[A-Z]/.test(pw);
-  const hasNum = /\d/.test(pw);
-  const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-  const score = (hasUpper ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpecial ? 1 : 0);
+  const score =
+    (/[A-Z]/.test(pw) ? 1 : 0) +
+    (/\d/.test(pw) ? 1 : 0) +
+    (/[^A-Za-z0-9]/.test(pw) ? 1 : 0);
   if (pw.length >= 10 && score >= 2)
     return { level: 3, label: "Strong", color: "bg-[#16a34a]" };
   if (pw.length >= 8 && score >= 1)
@@ -67,12 +75,11 @@ function OTPInput({
     const next = Array(6).fill("");
     digits.split("").forEach((d, i) => (next[i] = d));
     onChange(next);
-    const focusIdx = Math.min(digits.length, 5);
-    refs.current[focusIdx]?.focus();
+    refs.current[Math.min(digits.length, 5)]?.focus();
   }
 
   return (
-    <div className="flex gap-3 justify-center">
+    <div className="flex justify-center gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <input
           key={i}
@@ -86,21 +93,21 @@ function OTPInput({
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
-          className="h-[52px] w-[44px] rounded-[10px] border border-[#e5e7eb] bg-white text-center text-[20px] font-semibold text-text-heading outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20 transition-all"
+          className="h-[52px] w-[44px] rounded-[10px] border border-[#e5e7eb] bg-white text-center text-[20px] font-semibold text-text-heading outline-none transition-all focus:border-brand-green focus:ring-2 focus:ring-brand-green/20"
         />
       ))}
     </div>
   );
 }
 
-// ── Shell layout ──────────────────────────────────────────────────────────────
+// ── Shell ─────────────────────────────────────────────────────────────────────
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f9fafb] px-4 py-12">
       <div className="w-full max-w-[420px]">
         <p className="mb-8 text-center text-[18px] font-bold tracking-tight text-brand-green">
-          EduPortal
+          SchoolFlow
         </p>
         {children}
       </div>
@@ -108,106 +115,71 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[12px] text-text-body">{label}</span>
+      <span className="text-[13px] font-medium capitalize text-text-heading">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function InviteAcceptFlow({ token }: { token: string }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("loading");
-  const [details, setDetails] = useState<InviteDetails | null>(null);
+  const { data: details, isPending, isError } = useValidateInvite(token);
+  const sendOtp = useSendInviteOtp();
+  const accept = useAcceptInvite();
 
-  // OTP step state
+  const [step, setStep] = useState<Step>("welcome");
   const [otp, setOtp] = useState(Array(6).fill(""));
-  const [otpError, setOtpError] = useState("");
-  const [verifying, setVerifying] = useState(false);
-  const [countdown, setCountdown] = useState(60);
-
-  // Password step state
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
-  const [pwError, setPwError] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
-  // Validate token on mount
   useEffect(() => {
-    validateInviteToken(token).then((d) => {
-      if (!d) {
-        setStep("invalid");
-      } else {
-        setDetails(d);
-        setStep("welcome");
-      }
-    });
-  }, [token]);
-
-  // Countdown timer for OTP resend
-  useEffect(() => {
-    if (step !== "otp") return;
-    const id = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(id);
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
+    if (countdown <= 0) return;
+    const id = setInterval(() => setCountdown((c) => c - 1), 1000);
     return () => clearInterval(id);
-  }, [step]);
+  }, [countdown]);
 
-  async function handleSendOTP() {
-    if (!details) return;
-    await sendOTP(details.staffId);
-    setCountdown(60);
-    setStep("otp");
-  }
-
-  async function handleVerifyOTP() {
-    if (!details) return;
-    const code = otp.join("");
-    if (code.length < 6) {
-      setOtpError("Enter all 6 digits.");
-      return;
-    }
-    setVerifying(true);
-    setOtpError("");
-    const ok = await verifyOTP(details.staffId, code);
-    setVerifying(false);
-    if (ok) {
-      setStep("password");
-    } else {
-      setOtpError("Incorrect code. Try again.");
-      setOtp(Array(6).fill(""));
+  async function handleSendOtp() {
+    try {
+      await sendOtp.mutateAsync(token);
+      setCountdown(60);
+      setStep("otp");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send code.");
     }
   }
 
   async function handleCreateAccount() {
-    if (!details) return;
-    if (password.length < 6) {
-      setPwError("Password must be at least 6 characters.");
+    setError("");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPw) {
-      setPwError("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
-    setCreating(true);
-    setPwError("");
     try {
-      const { userId } = await completeRegistration(token, password);
-      localStorage.setItem(STAFF_TEST_USER_KEY, userId);
-      setStep("success");
-    } catch {
-      setPwError("Something went wrong. Please try again.");
-    } finally {
-      setCreating(false);
+      await accept.mutateAsync({ token, password, code: otp.join("") });
+      toast.success("Welcome aboard!");
+      router.push("/staff/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
   const strength = passwordStrength(password);
 
-  // ── Renders ────────────────────────────────────────────────────────────────
-
-  if (step === "loading") {
+  // ── Loading / invalid ──────────────────────────────────────────────────────
+  if (isPending) {
     return (
       <Shell>
         <div className="flex justify-center py-16">
@@ -217,7 +189,7 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
     );
   }
 
-  if (step === "invalid") {
+  if (isError || !details) {
     return (
       <Shell>
         <div className="rounded-[16px] bg-white p-8 text-center shadow-sm">
@@ -233,28 +205,62 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
     );
   }
 
-  if (step === "welcome" && details) {
+  // ── Already has a staff account ──────────────────────────────────────────────
+  if (details.hasAccount) {
+    return (
+      <Shell>
+        <div className="rounded-[16px] bg-white p-8 text-center shadow-sm">
+          <p className="mb-1 text-[13px] font-medium text-brand-green">
+            {details.schoolName}
+          </p>
+          <h1 className="text-[20px] font-bold leading-snug text-text-heading">
+            You already have a staff account
+          </h1>
+          <p className="mt-2 text-[13px] text-text-body">
+            Sign in and you&apos;ll be able to accept this invitation and join{" "}
+            {details.schoolName}.
+          </p>
+          <Link
+            href="/staff/login"
+            className="mt-6 inline-block w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#17904f]"
+          >
+            Sign in to accept
+          </Link>
+        </div>
+      </Shell>
+    );
+  }
+
+  // ── Welcome ──────────────────────────────────────────────────────────────────
+  if (step === "welcome") {
     return (
       <Shell>
         <div className="rounded-[16px] bg-white p-8 shadow-sm">
           <p className="mb-1 text-[13px] font-medium text-brand-green">
             {details.schoolName}
           </p>
-          <h1 className="text-[20px] font-bold text-text-heading leading-snug">
-            You&apos;ve been invited to join
+          <h1 className="text-[20px] font-bold leading-snug text-text-heading">
+            {details.firstName
+              ? `You've been invited, ${details.firstName}`
+              : "You've been invited to join"}
           </h1>
           <p className="mt-1 text-[13px] text-text-body">
             {details.schoolName} has added you as a staff member.
           </p>
 
-          <div className="mt-5 rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] px-4 py-4 space-y-2">
+          <div className="mt-5 space-y-2 rounded-[10px] border border-[#e5e7eb] bg-[#f9fafb] px-4 py-4">
+            {(details.firstName || details.lastName) && (
+              <Row
+                label="Name"
+                value={`${details.firstName ?? ""} ${details.lastName ?? ""}`.trim()}
+              />
+            )}
+            <Row label="School" value={details.schoolName ?? "—"} />
+            <Row label="Role" value={roleLabel(details.role)} />
             <Row
-              label="Name"
-              value={`${details.firstName} ${details.lastName}`}
+              label="Employment"
+              value={employmentLabel(details.employmentType)}
             />
-            <Row label="Role" value={details.role} />
-            <Row label="Position" value={details.position} />
-            <Row label="School" value={details.schoolName} />
           </div>
 
           <p className="mt-5 text-[13px] text-text-body">
@@ -263,17 +269,19 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
           </p>
 
           <button
-            onClick={handleSendOTP}
-            className="mt-5 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white hover:bg-[#17904f] transition-colors"
+            onClick={handleSendOtp}
+            disabled={sendOtp.isPending}
+            className="mt-5 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#17904f] disabled:opacity-50"
           >
-            Send verification code
+            {sendOtp.isPending ? "Sending…" : "Send verification code"}
           </button>
         </div>
       </Shell>
     );
   }
 
-  if (step === "otp" && details) {
+  // ── OTP ──────────────────────────────────────────────────────────────────────
+  if (step === "otp") {
     return (
       <Shell>
         <div className="rounded-[16px] bg-white p-8 shadow-sm">
@@ -281,32 +289,21 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
             Verify your number
           </h1>
           <p className="mt-1.5 text-[13px] text-text-body">
-            We sent a 6-digit code to{" "}
-            <span className="font-medium text-text-heading">
-              {details.phoneMasked}
-            </span>
+            We sent a 6-digit code to your registered phone number.
           </p>
 
           <div className="mt-7">
             <OTPInput value={otp} onChange={setOtp} />
           </div>
 
-          {otpError && (
-            <p className="mt-3 text-center text-[12px] text-[#dc2626]">
-              {otpError}
-            </p>
-          )}
-
           <div className="mt-3 text-center">
             {countdown > 0 ? (
               <p className="text-[12px] text-[#9ca3af]">
-                Resend code in{" "}
-                {String(Math.floor(countdown / 60)).padStart(2, "0")}:
-                {String(countdown % 60).padStart(2, "0")}
+                Resend code in {countdown}s
               </p>
             ) : (
               <button
-                onClick={handleSendOTP}
+                onClick={handleSendOtp}
                 className="text-[12px] font-medium text-brand-green hover:underline"
               >
                 Resend code
@@ -314,157 +311,97 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
             )}
           </div>
 
-          {/* Dev hint */}
-          <div className="mt-5 rounded-[8px] border border-[#fbbf24] bg-[#fffbeb] px-3 py-2 text-center">
-            <p className="text-[11px] text-[#b45309]">
-              Testing mode — use code <span className="font-bold">123456</span>
-            </p>
-          </div>
-
           <button
-            onClick={handleVerifyOTP}
-            disabled={verifying || otp.join("").length < 6}
-            className="mt-5 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white hover:bg-[#17904f] disabled:opacity-50 transition-colors"
+            onClick={() => setStep("password")}
+            disabled={otp.join("").length < 6}
+            className="mt-6 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#17904f] disabled:opacity-50"
           >
-            {verifying ? "Verifying…" : "Verify"}
+            Continue
           </button>
         </div>
       </Shell>
     );
   }
 
-  if (step === "password") {
-    return (
-      <Shell>
-        <div className="rounded-[16px] bg-white p-8 shadow-sm">
-          <h1 className="text-[20px] font-bold text-text-heading">
-            Create your password
-          </h1>
-          <p className="mt-1.5 text-[13px] text-text-body">
-            You&apos;ll use this to sign in to your staff account.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-text-body">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPwError("");
-                }}
-                placeholder="Min. 6 characters"
-                className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2.5 text-[13px] text-text-heading outline-none focus:border-brand-green"
-              />
-              {password.length >= 6 && (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex flex-1 gap-1">
-                    {[1, 2, 3].map((l) => (
-                      <div
-                        key={l}
-                        className={`h-[3px] flex-1 rounded-full transition-colors ${
-                          strength.level >= l ? strength.color : "bg-[#e5e7eb]"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-[11px] text-text-body">
-                    {strength.label}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-text-body">
-                Confirm password
-              </label>
-              <input
-                type="password"
-                value={confirmPw}
-                onChange={(e) => {
-                  setConfirmPw(e.target.value);
-                  setPwError("");
-                }}
-                placeholder="Repeat your password"
-                className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2.5 text-[13px] text-text-heading outline-none focus:border-brand-green"
-              />
-            </div>
-          </div>
-
-          {pwError && (
-            <p className="mt-2 text-[12px] text-[#dc2626]">{pwError}</p>
-          )}
-
-          <button
-            onClick={handleCreateAccount}
-            disabled={creating || !password || !confirmPw}
-            className="mt-6 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white hover:bg-[#17904f] disabled:opacity-50 transition-colors"
-          >
-            {creating ? "Creating account…" : "Create account"}
-          </button>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (step === "success" && details) {
-    return (
-      <Shell>
-        <div className="rounded-[16px] bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#f0fdf4]">
-            <svg
-              className="h-8 w-8 text-brand-green"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-
-          <h1 className="text-[20px] font-bold text-text-heading">
-            You&apos;re in, {details.firstName}!
-          </h1>
-          <p className="mt-2 text-[13px] text-text-body">
-            You&apos;re now part of{" "}
-            <span className="font-medium text-text-heading">
-              {details.schoolName}
-            </span>{" "}
-            as{" "}
-            <span className="font-medium text-text-heading">
-              {details.position}
-            </span>
-            .
-          </p>
-
-          <button
-            onClick={() => router.push("/staff/dashboard")}
-            className="mt-7 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white hover:bg-[#17904f] transition-colors"
-          >
-            Go to my dashboard
-          </button>
-        </div>
-      </Shell>
-    );
-  }
-
-  return null;
-}
-
-function Row({ label, value }: { label: string; value: string }) {
+  // ── Password (final accept) ──────────────────────────────────────────────────
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-[12px] text-text-body">{label}</span>
-      <span className="text-[13px] font-medium text-text-heading">{value}</span>
-    </div>
+    <Shell>
+      <div className="rounded-[16px] bg-white p-8 shadow-sm">
+        <h1 className="text-[20px] font-bold text-text-heading">
+          Create your password
+        </h1>
+        <p className="mt-1.5 text-[13px] text-text-body">
+          You&apos;ll use this to sign in to your staff account.
+        </p>
+
+        <div className="mt-6 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-body">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              placeholder="Min. 8 characters"
+              className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2.5 text-[13px] text-text-heading outline-none focus:border-brand-green"
+            />
+            {password.length >= 6 && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex flex-1 gap-1">
+                  {[1, 2, 3].map((l) => (
+                    <div
+                      key={l}
+                      className={`h-[3px] flex-1 rounded-full transition-colors ${
+                        strength.level >= l ? strength.color : "bg-[#e5e7eb]"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-[11px] text-text-body">
+                  {strength.label}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-body">
+              Confirm password
+            </label>
+            <input
+              type="password"
+              value={confirmPw}
+              onChange={(e) => {
+                setConfirmPw(e.target.value);
+                setError("");
+              }}
+              placeholder="Repeat your password"
+              className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2.5 text-[13px] text-text-heading outline-none focus:border-brand-green"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mt-2 text-[12px] text-[#dc2626]">{error}</p>}
+
+        <button
+          onClick={handleCreateAccount}
+          disabled={accept.isPending || !password || !confirmPw}
+          className="mt-6 w-full rounded-[10px] bg-brand-green py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#17904f] disabled:opacity-50"
+        >
+          {accept.isPending ? "Creating account…" : "Create account & join"}
+        </button>
+
+        <button
+          onClick={() => setStep("otp")}
+          className="mt-3 w-full text-center text-[12px] text-text-body hover:text-text-heading"
+        >
+          ← Back
+        </button>
+      </div>
+    </Shell>
   );
 }

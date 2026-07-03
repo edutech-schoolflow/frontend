@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { X, Copy, Check } from "lucide-react";
-import { inviteStaff } from "@/src/lib/api/staff";
+import { toast } from "sonner";
+import { useInviteStaff } from "@/src/lib/api/useStaffInvite";
+import {
+  inviteStaffSchema,
+  EMPLOYMENT_TYPES,
+  EMPLOYMENT_LABELS,
+} from "@/src/lib/api/staffInvite";
 import type { Staff, StaffRole } from "@/src/types/staff";
 import { ROLE_LABELS, INVITABLE_ROLES } from "@/src/types/staff";
 
@@ -11,39 +17,61 @@ interface Props {
   onClose: () => void;
 }
 
+const inputCls =
+  "w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green";
+const labelCls = "mb-1 block text-[13px] font-medium text-text-body";
+
 export default function InviteStaffModal({ onDone, onClose }: Props) {
+  const invite = useInviteStaff();
+
   const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<StaffRole>("teacher");
+  const [employmentType, setEmploymentType] =
+    useState<(typeof EMPLOYMENT_TYPES)[number]>("full_time");
   const [position, setPosition] = useState("");
-  const [saving, setSaving] = useState(false);
+
   const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [savedStaff, setSavedStaff] = useState<Staff | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const canSave =
-    firstName.trim() &&
-    lastName.trim() &&
-    email.trim() &&
-    phone.trim() &&
-    position.trim();
-
   async function handleSave() {
-    if (!canSave) return;
-    setSaving(true);
-    const result = await inviteStaff({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
+    const parsed = inviteStaffSchema.safeParse({
+      firstName,
+      middleName,
+      lastName,
+      phone,
       role,
-      position: position.trim(),
+      employmentType,
+      position,
     });
-    setSaving(false);
-    setSavedStaff(result.staff);
-    setInviteLink(result.inviteLink);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
+      return;
+    }
+    try {
+      const result = await invite.mutateAsync(parsed.data);
+      setInviteLink(result.inviteLink);
+      // Optimistic pending entry (no staff-list endpoint yet) so the directory updates.
+      onDone({
+        id: `pending-${Date.now()}`,
+        schoolId: "",
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        email: "",
+        phone: parsed.data.phone,
+        role: parsed.data.role,
+        position: parsed.data.position ?? "",
+        status: "pending",
+        employmentType: parsed.data.employmentType,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not send invite."
+      );
+    }
   }
 
   async function copyLink() {
@@ -63,10 +91,7 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
               Invitation sent
             </h2>
             <button
-              onClick={() => {
-                if (savedStaff) onDone(savedStaff);
-                onClose();
-              }}
+              onClick={onClose}
               className="text-[#9ca3af] hover:text-text-heading"
             >
               <X className="h-[18px] w-[18px]" />
@@ -75,14 +100,14 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
 
           <div className="mb-4 rounded-[10px] bg-[#f0fdf4] px-4 py-3">
             <p className="text-[13px] text-[#15803d]">
-              An email has been sent to{" "}
-              <span className="font-semibold">{email}</span>. They will use the
-              link below to set up their account.
+              We sent the invite link by SMS to{" "}
+              <span className="font-semibold">{phone}</span>. They&apos;ll use
+              it to set up their account.
             </p>
           </div>
 
           <p className="mb-2 text-[12px] font-medium text-text-body">
-            Invite link — share directly if email doesn&apos;t arrive
+            Invite link — share directly if the SMS doesn&apos;t arrive
           </p>
           <div className="flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-[#f9fafb] px-3 py-2">
             <p className="flex-1 truncate text-[12px] text-text-heading">
@@ -90,7 +115,7 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
             </p>
             <button
               onClick={copyLink}
-              className="shrink-0 text-[#9ca3af] hover:text-brand-green transition-colors"
+              className="shrink-0 text-[#9ca3af] transition-colors hover:text-brand-green"
             >
               {copied ? (
                 <Check className="h-[15px] w-[15px] text-brand-green" />
@@ -106,10 +131,7 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
           </p>
 
           <button
-            onClick={() => {
-              if (savedStaff) onDone(savedStaff);
-              onClose();
-            }}
+            onClick={onClose}
             className="mt-5 w-full rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90"
           >
             Done
@@ -138,66 +160,53 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-[13px] font-medium text-text-body">
-                First name
-              </label>
+              <label className={labelCls}>First name</label>
               <input
-                type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="e.g. Amaka"
-                className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="mb-1 block text-[13px] font-medium text-text-body">
-                Last name
-              </label>
+              <label className={labelCls}>Last name</label>
               <input
-                type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="e.g. Adeyemi"
-                className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
+                className={inputCls}
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-[13px] font-medium text-text-body">
-              Email address
-            </label>
+            <label className={labelCls}>Middle name (optional)</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. amaka@example.com"
-              className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
+              value={middleName}
+              onChange={(e) => setMiddleName(e.target.value)}
+              placeholder="e.g. Ngozi"
+              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-[13px] font-medium text-text-body">
-              Phone number
-            </label>
+            <label className={labelCls}>Phone number</label>
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. +234 801 234 5678"
-              className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
+              onChange={(e) => setPhone(e.target.value.replace(/[^\d+]/g, ""))}
+              placeholder="e.g. 08012345678"
+              className={inputCls}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-[13px] font-medium text-text-body">
-                Role
-              </label>
+              <label className={labelCls}>Role</label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as StaffRole)}
-                className="w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
+                className={`${inputCls} bg-white`}
               >
                 {INVITABLE_ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -207,23 +216,38 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-[13px] font-medium text-text-body">
-                Position / title
-              </label>
-              <input
-                type="text"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                placeholder="e.g. Class Teacher"
-                className="w-full rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-[13px] text-text-heading outline-none focus:border-brand-green"
-              />
+              <label className={labelCls}>Employment type</label>
+              <select
+                value={employmentType}
+                onChange={(e) =>
+                  setEmploymentType(
+                    e.target.value as (typeof EMPLOYMENT_TYPES)[number]
+                  )
+                }
+                className={`${inputCls} bg-white`}
+              >
+                {EMPLOYMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {EMPLOYMENT_LABELS[t]}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Position / title (optional)</label>
+            <input
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="e.g. Class Teacher"
+              className={inputCls}
+            />
           </div>
         </div>
 
         <p className="mt-4 text-[12px] text-[#9ca3af]">
-          An invitation will be sent to their email. They can accept and set up
-          their account from there.
+          We&apos;ll text them an invite link to set up their account.
         </p>
 
         <div className="mt-5 flex gap-3">
@@ -235,10 +259,10 @@ export default function InviteStaffModal({ onDone, onClose }: Props) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!canSave || saving}
+            disabled={invite.isPending}
             className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-40"
           >
-            {saving ? "Sending…" : "Send invitation"}
+            {invite.isPending ? "Sending…" : "Send invitation"}
           </button>
         </div>
       </div>

@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getSchoolDashboard } from "@/src/lib/api/schools";
+import { useAppSelector } from "@/src/lib/store/hooks";
 import type {
   DashboardStats,
   ActivityItem,
@@ -103,10 +104,10 @@ function FeeCollection({ stats }: { stats: DashboardStats }) {
           Term Fee Collection
         </h2>
         <Link
-          href="/school/dashboard/fees/invoices"
+          href="/school/dashboard/bursar"
           className="text-[12px] font-medium text-brand-green hover:underline"
         >
-          View invoices
+          View collections
         </Link>
       </div>
 
@@ -224,8 +225,8 @@ const QUICK_ACTIONS = [
     accent: "bg-[#e8f0ff] text-[#4a6cf7]",
   },
   {
-    label: "Record Payment",
-    href: "/school/dashboard/fees/invoices",
+    label: "Fee Collections",
+    href: "/school/dashboard/bursar",
     icon: CreditCard,
     accent: "bg-[#fff3e8] text-[#f47e14]",
   },
@@ -312,6 +313,9 @@ function RecentActivity({ items }: { items: ActivityItem[] }) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function SchoolDashboard() {
+  // Real KYC status (from /me, mirrored into Redux by the guard) — not the mock dashboard stats.
+  const kycStatus = useAppSelector((s) => s.auth.user?.kycStatus);
+
   const [data, setData] = useState<{
     stats: DashboardStats;
     recentApplications: DashboardApplication[];
@@ -334,8 +338,8 @@ export default function SchoolDashboard() {
 
   return (
     <div className="px-[32px] py-[28px] pb-[60px]">
-      {/* Compliance banner */}
-      {!stats.complianceApproved && (
+      {/* Compliance banner — driven by real KYC status; hidden once approved. */}
+      {kycStatus && kycStatus !== "approved" && (
         <Link
           href="/school/dashboard/compliance"
           className="mb-6 flex items-center justify-between rounded-[10px] border border-amber-200 bg-amber-50 px-5 py-3.5 transition-opacity hover:opacity-90"
@@ -343,12 +347,15 @@ export default function SchoolDashboard() {
           <div className="flex items-center gap-3">
             <AlertCircle className="h-[18px] w-[18px] shrink-0 text-amber-600" />
             <p className="text-[13px] font-medium text-amber-800">
-              Complete your compliance profile to unlock fee collection and full
-              platform access.
+              {kycStatus === "under_review"
+                ? "Your compliance profile is under review — we'll unlock fee collection once it's approved."
+                : "Complete your compliance profile to unlock fee collection and full platform access."}
             </p>
           </div>
           <span className="shrink-0 text-[12px] font-semibold text-amber-700">
-            Go to Compliance →
+            {kycStatus === "under_review"
+              ? "View status →"
+              : "Go to Compliance →"}
           </span>
         </Link>
       )}

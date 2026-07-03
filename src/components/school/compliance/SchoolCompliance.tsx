@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
   Upload,
@@ -9,16 +9,69 @@ import {
   MapPin,
   Navigation,
   Link2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
-import {
-  getComplianceRecord,
-  updateComplianceStep,
-} from "@/src/lib/api/compliance";
-import { useAuth } from "@/src/context/AuthContext";
-import type { StepStatus, ComplianceStep } from "@/src/types/compliance";
+import { toast } from "sonner";
 
-// Section is just a ComplianceStep
-type Section = ComplianceStep;
+import { useAppSelector } from "@/src/lib/store/hooks";
+import { useKycStatus, useSubmitKyc } from "@/src/lib/api/useSchoolKyc";
+import { kycSchema } from "@/src/lib/api/schoolKyc";
+import type { KycSubmission } from "@/src/lib/api/schoolKyc";
+import type { StepStatus } from "@/src/types/compliance";
+
+// ─── Form state (lifted to the parent so it survives section navigation) ───────
+
+interface KycForm {
+  // School profile
+  name: string;
+  type: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  // Contact setup (UI-only — no backend home yet)
+  contactName: string;
+  position: string;
+  officialEmail: string;
+  contactPhone: string;
+  mapsUrl: string;
+  lat: number | null;
+  lng: number | null;
+  // Proprietor identity
+  proprietorFirstName: string;
+  proprietorMiddleName: string;
+  proprietorLastName: string;
+  nin: string;
+  bvn: string;
+  proprietorAddress: string;
+  faceDone: boolean;
+  // Business registration + settlement account
+  businessName: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+const SECTION_IDS = [
+  "school_profile",
+  "contact_setup",
+  "proprietor",
+  "business_registration",
+  "review",
+] as const;
+type SectionId = (typeof SECTION_IDS)[number];
+
+const SECTION_LABELS: Record<SectionId, string> = {
+  school_profile: "School Profile",
+  contact_setup: "Contact Setup",
+  proprietor: "Proprietor / Owner",
+  business_registration: "Business Registration",
+  review: "Review & Submit",
+};
 
 const TIPS: Record<
   string,
@@ -44,8 +97,7 @@ const TIPS: Record<
   proprietor: {
     heading: "Identity Verification",
     bullets: [
-      "Have your BVN or NIN ready",
-      "Ensure your face is well-lit for the liveness check",
+      "Have your BVN and NIN ready",
       "The name must match your ID document exactly",
       "NIN and BVN must each be 11 digits",
     ],
@@ -64,18 +116,70 @@ const TIPS: Record<
     heading: "Before you submit",
     bullets: [
       "Review all sections for accuracy",
-      "Ensure all documents are clear and readable",
+      "Ensure your CAC document is clear and readable",
       "Approval typically takes 1–2 business days",
     ],
   },
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+const inputCls =
+  "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
+const selectCls = `${inputCls} appearance-none cursor-pointer`;
+const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
+
+const SCHOOL_TYPE_OPTIONS = [
+  { value: "nursery", label: "Nursery / Creche" },
+  { value: "primary", label: "Primary School" },
+  { value: "secondary", label: "Secondary School" },
+  { value: "combined", label: "Combined (Nursery–Secondary)" },
+];
+
+const STATES = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT (Abuja)",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
+
+// ─── Shared sub-components ─────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: StepStatus }) {
   const map: Record<StepStatus, { label: string; cls: string }> = {
     not_started: { label: "Not Started", cls: "bg-[#f3f4f6] text-[#6b7280]" },
-    in_progress: { label: "In Progress", cls: "bg-[#fef3c7] text-[#b45309]" },
+    in_progress: { label: "Ready", cls: "bg-[#fef3c7] text-[#b45309]" },
     pending: { label: "Under Review", cls: "bg-[#dbeafe] text-[#1d4ed8]" },
     verified: { label: "Approved", cls: "bg-[#dcfce7] text-[#15803d]" },
   };
@@ -89,200 +193,107 @@ function StatusBadge({ status }: { status: StepStatus }) {
   );
 }
 
-function FileUploadRow({
+function Field({
   label,
-  file,
-  onUpload,
-  onRemove,
+  children,
 }: {
   label: string;
-  file: File | null;
-  onUpload: (f: File) => void;
-  onRemove: () => void;
+  children: React.ReactNode;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return (
-    <div className="flex items-center justify-between rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
-      {file ? (
-        <span className="text-[13px] font-medium text-brand-green truncate max-w-[260px]">
-          {file.name}
-        </span>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-2 text-[13px] font-medium text-brand-green hover:underline"
-        >
-          <Upload className="h-[14px] w-[14px]" />
-          {label}
-        </button>
-      )}
-      {file ? (
-        <button type="button" onClick={onRemove} aria-label="Remove file">
-          <Trash2 className="h-[16px] w-[16px] text-[#ef4444] hover:text-[#dc2626]" />
-        </button>
-      ) : (
-        <Trash2 className="h-[16px] w-[16px] text-[#d1d5db]" />
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.pdf"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onUpload(f);
-        }}
-      />
+    <div>
+      <label className={labelCls}>{label}</label>
+      {children}
     </div>
   );
 }
 
-// ─── Section forms ────────────────────────────────────────────────────────────
+// ─── Section forms (controlled by the parent) ─────────────────────────────────
 
-function SchoolProfileForm({ onSave }: { onSave: () => void }) {
-  const [schoolName, setSchoolName] = useState("");
-  const [schoolType, setSchoolType] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+type SectionProps = {
+  form: KycForm;
+  set: (patch: Partial<KycForm>) => void;
+  onNext: () => void;
+};
 
+function SchoolProfileForm({ form, set, onNext }: SectionProps) {
   const canSave =
-    schoolName.trim() &&
-    schoolType &&
-    phone.trim() &&
-    email.trim() &&
-    address.trim() &&
-    city.trim() &&
-    state;
-
-  const TYPES = [
-    { value: "nursery", label: "Nursery / Creche" },
-    { value: "primary", label: "Primary School" },
-    { value: "secondary", label: "Secondary School" },
-    { value: "combined", label: "Combined (Nursery–Secondary)" },
-  ];
-  const STATES = [
-    "Abia",
-    "Adamawa",
-    "Akwa Ibom",
-    "Anambra",
-    "Bauchi",
-    "Bayelsa",
-    "Benue",
-    "Borno",
-    "Cross River",
-    "Delta",
-    "Ebonyi",
-    "Edo",
-    "Ekiti",
-    "Enugu",
-    "FCT (Abuja)",
-    "Gombe",
-    "Imo",
-    "Jigawa",
-    "Kaduna",
-    "Kano",
-    "Katsina",
-    "Kebbi",
-    "Kogi",
-    "Kwara",
-    "Lagos",
-    "Nasarawa",
-    "Niger",
-    "Ogun",
-    "Ondo",
-    "Osun",
-    "Oyo",
-    "Plateau",
-    "Rivers",
-    "Sokoto",
-    "Taraba",
-    "Yobe",
-    "Zamfara",
-  ];
-
-  const inputCls =
-    "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
-  const selectCls = `${inputCls} appearance-none cursor-pointer`;
-  const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
+    form.name.trim() &&
+    form.type &&
+    form.phone.trim() &&
+    form.email.trim() &&
+    form.address.trim() &&
+    form.city.trim() &&
+    form.state;
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <label className={labelCls}>School Name</label>
+      <Field label="School Name">
         <input
           className={inputCls}
           placeholder="e.g. Greenfield Academy"
-          value={schoolName}
-          onChange={(e) => setSchoolName(e.target.value)}
+          value={form.name}
+          onChange={(e) => set({ name: e.target.value })}
         />
-      </div>
-      <div>
-        <label className={labelCls}>School Type</label>
+      </Field>
+      <Field label="School Type">
         <select
           className={selectCls}
-          value={schoolType}
-          onChange={(e) => setSchoolType(e.target.value)}
+          value={form.type}
+          onChange={(e) => set({ type: e.target.value })}
         >
           <option value="" disabled>
             Select school type
           </option>
-          {TYPES.map((t) => (
+          {SCHOOL_TYPE_OPTIONS.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>
           ))}
         </select>
-      </div>
-      <div>
-        <label className={labelCls}>School Phone</label>
+      </Field>
+      <Field label="School Phone">
         <input
           className={inputCls}
           placeholder="e.g. 08012345678"
           type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={form.phone}
+          onChange={(e) =>
+            set({ phone: e.target.value.replace(/[^\d+]/g, "") })
+          }
         />
-      </div>
-      <div>
-        <label className={labelCls}>School Email</label>
+      </Field>
+      <Field label="School Email">
         <input
           className={inputCls}
           placeholder="e.g. info@greenfield.com"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={form.email}
+          onChange={(e) => set({ email: e.target.value })}
         />
-      </div>
-      <div>
-        <label className={labelCls}>Full Address</label>
+      </Field>
+      <Field label="Full Address">
         <input
           className={inputCls}
           placeholder="e.g. 12 Adeola Odeku Street, Victoria Island"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={form.address}
+          onChange={(e) => set({ address: e.target.value })}
         />
-      </div>
+      </Field>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>City</label>
+        <Field label="City">
           <input
             className={inputCls}
             placeholder="e.g. Lagos"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+            value={form.city}
+            onChange={(e) => set({ city: e.target.value })}
           />
-        </div>
-        <div>
-          <label className={labelCls}>State</label>
+        </Field>
+        <Field label="State">
           <select
             className={selectCls}
-            value={state}
-            onChange={(e) => setState(e.target.value)}
+            value={form.state}
+            onChange={(e) => set({ state: e.target.value })}
           >
             <option value="" disabled>
               Select state
@@ -293,36 +304,18 @@ function SchoolProfileForm({ onSave }: { onSave: () => void }) {
               </option>
             ))}
           </select>
-        </div>
+        </Field>
       </div>
-      <button
-        onClick={onSave}
-        disabled={!canSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Save & Continue
-      </button>
+      <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
   );
 }
 
-type LocationData = { lat: number; lng: number } | null;
-
-function ContactSetupForm({ onSave }: { onSave: () => void }) {
-  const [contactName, setContactName] = useState("");
-  const [position, setPosition] = useState("");
-  const [officialEmail, setOfficialEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [mapsUrl, setMapsUrl] = useState("");
-  const [location, setLocation] = useState<LocationData>(null);
+function ContactSetupForm({ form, set, onNext }: SectionProps) {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
 
-  const inputCls =
-    "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
-  const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
-
-  function handleUseCurrentLocation() {
+  function useCurrentLocation() {
     if (!navigator.geolocation) {
       setLocError("Geolocation is not supported by your browser.");
       return;
@@ -331,12 +324,12 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
     setLocError("");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
       () => {
         setLocError(
-          "Could not get your location. Please allow location access or paste a Google Maps link instead."
+          "Could not get your location. Allow location access or paste a Google Maps link instead."
         );
         setLocating(false);
       }
@@ -344,120 +337,89 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
   }
 
   function handleMapsUrl(val: string) {
-    setMapsUrl(val);
-    setLocation(null);
-    // Extract @lat,lng from a Google Maps URL if present
     const match = val.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (match) {
-      setLocation({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
-    }
+    set({
+      mapsUrl: val,
+      lat: match ? parseFloat(match[1]) : null,
+      lng: match ? parseFloat(match[2]) : null,
+    });
   }
 
-  const locationSet = !!location;
+  const locationSet = form.lat !== null && form.lng !== null;
   const canSave =
-    contactName.trim() &&
-    position.trim() &&
-    officialEmail.trim() &&
-    phone.trim() &&
+    form.contactName.trim() &&
+    form.position.trim() &&
+    form.officialEmail.trim() &&
+    form.contactPhone.trim() &&
     locationSet;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Contact Name</label>
+        <Field label="Contact Name">
           <input
             className={inputCls}
             placeholder="e.g. Chukwuemeka Okonkwo"
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
+            value={form.contactName}
+            onChange={(e) => set({ contactName: e.target.value })}
           />
-        </div>
-        <div>
-          <label className={labelCls}>Position / Title</label>
+        </Field>
+        <Field label="Position / Title">
           <input
             className={inputCls}
             placeholder="e.g. Principal, Director"
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
+            value={form.position}
+            onChange={(e) => set({ position: e.target.value })}
           />
-        </div>
+        </Field>
       </div>
-
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Official Email</label>
+        <Field label="Official Email">
           <input
             className={inputCls}
             placeholder="e.g. info@greenfield.com"
             type="email"
-            value={officialEmail}
-            onChange={(e) => setOfficialEmail(e.target.value)}
+            value={form.officialEmail}
+            onChange={(e) => set({ officialEmail: e.target.value })}
           />
-        </div>
-        <div>
-          <label className={labelCls}>Support Email</label>
-          <input
-            className={inputCls}
-            placeholder="e.g. support@greenfield.com"
-            type="email"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Phone Number</label>
+        </Field>
+        <Field label="Phone Number">
           <input
             className={inputCls}
             placeholder="e.g. 08012345678"
             type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            value={form.contactPhone}
+            onChange={(e) =>
+              set({ contactPhone: e.target.value.replace(/[^\d+]/g, "") })
+            }
           />
-        </div>
-        <div>
-          <label className={labelCls}>Website (optional)</label>
-          <input
-            className={inputCls}
-            placeholder="e.g. https://greenfield.edu.ng"
-            type="url"
-          />
-        </div>
+        </Field>
       </div>
 
-      {/* Digital proof of address */}
       <div>
         <label className={labelCls}>
           School Location{" "}
           <span className="font-normal text-text-body">— proof of address</span>
         </label>
         <p className="mb-3 text-[12px] text-text-body">
-          Instead of uploading a document, share your school&apos;s exact
-          location digitally. Either paste your Google Maps link or use your
-          device&apos;s GPS.
+          Share your school&apos;s exact location digitally — use your
+          device&apos;s GPS or paste a Google Maps link.
         </p>
-
         <div className="flex flex-col gap-3">
-          {/* GPS button */}
           <button
             type="button"
-            onClick={handleUseCurrentLocation}
+            onClick={useCurrentLocation}
             disabled={locating}
             className="flex h-[46px] items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[13.5px] font-medium text-text-heading transition-colors hover:border-brand-green hover:text-brand-green disabled:opacity-60"
           >
             <Navigation className="h-[16px] w-[16px] shrink-0" />
             {locating ? "Getting location…" : "Use my current location (GPS)"}
           </button>
-
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-[#e5e7eb]" />
             <span className="text-[12px] text-text-body">or</span>
             <div className="h-px flex-1 bg-[#e5e7eb]" />
           </div>
-
-          {/* Google Maps URL */}
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
               <Link2 className="h-[16px] w-[16px] text-[#9ca3af]" />
@@ -465,18 +427,14 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
             <input
               className="h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white pl-9 pr-4 text-[13.5px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20"
               placeholder="Paste Google Maps link — e.g. https://maps.app.goo.gl/…"
-              value={mapsUrl}
+              value={form.mapsUrl}
               onChange={(e) => handleMapsUrl(e.target.value)}
             />
           </div>
         </div>
-
-        {/* Error */}
         {locError && (
           <p className="mt-2 text-[12px] text-[#ef4444]">{locError}</p>
         )}
-
-        {/* Confirmed location */}
         {locationSet && (
           <div className="mt-3 flex items-center gap-3 rounded-[8px] border border-green-200 bg-green-50 px-4 py-3">
             <MapPin className="h-[18px] w-[18px] shrink-0 text-brand-green" />
@@ -485,83 +443,83 @@ function ContactSetupForm({ onSave }: { onSave: () => void }) {
                 Location captured
               </p>
               <p className="text-[12px] text-text-body">
-                {location!.lat.toFixed(6)}, {location!.lng.toFixed(6)}
+                {form.lat!.toFixed(6)}, {form.lng!.toFixed(6)}
               </p>
             </div>
-            <a
-              href={`https://www.google.com/maps?q=${location!.lat},${location!.lng}`}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto text-[12px] font-medium text-brand-green hover:underline"
-            >
-              View on map ↗
-            </a>
           </div>
         )}
       </div>
-
-      <button
-        onClick={onSave}
-        disabled={!canSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Save & Continue
-      </button>
+      <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
   );
 }
 
-function ProprietorForm({ onSave }: { onSave: () => void }) {
-  const [nin, setNin] = useState("");
-  const [bvn, setBvn] = useState("");
-  const [address, setAddress] = useState("");
-  const [faceDone, setFaceDone] = useState(false);
-
-  const inputCls =
-    "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
-  const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
-
-  const idReady = nin.length === 11 && bvn.length === 11;
-  const canSubmit = idReady && address.trim().length > 0 && faceDone;
+function ProprietorForm({ form, set, onNext }: SectionProps) {
+  const idReady = form.nin.length === 11 && form.bvn.length === 11;
+  const canSave =
+    idReady &&
+    form.proprietorFirstName.trim().length > 0 &&
+    form.proprietorLastName.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>National Identity Number (NIN)</label>
+        <Field label="First Name">
+          <input
+            className={inputCls}
+            placeholder="e.g. Chidi"
+            value={form.proprietorFirstName}
+            onChange={(e) => set({ proprietorFirstName: e.target.value })}
+          />
+        </Field>
+        <Field label="Last Name">
+          <input
+            className={inputCls}
+            placeholder="e.g. Okonkwo"
+            value={form.proprietorLastName}
+            onChange={(e) => set({ proprietorLastName: e.target.value })}
+          />
+        </Field>
+      </div>
+      <Field label="Middle Name (optional)">
+        <input
+          className={inputCls}
+          placeholder="e.g. Emeka"
+          value={form.proprietorMiddleName}
+          onChange={(e) => set({ proprietorMiddleName: e.target.value })}
+        />
+      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="National Identity Number (NIN)">
           <input
             className={inputCls}
             placeholder="Enter 11-digit NIN"
             maxLength={11}
-            value={nin}
-            onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))}
+            value={form.nin}
+            onChange={(e) => set({ nin: e.target.value.replace(/\D/g, "") })}
           />
-        </div>
-        <div>
-          <label className={labelCls}>Bank Verification Number (BVN)</label>
+        </Field>
+        <Field label="Bank Verification Number (BVN)">
           <input
             className={inputCls}
             placeholder="Enter 11-digit BVN"
             maxLength={11}
-            value={bvn}
-            onChange={(e) => setBvn(e.target.value.replace(/\D/g, ""))}
+            value={form.bvn}
+            onChange={(e) => set({ bvn: e.target.value.replace(/\D/g, "") })}
           />
-        </div>
+        </Field>
       </div>
-
-      <div>
-        <label className={labelCls}>Address</label>
+      <Field label="Proprietor Address (optional)">
         <input
           className={inputCls}
-          placeholder="Enter your address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Residential address"
+          value={form.proprietorAddress}
+          onChange={(e) => set({ proprietorAddress: e.target.value })}
         />
-      </div>
+      </Field>
 
-      {/* Liveness check */}
       <div>
-        <p className={labelCls}>Liveliness Check</p>
+        <p className={labelCls}>Liveliness Check (optional)</p>
         <div className="flex items-center gap-4 rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
           <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full bg-[#f3f4f6]">
             <Camera className="h-[20px] w-[20px] text-[#9ca3af]" />
@@ -571,12 +529,10 @@ function ProprietorForm({ onSave }: { onSave: () => void }) {
               Face verification
             </p>
             <p className="text-[12px] text-text-body">
-              {idReady
-                ? "Click to start face check"
-                : "Complete NIN & BVN verification first"}
+              {idReady ? "Click to start face check" : "Enter NIN & BVN first"}
             </p>
           </div>
-          {faceDone ? (
+          {form.faceDone ? (
             <span className="text-[12px] font-medium text-brand-green">
               Done ✓
             </span>
@@ -584,7 +540,7 @@ function ProprietorForm({ onSave }: { onSave: () => void }) {
             <button
               type="button"
               disabled={!idReady}
-              onClick={() => setFaceDone(true)}
+              onClick={() => set({ faceDone: true })}
               className="rounded-[6px] border border-[#e5e7eb] px-4 py-1.5 text-[12px] font-medium text-text-heading transition-colors hover:border-brand-green hover:text-brand-green disabled:cursor-not-allowed disabled:opacity-40"
             >
               Start check
@@ -592,260 +548,442 @@ function ProprietorForm({ onSave }: { onSave: () => void }) {
           )}
         </div>
       </div>
-
-      <button
-        onClick={onSave}
-        disabled={!canSubmit}
-        className="mt-1 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Submit
-      </button>
+      <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
   );
 }
 
-function BusinessRegistrationForm({ onSave }: { onSave: () => void }) {
-  const [businessName, setBusinessName] = useState("");
-  const [docs, setDocs] = useState<Record<string, File | null>>({
-    cac: null,
-    tin_cert: null,
-    status_report: null,
-    cac7: null,
-  });
-
-  const setDoc = (key: string, file: File | null) =>
-    setDocs((prev) => ({ ...prev, [key]: file }));
-
-  const canSave = businessName.trim() && docs.cac;
-
-  const inputCls =
-    "h-[46px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-4 text-[14px] text-text-heading outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/20";
-  const labelCls = "mb-1.5 block text-[13px] font-medium text-text-heading";
+function BusinessRegistrationForm({
+  form,
+  set,
+  cacFile,
+  setCacFile,
+  onNext,
+}: SectionProps & {
+  cacFile: File | null;
+  setCacFile: (f: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const canSave =
+    !!cacFile &&
+    form.bankName.trim() &&
+    form.accountNumber.length === 10 &&
+    form.accountName.trim();
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <label className={labelCls}>
-          Business Name (as registered with CAC)
-        </label>
+      <Field label="Business Name (as registered with CAC) — optional">
         <input
           className={inputCls}
           placeholder="e.g. Greenfield Academy Ltd"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
+          value={form.businessName}
+          onChange={(e) => set({ businessName: e.target.value })}
         />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Tax Identification Number (TIN)</label>
-          <input className={inputCls} placeholder="e.g. 12345678-0001" />
-        </div>
-        <div>
-          <label className={labelCls}>RC Number / BN Number</label>
-          <input className={inputCls} placeholder="e.g. RC1234567" />
-        </div>
-      </div>
+      </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Certificate of Incorporation</label>
-          <FileUploadRow
-            label="Upload Certificate"
-            file={docs.cac}
-            onUpload={(f) => setDoc("cac", f)}
-            onRemove={() => setDoc("cac", null)}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>Resolution To Open Account</label>
-          <FileUploadRow
-            label="Upload Resolution"
-            file={docs.tin_cert}
-            onUpload={(f) => setDoc("tin_cert", f)}
-            onRemove={() => setDoc("tin_cert", null)}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>Status Report</label>
-          <FileUploadRow
-            label="Upload Status Report"
-            file={docs.status_report}
-            onUpload={(f) => setDoc("status_report", f)}
-            onRemove={() => setDoc("status_report", null)}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>CAC 7 (Particulars of Director)</label>
-          <FileUploadRow
-            label="Upload CAC 7"
-            file={docs.cac7}
-            onUpload={(f) => setDoc("cac7", f)}
-            onRemove={() => setDoc("cac7", null)}
+      <div>
+        <label className={labelCls}>Certificate of Incorporation (CAC)</label>
+        <div className="flex items-center justify-between rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
+          {cacFile ? (
+            <span className="max-w-[260px] truncate text-[13px] font-medium text-brand-green">
+              {cacFile.name}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="flex items-center gap-2 text-[13px] font-medium text-brand-green hover:underline"
+            >
+              <Upload className="h-[14px] w-[14px]" />
+              Upload Certificate
+            </button>
+          )}
+          {cacFile ? (
+            <button
+              type="button"
+              onClick={() => setCacFile(null)}
+              aria-label="Remove file"
+            >
+              <Trash2 className="h-[16px] w-[16px] text-[#ef4444] hover:text-[#dc2626]" />
+            </button>
+          ) : (
+            <Trash2 className="h-[16px] w-[16px] text-[#d1d5db]" />
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setCacFile(f);
+            }}
           />
         </div>
       </div>
 
-      <button
-        onClick={onSave}
-        disabled={!canSave}
-        className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Save & Continue
-      </button>
+      <div className="border-t border-[#e5e7eb] pt-1">
+        <p className="mb-1 text-[14px] font-semibold text-text-heading">
+          Settlement account
+        </p>
+        <p className="mb-4 text-[12px] text-text-body">
+          Where parent payments are paid out.
+        </p>
+        <div className="flex flex-col gap-5">
+          <Field label="Bank Name">
+            <input
+              className={inputCls}
+              placeholder="e.g. GTBank"
+              value={form.bankName}
+              onChange={(e) => set({ bankName: e.target.value })}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Account Number">
+              <input
+                className={inputCls}
+                placeholder="10-digit NUBAN"
+                maxLength={10}
+                value={form.accountNumber}
+                onChange={(e) =>
+                  set({ accountNumber: e.target.value.replace(/\D/g, "") })
+                }
+              />
+            </Field>
+            <Field label="Account Name">
+              <input
+                className={inputCls}
+                placeholder="As it appears at the bank"
+                value={form.accountName}
+                onChange={(e) => set({ accountName: e.target.value })}
+              />
+            </Field>
+          </div>
+        </div>
+      </div>
+      <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
+  );
+}
+
+function SaveButton({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="mt-2 h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      Save & Continue
+    </button>
   );
 }
 
 function ReviewForm({
-  sections,
+  statusOf,
+  allReady,
+  submitting,
   onSubmit,
 }: {
-  sections: Section[];
+  statusOf: (id: SectionId) => StepStatus;
+  allReady: boolean;
+  submitting: boolean;
   onSubmit: () => void;
 }) {
-  const allDone = sections
-    .filter((s) => s.id !== "review")
-    .every((s) => s.status === "verified");
-
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
-        {sections
-          .filter((s) => s.id !== "review")
-          .map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center justify-between rounded-[10px] border border-[#e5e7eb] bg-white px-5 py-4"
-            >
-              <span className="text-[14px] font-medium text-text-heading">
-                {s.label}
-              </span>
-              <StatusBadge status={s.status} />
-            </div>
-          ))}
+        {SECTION_IDS.filter((id) => id !== "review").map((id) => (
+          <div
+            key={id}
+            className="flex items-center justify-between rounded-[10px] border border-[#e5e7eb] bg-white px-5 py-4"
+          >
+            <span className="text-[14px] font-medium text-text-heading">
+              {SECTION_LABELS[id]}
+            </span>
+            <StatusBadge status={statusOf(id)} />
+          </div>
+        ))}
       </div>
 
-      {!allDone && (
+      {!allReady && (
         <div className="rounded-[10px] bg-[#fef3c7] px-5 py-4 text-[13px] text-[#92400e]">
-          Please complete all sections above before submitting for review.
+          Complete all sections above before submitting for review.
         </div>
       )}
 
       <button
         onClick={onSubmit}
-        disabled={!allDone}
-        className="h-[46px] w-full rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        disabled={!allReady || submitting}
+        className="flex h-[46px] w-full items-center justify-center gap-2 rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Submit for Review
+        {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+        {submitting ? "Submitting…" : "Submit for Review"}
       </button>
+    </div>
+  );
+}
+
+// ─── Submitted / decided status panel ─────────────────────────────────────────
+
+function SubmittedPanel({
+  kyc,
+  onResubmit,
+}: {
+  kyc: KycSubmission;
+  onResubmit: () => void;
+}) {
+  if (kyc.status === "approved") {
+    return (
+      <Panel
+        icon={<CheckCircle2 className="h-12 w-12 text-brand-green" />}
+        title="Your school is verified"
+        body="You can now receive parent payments and appear in search results."
+      />
+    );
+  }
+  if (kyc.status === "rejected") {
+    return (
+      <Panel
+        icon={<XCircle className="h-12 w-12 text-destructive" />}
+        title="Verification was declined"
+        body={
+          kyc.schoolMessage ?? "Please review your details and submit again."
+        }
+        action={
+          <button
+            onClick={onResubmit}
+            className="rounded-[8px] bg-brand-green px-5 py-2.5 text-[14px] font-medium text-white hover:opacity-90"
+          >
+            Edit & resubmit
+          </button>
+        }
+      />
+    );
+  }
+  return (
+    <Panel
+      icon={<Clock className="h-12 w-12 text-amber-500" />}
+      title="Verification in progress"
+      body="We're reviewing your submission — this usually takes 1–2 business days."
+      meta={
+        kyc.submittedAt
+          ? `Submitted ${new Date(kyc.submittedAt).toLocaleDateString()}`
+          : undefined
+      }
+    />
+  );
+}
+
+function Panel({
+  icon,
+  title,
+  body,
+  meta,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  meta?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-10 text-center">
+      {icon}
+      <h2 className="text-[20px] font-semibold text-text-heading">{title}</h2>
+      <p className="max-w-md text-[14px] text-text-body">{body}</p>
+      {meta && <p className="text-[12px] text-grey-text">{meta}</p>}
+      {action}
     </div>
   );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const FALLBACK_SECTIONS: Section[] = [
-  {
-    id: "school_profile",
-    label: "School Profile",
-    status: "not_started",
-    required: true,
-  },
-  {
-    id: "contact_setup",
-    label: "Contact Setup",
-    status: "not_started",
-    required: true,
-  },
-  {
-    id: "proprietor",
-    label: "Proprietor / Owner",
-    status: "not_started",
-    required: true,
-  },
-  {
-    id: "business_registration",
-    label: "Business Registration",
-    status: "not_started",
-    required: true,
-  },
-  {
-    id: "review",
-    label: "Review & Submit",
-    status: "not_started",
-    required: true,
-  },
-];
-
 export default function SchoolCompliance() {
-  const { user } = useAuth();
-  const [sections, setSections] = useState<Section[]>(FALLBACK_SECTIONS);
-  const [activeId, setActiveId] = useState(FALLBACK_SECTIONS[0].id);
+  const owner = useAppSelector((s) => s.auth.user);
+  const { data: kyc, isPending: kycLoading } = useKycStatus();
+  const submit = useSubmitKyc();
 
-  useEffect(() => {
-    let cancelled = false;
-    getComplianceRecord("school", user?.schoolId ?? "sch-001").then(
-      (record) => {
-        if (cancelled) return;
-        setSections(record.steps as Section[]);
-      }
-    );
-    return () => {
-      cancelled = true;
+  const [activeId, setActiveId] = useState<SectionId>("school_profile");
+  const [cacFile, setCacFile] = useState<File | null>(null);
+  const [editing, setEditing] = useState(false); // resubmit after rejection
+
+  const [form, setForm] = useState<KycForm>(() => {
+    const parts = (owner?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
+    return {
+      name: "",
+      type: "",
+      phone: owner?.phone ? owner.phone.replace(/^\+234/, "0") : "",
+      email: owner?.email ?? "",
+      address: "",
+      city: "",
+      state: "",
+      contactName: owner?.fullName ?? "",
+      position: "",
+      officialEmail: owner?.email ?? "",
+      contactPhone: owner?.phone ? owner.phone.replace(/^\+234/, "0") : "",
+      mapsUrl: "",
+      lat: null,
+      lng: null,
+      proprietorFirstName: parts[0] ?? "",
+      proprietorMiddleName:
+        parts.length > 2 ? parts.slice(1, -1).join(" ") : "",
+      proprietorLastName: parts.length > 1 ? parts[parts.length - 1] : "",
+      nin: "",
+      bvn: "",
+      proprietorAddress: "",
+      faceDone: false,
+      businessName: "",
+      bankName: "",
+      accountNumber: "",
+      accountName: "",
     };
-  }, [user?.schoolId]);
+  });
 
-  const handleSectionSave = async (stepId: string) => {
-    const updated = await updateComplianceStep(
-      "school",
-      user?.schoolId ?? "sch-001",
-      stepId,
-      "in_progress"
-    );
-    setSections(updated.steps as Section[]);
-    const ids = FALLBACK_SECTIONS.map((s) => s.id);
-    const nextIdx = ids.indexOf(stepId) + 1;
-    if (nextIdx < ids.length) setActiveId(ids[nextIdx]);
+  const set = (patch: Partial<KycForm>) =>
+    setForm((prev) => ({ ...prev, ...patch }));
+
+  // A section is "ready" when its required fields are filled (client-side wizard gate).
+  const ready = useMemo(
+    () => ({
+      school_profile: Boolean(
+        form.name.trim() &&
+        form.type &&
+        form.phone.trim() &&
+        form.email.trim() &&
+        form.address.trim() &&
+        form.city.trim() &&
+        form.state
+      ),
+      contact_setup: Boolean(
+        form.contactName.trim() &&
+        form.position.trim() &&
+        form.officialEmail.trim() &&
+        form.contactPhone.trim() &&
+        form.lat !== null &&
+        form.lng !== null
+      ),
+      proprietor: Boolean(
+        form.nin.length === 11 &&
+        form.bvn.length === 11 &&
+        form.proprietorFirstName.trim() &&
+        form.proprietorLastName.trim()
+      ),
+      business_registration: Boolean(
+        cacFile &&
+        form.bankName.trim() &&
+        form.accountNumber.length === 10 &&
+        form.accountName.trim()
+      ),
+    }),
+    [form, cacFile]
+  );
+
+  const allReady =
+    ready.school_profile &&
+    ready.contact_setup &&
+    ready.proprietor &&
+    ready.business_registration;
+
+  const locked =
+    !editing && (kyc?.status === "under_review" || kyc?.status === "approved");
+  const decided = !editing && kyc && kyc.status !== "not_submitted";
+
+  const statusOf = (id: SectionId): StepStatus => {
+    if (locked) return kyc?.status === "approved" ? "verified" : "pending";
+    if (id === "review") return allReady ? "in_progress" : "not_started";
+    return ready[id as keyof typeof ready] ? "in_progress" : "not_started";
+  };
+
+  const goNext = (from: SectionId) => {
+    const idx = SECTION_IDS.indexOf(from);
+    if (idx < SECTION_IDS.length - 1) setActiveId(SECTION_IDS[idx + 1]);
+  };
+
+  const handleSubmit = async () => {
+    const candidate = {
+      name: form.name,
+      type: form.type,
+      address: form.address,
+      city: form.city,
+      state: form.state,
+      phone: form.phone,
+      email: form.email,
+      proprietorFirstName: form.proprietorFirstName,
+      proprietorMiddleName: form.proprietorMiddleName || undefined,
+      proprietorLastName: form.proprietorLastName,
+      proprietorNin: form.nin,
+      proprietorBvn: form.bvn,
+      bankName: form.bankName,
+      accountNumber: form.accountNumber,
+      accountName: form.accountName,
+    };
+    const parsed = kycSchema.safeParse(candidate);
+    if (!parsed.success) {
+      toast.error(
+        parsed.error.issues[0]?.message ?? "Please check your details."
+      );
+      return;
+    }
+    if (!cacFile) {
+      toast.error("Upload your CAC certificate.");
+      setActiveId("business_registration");
+      return;
+    }
+    try {
+      await submit.mutateAsync({ input: parsed.data, file: cacFile });
+      toast.success("KYC submitted — we'll review it shortly.");
+      setEditing(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Submission failed.");
+    }
   };
 
   const tips = TIPS[activeId];
 
-  const sectionTitles: Record<string, { title: string; subtitle: string }> = {
-    school_profile: {
-      title: "School Profile",
-      subtitle: "Enter your school's basic information",
-    },
-    contact_setup: {
-      title: "Contact Setup",
-      subtitle: "Enter the primary contact for your school account",
-    },
-    proprietor: {
-      title: "Proprietor / Owner Verification",
-      subtitle: "Verify the identity of the school proprietor or director",
-    },
-    business_registration: {
-      title: "Business Registration Details",
-      subtitle:
-        "Enter your school's CAC registration details and upload documents",
-    },
-    review: {
-      title: "Review & Submit",
-      subtitle: "Review all sections before submitting for approval",
-    },
-  };
+  const sectionTitles: Record<SectionId, { title: string; subtitle: string }> =
+    {
+      school_profile: {
+        title: "School Profile",
+        subtitle: "Enter your school's basic information",
+      },
+      contact_setup: {
+        title: "Contact Setup",
+        subtitle: "Enter the primary contact for your school account",
+      },
+      proprietor: {
+        title: "Proprietor / Owner Verification",
+        subtitle: "Verify the identity of the school proprietor or director",
+      },
+      business_registration: {
+        title: "Business Registration & Settlement",
+        subtitle: "Upload your CAC certificate and add your payout account",
+      },
+      review: {
+        title: "Review & Submit",
+        subtitle: "Review all sections before submitting for approval",
+      },
+    };
 
   return (
     <div className="flex h-full">
       {/* Left nav */}
       <div className="w-[260px] shrink-0 border-r border-[#e5e7eb] bg-white py-6">
         <div className="flex flex-col gap-1 px-4">
-          {sections.map((section) => {
-            const isActive = section.id === activeId;
+          {SECTION_IDS.map((id) => {
+            const isActive = id === activeId;
             return (
               <button
-                key={section.id}
+                key={id}
                 type="button"
-                onClick={() => setActiveId(section.id)}
+                onClick={() => setActiveId(id)}
                 className={`flex w-full items-center justify-between rounded-[8px] px-4 py-3 text-left transition-colors ${
                   isActive
                     ? "border-l-[3px] border-brand-green bg-[#f0faf4] pl-[13px]"
@@ -856,9 +994,9 @@ export default function SchoolCompliance() {
                   <span
                     className={`text-[14px] font-medium ${isActive ? "text-brand-green" : "text-text-heading"}`}
                   >
-                    {section.label}
+                    {SECTION_LABELS[id]}
                   </span>
-                  <StatusBadge status={section.status} />
+                  <StatusBadge status={statusOf(id)} />
                 </div>
                 <ChevronRight
                   className={`h-[16px] w-[16px] shrink-0 ${isActive ? "text-brand-green" : "text-[#9ca3af]"}`}
@@ -869,40 +1007,66 @@ export default function SchoolCompliance() {
         </div>
       </div>
 
-      {/* Center: form */}
+      {/* Center */}
       <div className="flex-1 overflow-y-auto px-8 py-8">
-        <h2 className="text-[20px] font-semibold text-text-heading">
-          {sectionTitles[activeId].title}
-        </h2>
-        <p className="mt-1 mb-7 text-[13px] text-text-body">
-          {sectionTitles[activeId].subtitle}
-        </p>
+        {kycLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-brand-green" />
+          </div>
+        ) : decided ? (
+          <SubmittedPanel kyc={kyc!} onResubmit={() => setEditing(true)} />
+        ) : (
+          <>
+            <h2 className="text-[20px] font-semibold text-text-heading">
+              {sectionTitles[activeId].title}
+            </h2>
+            <p className="mt-1 mb-7 text-[13px] text-text-body">
+              {sectionTitles[activeId].subtitle}
+            </p>
 
-        {activeId === "school_profile" && (
-          <SchoolProfileForm
-            onSave={() => handleSectionSave("school_profile")}
-          />
-        )}
-        {activeId === "contact_setup" && (
-          <ContactSetupForm onSave={() => handleSectionSave("contact_setup")} />
-        )}
-        {activeId === "proprietor" && (
-          <ProprietorForm onSave={() => handleSectionSave("proprietor")} />
-        )}
-        {activeId === "business_registration" && (
-          <BusinessRegistrationForm
-            onSave={() => handleSectionSave("business_registration")}
-          />
-        )}
-        {activeId === "review" && (
-          <ReviewForm
-            sections={sections}
-            onSubmit={() => handleSectionSave("review")}
-          />
+            {activeId === "school_profile" && (
+              <SchoolProfileForm
+                form={form}
+                set={set}
+                onNext={() => goNext("school_profile")}
+              />
+            )}
+            {activeId === "contact_setup" && (
+              <ContactSetupForm
+                form={form}
+                set={set}
+                onNext={() => goNext("contact_setup")}
+              />
+            )}
+            {activeId === "proprietor" && (
+              <ProprietorForm
+                form={form}
+                set={set}
+                onNext={() => goNext("proprietor")}
+              />
+            )}
+            {activeId === "business_registration" && (
+              <BusinessRegistrationForm
+                form={form}
+                set={set}
+                cacFile={cacFile}
+                setCacFile={setCacFile}
+                onNext={() => goNext("business_registration")}
+              />
+            )}
+            {activeId === "review" && (
+              <ReviewForm
+                statusOf={statusOf}
+                allReady={allReady}
+                submitting={submit.isPending}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </>
         )}
       </div>
 
-      {/* Right tips panel */}
+      {/* Right tips */}
       <div className="w-[260px] shrink-0 border-l border-[#e5e7eb] bg-[#f9fafb] px-6 py-8">
         <p className="mb-3 text-[13px] font-semibold text-text-heading">
           {tips.heading}

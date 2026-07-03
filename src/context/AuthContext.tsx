@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import { getToken, clearToken } from "@/src/lib/api/client";
-import client from "@/src/lib/api/client";
+import { createContext, useContext, useState, ReactNode } from "react";
 import type { StaffRole } from "@/src/types/staff";
+
+// NOTE: legacy in-memory auth for the not-yet-migrated portals (parent/staff still on mocks).
+// The school portal has moved to Redux + TanStack Query against the real backend
+// (see lib/store/authSlice + lib/api/useSchoolAuth). Migrate the others the same way.
 
 export interface AuthUser {
   id: string;
@@ -38,28 +34,14 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(() => !!getToken());
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      return;
-    }
-    client
-      .get("/auth/me")
-      .then(({ data }) => setUser(data))
-      .catch(() => clearToken())
-      .finally(() => setIsLoading(false));
-  }, []);
 
   const logout = () => {
-    clearToken();
     setUser(null);
     window.location.href = "/login";
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, setUser, logout }}>
+    <AuthContext.Provider value={{ user, isLoading: false, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

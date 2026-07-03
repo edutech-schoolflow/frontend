@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Plus,
   Users,
@@ -15,11 +16,11 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  getSchoolClasses,
-  createSchoolClass,
-  deleteSchoolClass,
-  getSchoolTeachers,
-} from "@/src/lib/api/schools";
+  useClasses,
+  useCreateClass,
+  useDeleteClass,
+  useSchoolTeachers,
+} from "@/src/lib/api/useSchoolClasses";
 import type { SchoolClass, ClassLevel } from "@/src/types/school";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -43,9 +44,8 @@ const LEVEL_COLORS: Record<ClassLevel, string> = {
 const schema = z.object({
   name: z.string().min(1, "Class name is required"),
   level: z.enum(["nursery", "primary", "junior_secondary", "senior_secondary"]),
-  arms: z
-    .array(z.object({ value: z.string().min(1, "Arm name is required") }))
-    .min(1, "Add at least one arm"),
+  // Arms are optional — a class with no streams gets a single default arm on the backend.
+  arms: z.array(z.object({ value: z.string().min(1, "Arm name is required") })),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -57,16 +57,12 @@ function AddClassModal({
   onClose: () => void;
   onCreated: (c: SchoolClass) => void;
 }) {
-  const [saving, setSaving] = useState(false);
-  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
+  const { data: teachers = [] } = useSchoolTeachers();
+  const createClass = useCreateClass();
   // arm index → selected teacher id
   const [teacherPerArm, setTeacherPerArm] = useState<Record<number, string>>(
     {}
   );
-
-  useEffect(() => {
-    getSchoolTeachers().then(setTeachers);
-  }, []);
 
   const {
     register,
@@ -78,22 +74,21 @@ function AddClassModal({
     defaultValues: {
       name: "",
       level: "primary",
-      arms: [{ value: "A" }],
+      arms: [], // start with no arms — a class with no streams gets a default arm on the backend
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "arms" });
 
   const onSubmit = async (values: FormValues) => {
-    setSaving(true);
-    try {
-      const armNames = values.arms.map((a) => a.value);
-      const teacherByName: Record<string, string> = {};
-      armNames.forEach((arm, idx) => {
-        if (teacherPerArm[idx]) teacherByName[arm] = teacherPerArm[idx];
-      });
+    const armNames = values.arms.map((a) => a.value);
+    const teacherByName: Record<string, string> = {};
+    armNames.forEach((arm, idx) => {
+      if (teacherPerArm[idx]) teacherByName[arm] = teacherPerArm[idx];
+    });
 
-      const created = await createSchoolClass({
+    try {
+      const created = await createClass.mutateAsync({
         name: values.name,
         level: values.level,
         arms: armNames,
@@ -101,8 +96,10 @@ function AddClassModal({
           Object.keys(teacherByName).length > 0 ? teacherByName : undefined,
       });
       onCreated(created);
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not create class."
+      );
     }
   };
 
@@ -178,22 +175,20 @@ function AddClassModal({
                       placeholder={`e.g. ${String.fromCharCode(65 + idx)}`}
                       className="h-[38px] flex-1 rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
                     />
-                    {fields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          remove(idx);
-                          setTeacherPerArm((prev) => {
-                            const next = { ...prev };
-                            delete next[idx];
-                            return next;
-                          });
-                        }}
-                        className="text-[#d1d5db] hover:text-red-400"
-                      >
-                        <X className="h-[15px] w-[15px]" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        remove(idx);
+                        setTeacherPerArm((prev) => {
+                          const next = { ...prev };
+                          delete next[idx];
+                          return next;
+                        });
+                      }}
+                      className="text-[#d1d5db] hover:text-red-400"
+                    >
+                      <X className="h-[15px] w-[15px]" />
+                    </button>
                   </div>
                   {teachers.length > 0 && (
                     <select
@@ -225,8 +220,9 @@ function AddClassModal({
               </p>
             )}
             <p className="mt-2 text-[12px] text-text-body">
-              Each arm is a separate class group, e.g. JSS 1<strong>A</strong>,
-              JSS 1<strong>B</strong>
+              Arms are optional. Add them for streamed classes, e.g. JSS 1
+              <strong>A</strong>, JSS 1<strong>B</strong> — or leave empty if
+              this class has just one group.
             </p>
           </div>
 
@@ -240,10 +236,10 @@ function AddClassModal({
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={createClass.isPending}
               className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-60"
             >
-              {saving ? "Creating…" : "Create class"}
+              {createClass.isPending ? "Creating…" : "Create class"}
             </button>
           </div>
         </form>
@@ -259,7 +255,7 @@ function ClassCard({
   onDelete,
 }: {
   cls: SchoolClass;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const [deleting, setDeleting] = useState(false);
 
@@ -268,8 +264,12 @@ function ClassCard({
     e.stopPropagation();
     if (!confirm(`Delete "${cls.name}" and all its arms?`)) return;
     setDeleting(true);
-    await deleteSchoolClass(cls.id);
-    onDelete(cls.id);
+    try {
+      await onDelete(cls.id);
+    } catch (err) {
+      setDeleting(false);
+      toast.error(err instanceof Error ? err.message : "Could not delete.");
+    }
   };
 
   const teacherLabel =
@@ -367,27 +367,15 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
 export default function ClassesList() {
-  const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: classes = [], isPending } = useClasses();
+  const deleteClass = useDeleteClass();
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    getSchoolClasses().then((data) => {
-      setClasses(data);
-      setLoading(false);
-    });
-  }, []);
+  // Mutations invalidate the classes query, so the list refreshes automatically.
+  const handleCreated = () => setShowModal(false);
+  const handleDelete = (id: string) => deleteClass.mutateAsync(id);
 
-  const handleCreated = (cls: SchoolClass) => {
-    setClasses((prev) => [...prev, cls]);
-    setShowModal(false);
-  };
-
-  const handleDelete = (id: string) => {
-    setClasses((prev) => prev.filter((c) => c.id !== id));
-  };
-
-  if (loading) {
+  if (isPending) {
     return (
       <div className="flex items-center justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />

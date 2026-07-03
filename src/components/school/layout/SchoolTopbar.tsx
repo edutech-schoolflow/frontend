@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
-import { useAuth } from "@/src/context/AuthContext";
+import { useAppSelector } from "@/src/lib/store/hooks";
+import { useLogout } from "@/src/lib/api/useSchoolAuth";
 
 export default function SchoolTopbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { user } = useAuth();
+  const user = useAppSelector((s) => s.auth.user);
+  const logout = useLogout();
 
-  const fullName = user?.name ?? "School Admin";
+  const fullName = user?.fullName ?? "School Admin";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")
@@ -119,12 +119,18 @@ export default function SchoolTopbar() {
               <button
                 onClick={() => {
                   setOpen(false);
-                  router.push("/school/login");
+                  // Clears the server cookies + Redux, then redirects to login.
+                  logout.mutate(undefined, {
+                    onSettled: () => {
+                      window.location.href = "/school/login";
+                    },
+                  });
                 }}
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#e84040] hover:bg-[#fff5f5]"
+                disabled={logout.isPending}
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#e84040] hover:bg-[#fff5f5] disabled:opacity-50"
               >
                 <LogOut className="h-[15px] w-[15px]" />
-                Log out
+                {logout.isPending ? "Logging out…" : "Log out"}
               </button>
             </div>
           )}
