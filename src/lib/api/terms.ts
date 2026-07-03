@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from "./client";
+import { apiGet, apiPost, apiPut, apiDelete } from "./client";
 
 export type TermName = "first" | "second" | "third";
 
@@ -58,6 +58,17 @@ export async function setCurrentYear(yearId: string): Promise<void> {
   await apiPut<null>(`/academic-years/${yearId}/current`, {});
 }
 
+export async function renameAcademicYear(
+  yearId: string,
+  name: string
+): Promise<void> {
+  await apiPut<null>(`/academic-years/${yearId}`, { name });
+}
+
+export async function deleteAcademicYear(yearId: string): Promise<void> {
+  await apiDelete<null>(`/academic-years/${yearId}`);
+}
+
 // ── term writes ─────────────────────────────────────────────────────────────
 
 export interface CreateTermInput {
@@ -79,4 +90,16 @@ export async function createTerm(input: CreateTermInput): Promise<Term> {
 
 export async function setCurrentTerm(termId: string): Promise<void> {
   await apiPut<null>(`/terms/${termId}/current`, {});
+}
+
+export async function updateTermDates(
+  termId: string,
+  startDate: string | null,
+  endDate: string | null
+): Promise<void> {
+  await apiPut<null>(`/terms/${termId}`, { startDate, endDate });
+}
+
+export async function deleteTerm(termId: string): Promise<void> {
+  await apiDelete<null>(`/terms/${termId}`);
 }

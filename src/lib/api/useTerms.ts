@@ -4,8 +4,12 @@ import {
   getAcademicYears,
   createAcademicYear,
   setCurrentYear,
+  renameAcademicYear,
+  deleteAcademicYear,
   createTerm,
   setCurrentTerm,
+  updateTermDates,
+  deleteTerm,
   type CreateTermInput,
 } from "./terms";
 
@@ -54,4 +58,28 @@ export function useCreateTerm() {
 
 export function useSetCurrentTerm() {
   return useCalendarMutation((termId: string) => setCurrentTerm(termId));
+}
+
+export function useRenameAcademicYear() {
+  return useCalendarMutation((vars: { yearId: string; name: string }) =>
+    renameAcademicYear(vars.yearId, vars.name)
+  );
+}
+
+export function useDeleteAcademicYear() {
+  return useCalendarMutation((yearId: string) => deleteAcademicYear(yearId));
+}
+
+export function useUpdateTermDates() {
+  return useCalendarMutation(
+    (vars: {
+      termId: string;
+      startDate: string | null;
+      endDate: string | null;
+    }) => updateTermDates(vars.termId, vars.startDate, vars.endDate)
+  );
+}
+
+export function useDeleteTerm() {
+  return useCalendarMutation((termId: string) => deleteTerm(termId));
 }

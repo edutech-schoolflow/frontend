@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, CalendarDays, Check } from "lucide-react";
+import { Plus, X, CalendarDays, Check, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAcademicYears,
@@ -10,9 +10,14 @@ import {
   useSetCurrentYear,
   useCreateTerm,
   useSetCurrentTerm,
+  useRenameAcademicYear,
+  useDeleteAcademicYear,
+  useUpdateTermDates,
+  useDeleteTerm,
 } from "@/src/lib/api/useTerms";
 import {
   termLabel,
+  type Term,
   type TermName,
   type AcademicYear,
 } from "@/src/lib/api/terms";
@@ -220,6 +225,159 @@ function AddTermModal({
   );
 }
 
+// ── Rename session modal ───────────────────────────────────────────────────────
+
+function RenameYearModal({
+  year,
+  onClose,
+}: {
+  year: AcademicYear;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(year.name);
+  const rename = useRenameAcademicYear();
+
+  async function submit() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      await rename.mutateAsync({ yearId: year.id, name: trimmed });
+      toast.success("Session renamed.");
+      onClose();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not rename session."
+      );
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-[400px] rounded-[16px] bg-white p-7 shadow-xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-[16px] font-semibold text-text-heading">
+            Rename session
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-text-body hover:text-text-heading"
+          >
+            <X className="h-[17px] w-[17px]" />
+          </button>
+        </div>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. 2024/2025"
+          className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+        />
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-[8px] border border-[#e5e7eb] py-2.5 text-[13px] font-medium text-text-body hover:bg-[#f9fafb]"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={rename.isPending || !name.trim()}
+            className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {rename.isPending ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Edit term dates modal ───────────────────────────────────────────────────────
+
+function EditTermDatesModal({
+  term,
+  onClose,
+}: {
+  term: Term;
+  onClose: () => void;
+}) {
+  const [startDate, setStartDate] = useState(term.startDate ?? "");
+  const [endDate, setEndDate] = useState(term.endDate ?? "");
+  const update = useUpdateTermDates();
+
+  async function submit() {
+    try {
+      await update.mutateAsync({
+        termId: term.id,
+        startDate: startDate || null,
+        endDate: endDate || null,
+      });
+      toast.success("Term dates updated.");
+      onClose();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not update dates."
+      );
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-[420px] rounded-[16px] bg-white p-7 shadow-xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-[16px] font-semibold text-text-heading">
+            {termLabel(term.name)} dates
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-text-body hover:text-text-heading"
+          >
+            <X className="h-[17px] w-[17px]" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              Start date
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              End date
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-[8px] border border-[#e5e7eb] py-2.5 text-[13px] font-medium text-text-body hover:bg-[#f9fafb]"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={update.isPending}
+            className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {update.isPending ? "Saving…" : "Save dates"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function AcademicCalendar() {
@@ -227,12 +385,44 @@ export default function AcademicCalendar() {
   const { data: terms = [] } = useTerms();
   const setCurrentYear = useSetCurrentYear();
   const setCurrentTerm = useSetCurrentTerm();
+  const deleteYear = useDeleteAcademicYear();
+  const deleteTerm = useDeleteTerm();
 
   const [showAddYear, setShowAddYear] = useState(false);
   const [addTermFor, setAddTermFor] = useState<AcademicYear | null>(null);
+  const [renameYear, setRenameYear] = useState<AcademicYear | null>(null);
+  const [editTerm, setEditTerm] = useState<Term | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const hasCurrentTerm = terms.some((t) => t.isCurrent);
+
+  async function handleDeleteYear(id: string) {
+    setBusyId(id);
+    try {
+      await deleteYear.mutateAsync(id);
+      toast.success("Session deleted.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not delete session."
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleDeleteTerm(id: string) {
+    setBusyId(id);
+    try {
+      await deleteTerm.mutateAsync(id);
+      toast.success("Term deleted.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not delete term."
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function makeYearCurrent(id: string) {
     setBusyId(id);
@@ -326,7 +516,6 @@ export default function AcademicCalendar() {
                 (a, b) =>
                   TERM_ORDER.indexOf(a.name) - TERM_ORDER.indexOf(b.name)
               );
-            const existing = yearTerms.map((t) => t.name);
             return (
               <div
                 key={year.id}
@@ -361,6 +550,24 @@ export default function AcademicCalendar() {
                       <Plus className="h-[12px] w-[12px]" />
                       Add term
                     </button>
+                    <button
+                      onClick={() => setRenameYear(year)}
+                      title="Rename session"
+                      className="flex h-[30px] w-[30px] items-center justify-center rounded-[6px] text-text-body hover:bg-[#f3f4f6] hover:text-text-heading"
+                    >
+                      <Pencil className="h-[13px] w-[13px]" />
+                    </button>
+                    {/* A session with terms can't be deleted (remove its terms first). */}
+                    {yearTerms.length === 0 && (
+                      <button
+                        onClick={() => handleDeleteYear(year.id)}
+                        disabled={busyId === year.id}
+                        title="Delete session"
+                        className="flex h-[30px] w-[30px] items-center justify-center rounded-[6px] text-text-body hover:bg-[#fff0f0] hover:text-[#e84040] disabled:opacity-40"
+                      >
+                        <Trash2 className="h-[13px] w-[13px]" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -371,7 +578,7 @@ export default function AcademicCalendar() {
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    {yearTerms.map((term) => (
+                    {yearTerms.map((term, ti) => (
                       <div
                         key={term.id}
                         className={`rounded-[8px] border px-3 py-3 ${
@@ -384,12 +591,32 @@ export default function AcademicCalendar() {
                           <p className="text-[13px] font-medium text-text-heading">
                             {termLabel(term.name)}
                           </p>
-                          {term.isCurrent && (
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-brand-green">
-                              <Check className="h-[12px] w-[12px]" />
-                              Current
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {term.isCurrent && (
+                              <span className="flex items-center gap-1 text-[11px] font-medium text-brand-green">
+                                <Check className="h-[12px] w-[12px]" />
+                                Current
+                              </span>
+                            )}
+                            <button
+                              onClick={() => setEditTerm(term)}
+                              title="Edit dates"
+                              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-text-body hover:bg-white hover:text-text-heading"
+                            >
+                              <Pencil className="h-[12px] w-[12px]" />
+                            </button>
+                            {/* Terms are removed in reverse order, so only the last one is deletable. */}
+                            {ti === yearTerms.length - 1 && (
+                              <button
+                                onClick={() => handleDeleteTerm(term.id)}
+                                disabled={busyId === term.id}
+                                title="Delete term"
+                                className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-text-body hover:bg-[#fff0f0] hover:text-[#e84040] disabled:opacity-40"
+                              >
+                                <Trash2 className="h-[12px] w-[12px]" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {(term.startDate || term.endDate) && (
                           <p className="mt-1 text-[11px] text-text-body">
@@ -426,6 +653,15 @@ export default function AcademicCalendar() {
           }
           onClose={() => setAddTermFor(null)}
         />
+      )}
+      {renameYear && (
+        <RenameYearModal
+          year={renameYear}
+          onClose={() => setRenameYear(null)}
+        />
+      )}
+      {editTerm && (
+        <EditTermDatesModal term={editTerm} onClose={() => setEditTerm(null)} />
       )}
     </div>
   );
