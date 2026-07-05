@@ -117,6 +117,50 @@ export async function createStudent(
   return toStudent(data);
 }
 
+export interface ParentLookupResult {
+  found: boolean;
+  /** Full name of the existing guardian (only when found). */
+  name?: string | null;
+  /** "registered" (activated) or "pending" (school-seeded, not yet claimed). */
+  status?: "registered" | "pending" | null;
+  /** Backend-authored message describing what will happen. */
+  message: string;
+}
+
+export async function lookupParentByPhone(
+  phone: string
+): Promise<ParentLookupResult> {
+  const { data, message } = await apiGet<{
+    found: boolean;
+    name?: string | null;
+    status?: "registered" | "pending" | null;
+  }>(`/students/parent-lookup?phone=${encodeURIComponent(phone)}`);
+  return { ...data, message };
+}
+
+// ── lifecycle actions ──────────────────────────────────────────────────────────
+
+export async function withdrawStudent(id: string): Promise<void> {
+  await apiPost<null>(`/students/${id}/withdraw`, {});
+}
+
+export async function reAdmitStudent(id: string): Promise<void> {
+  await apiPost<null>(`/students/${id}/re-admit`, {});
+}
+
+export async function transferStudent(
+  id: string,
+  classArmId: string
+): Promise<void> {
+  await apiPost<null>(`/students/${id}/transfer`, { classArmId });
+}
+
+/** Reverse the student's most recent lifecycle action; returns the backend's summary message. */
+export async function undoLastStudent(id: string): Promise<string> {
+  const { message } = await apiPost<null>(`/students/${id}/undo-last`, {});
+  return message;
+}
+
 // ── end-of-session promotion ───────────────────────────────────────────────────
 
 export type PromotionAction = "promote" | "repeat" | "graduate";

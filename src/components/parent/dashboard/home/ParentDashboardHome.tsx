@@ -1,16 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Plus,
-  UserRound,
-  AlertCircle,
-  BookOpen,
-  MessageCircle,
-} from "lucide-react";
-import { getParentChildren } from "@/src/lib/api/parents";
-import type { ParentChild } from "@/src/types/parent";
+import { Plus, UserRound, AlertCircle, BookOpen } from "lucide-react";
+import { useMyChildren } from "@/src/lib/api/useParentChildren";
+import type { ParentChild } from "@/src/lib/api/parentChildren";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,8 +14,7 @@ function formatFees(amount: number) {
 // ─── child card ───────────────────────────────────────────────────────────────
 
 function ChildCard({ child }: { child: ParentChild }) {
-  const hasBadge =
-    child.outstandingFees > 0 || child.hasNewResult || child.hasNewMessage;
+  const hasBadge = child.outstandingFees > 0 || child.hasNewResult;
 
   return (
     <div className="flex flex-col rounded-[10px] border border-[#e0e0e0] bg-white overflow-hidden">
@@ -47,12 +39,6 @@ function ChildCard({ child }: { child: ParentChild }) {
                   New result
                 </span>
               )}
-              {child.hasNewMessage && (
-                <span className="flex items-center gap-[4px] rounded-full bg-[#e8f0ff] px-[10px] py-[4px] text-[11px] font-medium text-[#4a6cf7]">
-                  <MessageCircle className="h-[11px] w-[11px]" />
-                  New message
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -62,8 +48,12 @@ function ChildCard({ child }: { child: ParentChild }) {
           <p className="text-[16px] font-semibold text-[#1b1b1b]">
             {child.studentName}
           </p>
-          <p className="text-[13px] text-[#666]">{child.schoolName}</p>
-          <p className="text-[13px] text-[#888]">{child.className}</p>
+          <p className="text-[13px] text-[#666]">
+            {child.schoolName ?? "Not enrolled yet"}
+          </p>
+          {child.className && (
+            <p className="text-[13px] text-[#888]">{child.className}</p>
+          )}
         </div>
 
         {/* Fees outstanding */}
@@ -80,21 +70,21 @@ function ChildCard({ child }: { child: ParentChild }) {
       {/* Quick links */}
       <div className="flex border-t border-[#f0f0f0]">
         <Link
-          href={`/parent/dashboard/children/${child.studentId}`}
+          href={`/parent/dashboard/children/${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           View details
         </Link>
         <div className="w-px bg-[#f0f0f0]" />
         <Link
-          href={`/parent/dashboard/report-card?childId=${child.studentId}`}
+          href={`/parent/dashboard/report-card?childId=${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           Report card
         </Link>
         <div className="w-px bg-[#f0f0f0]" />
         <Link
-          href={`/parent/dashboard/ca-scores?childId=${child.studentId}`}
+          href={`/parent/dashboard/ca-scores?childId=${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           CA scores
@@ -134,15 +124,9 @@ function EmptyState() {
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function ParentDashboardHome() {
-  const [children, setChildren] = useState<ParentChild[] | undefined>(
-    undefined
-  );
+  const { data: children, isPending } = useMyChildren();
 
-  useEffect(() => {
-    getParentChildren().then(setChildren);
-  }, []);
-
-  if (children === undefined) {
+  if (isPending || !children) {
     return (
       <div className="flex items-center justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-[#1ca95c] border-t-transparent" />
@@ -170,7 +154,7 @@ export default function ParentDashboardHome() {
       ) : (
         <div className="grid grid-cols-3 gap-[20px]">
           {children.map((child) => (
-            <ChildCard key={child.studentId} child={child} />
+            <ChildCard key={child.childProfileId} child={child} />
           ))}
         </div>
       )}

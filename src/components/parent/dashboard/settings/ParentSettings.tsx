@@ -1,5 +1,6 @@
 import ProfileSection from "./ProfileSection";
 import PasswordSection from "./PasswordSection";
+import PaymentPinSection from "./PaymentPinSection";
 import NotifSection from "./NotifSection";
 
 export default function ParentSettings() {
@@ -11,6 +12,7 @@ export default function ParentSettings() {
       <div className="flex flex-col gap-[24px]">
         <ProfileSection />
         <PasswordSection />
+        <PaymentPinSection />
         <NotifSection />
       </div>
     </div>

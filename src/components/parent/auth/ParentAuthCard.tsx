@@ -107,7 +107,16 @@ export default function ParentAuthCard({ initialTab = "signup" }: Props) {
           )}
 
           {activeTab === "signup" && step === "verify" && (
-            <ParentVerifyEmail phone={verifyPhone} />
+            <ParentVerifyEmail
+              phone={verifyPhone}
+              onVerified={() => {
+                // Stay on this page but flip to the login tab — reliable, unlike a
+                // same-shell route push which left the verify step mounted.
+                setVerifyPhone("");
+                setStep("form");
+                setActiveTab("login");
+              }}
+            />
           )}
 
           {activeTab === "login" && <ParentLoginForm />}

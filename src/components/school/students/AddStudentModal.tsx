@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Loader2, CheckCircle2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateStudent } from "@/src/lib/api/useSchoolStudents";
 import { useClassArms } from "@/src/lib/api/useSchoolClasses";
+import {
+  lookupParentByPhone,
+  type ParentLookupResult,
+} from "@/src/lib/api/schoolStudents";
 import type { SchoolClass } from "@/src/types/school";
 
 type Props = {
@@ -42,6 +46,41 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
     lastName: "",
     relationship: "mother" as (typeof RELATIONSHIPS)[number],
   });
+
+  // Parent-by-phone search: tells the school whether this guardian already has an
+  // account (link, name locked) or is new (create). Advisory only — never blocks save.
+  const [lookup, setLookup] = useState<{
+    loading: boolean;
+    result: ParentLookupResult | null;
+  }>({ loading: false, result: null });
+
+  const linked = lookup.result?.found === true;
+
+  // Auto-check as soon as the phone is a complete Nigerian number — no need to tab
+  // out. Debounced so we fire once typing settles, and cancel-safe against races.
+  const phone = parent.phone.trim();
+  const phoneComplete = /^(\+?234|0)\d{10}$/.test(phone);
+  useEffect(() => {
+    if (!phoneComplete) {
+      setLookup({ loading: false, result: null });
+      return;
+    }
+    let cancelled = false;
+    setLookup({ loading: true, result: null });
+    const t = setTimeout(async () => {
+      try {
+        const result = await lookupParentByPhone(phone);
+        if (!cancelled) setLookup({ loading: false, result });
+      } catch {
+        // Lookup is best-effort; a failure just falls back to the create path.
+        if (!cancelled) setLookup({ loading: false, result: null });
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [phone, phoneComplete]);
 
   // Arms (streams) the school explicitly created for this class. May be empty —
   // a class can take students directly without any arm.
@@ -91,7 +130,7 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-10">
       <div className="w-full max-w-[520px] rounded-xl bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-default px-6 py-4">
@@ -297,62 +336,113 @@ export default function AddStudentModal({ classes, onDone, onClose }: Props) {
                   }))
                 }
               />
+
+              {/* Lookup status — the copy comes from the backend message. A fixed
+                  min-height keeps the modal from jumping while the check runs. */}
+              <div className="mt-2 min-h-11">
+                {lookup.loading && (
+                  <p className="flex items-center gap-1.5 text-[12px] text-grey-text">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Checking for an existing guardian…
+                  </p>
+                )}
+                {!lookup.loading && lookup.result && (
+                  <div
+                    className={`flex items-start gap-2 rounded-lg border px-3 py-2.5 text-[12px] ${
+                      linked
+                        ? "border-green-200 bg-green-50 text-green-700"
+                        : "border-blue-200 bg-blue-50 text-blue-700"
+                    }`}
+                  >
+                    {linked ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : (
+                      <UserPlus className="mt-0.5 h-4 w-4 shrink-0" />
+                    )}
+                    <span>
+                      {lookup.result.message}
+                      {linked && lookup.result.name && (
+                        <>
+                          {" "}
+                          <span className="font-medium">
+                            {lookup.result.name}
+                          </span>
+                          {lookup.result.status === "pending" && (
+                            <span className="text-grey-text">
+                              {" "}
+                              (not yet activated)
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                  Parent first name{" "}
-                  <span className="text-[12px] font-normal text-grey-text">
-                    (new accounts)
-                  </span>
-                </label>
-                <input
-                  className={INPUT}
-                  placeholder="e.g. John"
-                  value={parent.firstName}
-                  onChange={(e) =>
-                    setParent((p) => ({ ...p, firstName: e.target.value }))
-                  }
-                />
+            {/* Name is only editable when creating a NEW guardian. An existing
+                account's name is authoritative and is shown read-only above. */}
+            {!linked && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                    Parent first name{" "}
+                    <span className="text-[12px] font-normal text-grey-text">
+                      (new accounts)
+                    </span>
+                  </label>
+                  <input
+                    className={INPUT}
+                    placeholder="e.g. John"
+                    value={parent.firstName}
+                    onChange={(e) =>
+                      setParent((p) => ({ ...p, firstName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                    Parent last name
+                  </label>
+                  <input
+                    className={INPUT}
+                    placeholder="e.g. Okafor"
+                    value={parent.lastName}
+                    onChange={(e) =>
+                      setParent((p) => ({ ...p, lastName: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
-              <div>
-                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                  Parent last name
-                </label>
-                <input
-                  className={INPUT}
-                  placeholder="e.g. Okafor"
-                  value={parent.lastName}
-                  onChange={(e) =>
-                    setParent((p) => ({ ...p, lastName: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
+            )}
 
-            <div>
-              <label className="mb-1 block text-[13px] font-medium text-dark-blue">
-                Relationship
-              </label>
-              <select
-                className={INPUT}
-                value={parent.relationship}
-                onChange={(e) =>
-                  setParent((p) => ({
-                    ...p,
-                    relationship: e.target
-                      .value as (typeof RELATIONSHIPS)[number],
-                  }))
-                }
-              >
-                {RELATIONSHIPS.map((r) => (
-                  <option key={r} value={r} className="capitalize">
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Relationship is only collected when creating a new guardian. For an
+                existing account we just link — no need to re-declare mother/father. */}
+            {!linked && (
+              <div>
+                <label className="mb-1 block text-[13px] font-medium text-dark-blue">
+                  Relationship
+                </label>
+                <select
+                  className={INPUT}
+                  value={parent.relationship}
+                  onChange={(e) =>
+                    setParent((p) => ({
+                      ...p,
+                      relationship: e.target
+                        .value as (typeof RELATIONSHIPS)[number],
+                    }))
+                  }
+                >
+                  {RELATIONSHIPS.map((r) => (
+                    <option key={r} value={r} className="capitalize">
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 

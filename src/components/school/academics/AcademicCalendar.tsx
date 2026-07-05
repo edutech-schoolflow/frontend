@@ -24,17 +24,34 @@ import {
 
 const TERM_ORDER: TermName[] = ["first", "second", "third"];
 
+function getAcademicYearLabel(year: AcademicYear): string {
+  return year.name || `${year.startYear}/${year.endYear}`;
+}
+
 // ── Create session (academic year) modal ──────────────────────────────────────
 
 function CreateYearModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
+  const [startYear, setStartYear] = useState("");
+  const [endYear, setEndYear] = useState("");
   const create = useCreateAcademicYear();
 
   async function submit() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
+    const start = Number(startYear);
+    const end = Number(endYear);
+
+    if (
+      !Number.isInteger(start) ||
+      !Number.isInteger(end) ||
+      start <= 0 ||
+      end <= 0 ||
+      end <= start
+    ) {
+      toast.error("Enter a valid session range.");
+      return;
+    }
+
     try {
-      await create.mutateAsync(trimmed);
+      await create.mutateAsync({ startYear: start, endYear: end });
       toast.success("Session created.");
       onClose();
     } catch (err) {
@@ -58,15 +75,39 @@ function CreateYearModal({ onClose }: { onClose: () => void }) {
             <X className="h-[17px] w-[17px]" />
           </button>
         </div>
-        <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
-          Session name
-        </label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. 2024/2025"
-          className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
-        />
+
+        <div className="grid gap-3">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              Start year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              value={startYear}
+              onChange={(e) => setStartYear(e.target.value)}
+              placeholder="e.g. 2024"
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              End year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              value={endYear}
+              onChange={(e) => setEndYear(e.target.value)}
+              placeholder="e.g. 2025"
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+        </div>
+
         <div className="mt-5 flex gap-3">
           <button
             onClick={onClose}
@@ -76,7 +117,7 @@ function CreateYearModal({ onClose }: { onClose: () => void }) {
           </button>
           <button
             onClick={submit}
-            disabled={create.isPending || !name.trim()}
+            disabled={create.isPending || !startYear.trim() || !endYear.trim()}
             className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {create.isPending ? "Creating…" : "Create session"}
@@ -134,7 +175,9 @@ function AddTermModal({
             <h2 className="text-[16px] font-semibold text-text-heading">
               Add term
             </h2>
-            <p className="mt-0.5 text-[12px] text-text-body">{year.name}</p>
+            <p className="mt-0.5 text-[12px] text-text-body">
+              {getAcademicYearLabel(year)}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -234,19 +277,36 @@ function RenameYearModal({
   year: AcademicYear;
   onClose: () => void;
 }) {
-  const [name, setName] = useState(year.name);
+  const [startYear, setStartYear] = useState(String(year.startYear ?? ""));
+  const [endYear, setEndYear] = useState(String(year.endYear ?? ""));
   const rename = useRenameAcademicYear();
 
   async function submit() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
+    const start = Number(startYear);
+    const end = Number(endYear);
+
+    if (
+      !Number.isInteger(start) ||
+      !Number.isInteger(end) ||
+      start <= 0 ||
+      end <= 0 ||
+      end <= start
+    ) {
+      toast.error("Enter a valid session range.");
+      return;
+    }
+
     try {
-      await rename.mutateAsync({ yearId: year.id, name: trimmed });
-      toast.success("Session renamed.");
+      await rename.mutateAsync({
+        yearId: year.id,
+        startYear: start,
+        endYear: end,
+      });
+      toast.success("Session updated.");
       onClose();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not rename session."
+        err instanceof Error ? err.message : "Could not update session."
       );
     }
   }
@@ -256,7 +316,7 @@ function RenameYearModal({
       <div className="w-full max-w-[400px] rounded-[16px] bg-white p-7 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-[16px] font-semibold text-text-heading">
-            Rename session
+            Update session
           </h2>
           <button
             onClick={onClose}
@@ -265,12 +325,39 @@ function RenameYearModal({
             <X className="h-[17px] w-[17px]" />
           </button>
         </div>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. 2024/2025"
-          className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
-        />
+
+        <div className="grid gap-3">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              Start year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              value={startYear}
+              onChange={(e) => setStartYear(e.target.value)}
+              placeholder="e.g. 2024"
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-medium text-text-heading">
+              End year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              value={endYear}
+              onChange={(e) => setEndYear(e.target.value)}
+              placeholder="e.g. 2025"
+              className="h-[42px] w-full rounded-[8px] border border-[#e5e7eb] px-3 text-[13px] outline-none focus:border-brand-green"
+            />
+          </div>
+        </div>
+
         <div className="mt-5 flex gap-3">
           <button
             onClick={onClose}
@@ -280,7 +367,7 @@ function RenameYearModal({
           </button>
           <button
             onClick={submit}
-            disabled={rename.isPending || !name.trim()}
+            disabled={rename.isPending || !startYear.trim() || !endYear.trim()}
             className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {rename.isPending ? "Saving…" : "Save"}
@@ -495,7 +582,7 @@ export default function AcademicCalendar() {
               No academic session yet
             </p>
             <p className="mt-1 max-w-[320px] text-[13px] text-text-body">
-              Create a session (e.g. 2024/2025), add its terms, then set the
+              Create a session (e.g. 2024/25), add its terms, then set the
               current term to start using fees and results.
             </p>
           </div>
@@ -525,7 +612,7 @@ export default function AcademicCalendar() {
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h3 className="text-[15px] font-semibold text-text-heading">
-                      {year.name}
+                      {getAcademicYearLabel(year)}
                     </h3>
                     {year.isCurrent && (
                       <span className="rounded-full bg-green-50 px-[10px] py-[2px] text-[11px] font-medium text-brand-green">

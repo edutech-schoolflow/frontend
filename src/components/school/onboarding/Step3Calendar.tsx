@@ -1,10 +1,12 @@
 type Props = {
-  academicYear: string;
+  startYear: string;
+  endYear: string;
   currentTerm: "first" | "second" | "third";
   termStart: string;
   termEnd: string;
   onChange: (partial: {
-    academicYear?: string;
+    startYear?: string;
+    endYear?: string;
     currentTerm?: "first" | "second" | "third";
     termStart?: string;
     termEnd?: string;
@@ -20,7 +22,8 @@ const TERMS: { value: "first" | "second" | "third"; label: string }[] = [
 ];
 
 export default function Step3Calendar({
-  academicYear,
+  startYear,
+  endYear,
   currentTerm,
   termStart,
   termEnd,
@@ -28,7 +31,8 @@ export default function Step3Calendar({
   onNext,
   onBack,
 }: Props) {
-  const canContinue = academicYear.trim() && termStart && termEnd;
+  const canContinue =
+    startYear.trim() && endYear.trim() && termStart && termEnd;
 
   return (
     <div className="space-y-6">
@@ -42,17 +46,35 @@ export default function Step3Calendar({
       </div>
 
       <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-dark-blue">
-            Academic year
-          </label>
-          <input
-            type="text"
-            placeholder="e.g. 2024/2025"
-            value={academicYear}
-            onChange={(e) => onChange({ academicYear: e.target.value })}
-            className="w-full rounded-lg border border-border-default px-4 py-2.5 text-sm text-dark-blue outline-none focus:border-brand-green"
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-dark-blue">
+              Start year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              placeholder="e.g. 2024"
+              value={startYear}
+              onChange={(e) => onChange({ startYear: e.target.value })}
+              className="w-full rounded-lg border border-border-default px-4 py-2.5 text-sm text-dark-blue outline-none focus:border-brand-green"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-dark-blue">
+              End year
+            </label>
+            <input
+              type="number"
+              min="1900"
+              max="2100"
+              placeholder="e.g. 2025"
+              value={endYear}
+              onChange={(e) => onChange({ endYear: e.target.value })}
+              className="w-full rounded-lg border border-border-default px-4 py-2.5 text-sm text-dark-blue outline-none focus:border-brand-green"
+            />
+          </div>
         </div>
 
         <div>

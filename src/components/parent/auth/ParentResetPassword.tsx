@@ -2,23 +2,25 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/src/components/ui/Logo";
 import { Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Form } from "@/src/components/ui/form";
 import FormInput from "@/src/components/ui/formInput";
-import { resetPassword } from "@/src/lib/api/parents";
+import { resetParentPassword } from "@/src/lib/api/parentAuth";
 
 const schema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please retype your password"),
   })
-  .refine((d) => d.password === d.confirmPassword, {
+  .refine((d) => d.newPassword === d.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
@@ -31,11 +33,12 @@ const AUTH_LABEL = "text-[14px] font-normal text-[#666]";
 
 export default function ParentResetPassword() {
   const router = useRouter();
+  const phone = useSearchParams().get("phone") ?? "";
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     mode: "onTouched",
-    defaultValues: { password: "", confirmPassword: "" },
+    defaultValues: { code: "", newPassword: "", confirmPassword: "" },
   });
 
   const {
@@ -44,8 +47,22 @@ export default function ParentResetPassword() {
   } = form;
 
   const onSubmit = async (values: Values) => {
-    await resetPassword({ token: "", password: values.password });
-    router.push("/parent/login");
+    if (!phone) {
+      toast.error("Start again — we don't know which number to reset.");
+      router.push("/parent/forgot-password");
+      return;
+    }
+    try {
+      const message = await resetParentPassword({
+        phone,
+        code: values.code,
+        newPassword: values.newPassword,
+      });
+      toast.success(message);
+      router.push("/parent/login");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reset your password.");
+    }
   };
 
   return (
@@ -69,7 +86,6 @@ export default function ParentResetPassword() {
 
       {/* Right — white panel */}
       <div className="relative overflow-y-auto bg-white">
-        {/* Close */}
         <button
           onClick={() => router.push("/")}
           className="absolute right-8 top-8 flex h-8 w-8 items-center justify-center rounded-full text-text-body transition-colors hover:bg-surface-subtle"
@@ -82,10 +98,9 @@ export default function ParentResetPassword() {
           className="flex flex-col gap-[49px] pt-[94px]"
           style={{ paddingLeft: "105px", paddingRight: "99px" }}
         >
-          {/* Header + fields */}
           <div className="flex flex-col gap-[18px]">
             <h2 className="text-[24px] font-medium text-[#1b1b1b]">
-              Forgot password
+              Reset your password
             </h2>
 
             <Form {...form}>
@@ -94,14 +109,26 @@ export default function ParentResetPassword() {
                 className="flex flex-col gap-[17px]"
               >
                 <p className="text-[16px] font-medium text-[#1b1b1b]">
-                  Update your password
+                  Enter the code we sent{phone ? ` to ${phone}` : ""} and choose a
+                  new password.
                 </p>
 
                 <FormInput
-                  name="password"
+                  name="code"
+                  label="Verification code"
+                  placeholder="6-digit code"
+                  type="text"
+                  inputMode="numeric"
+                  inputClassName={AUTH_INPUT}
+                  labelClassName={AUTH_LABEL}
+                />
+
+                <FormInput
+                  name="newPassword"
                   label="Set your password"
                   placeholder="Type it here"
                   type="password"
+                  autoComplete="new-password"
                   inputClassName={AUTH_INPUT}
                   labelClassName={AUTH_LABEL}
                 />
@@ -111,11 +138,11 @@ export default function ParentResetPassword() {
                   label="Retype your password"
                   placeholder="Type it here"
                   type="password"
+                  autoComplete="new-password"
                   inputClassName={AUTH_INPUT}
                   labelClassName={AUTH_LABEL}
                 />
 
-                {/* Continue button — inside form so Enter submits */}
                 <button
                   type="submit"
                   disabled={!isValid || isSubmitting}
@@ -129,7 +156,7 @@ export default function ParentResetPassword() {
                       Updating…
                     </>
                   ) : (
-                    "Continue"
+                    "Reset password"
                   )}
                 </button>
               </form>

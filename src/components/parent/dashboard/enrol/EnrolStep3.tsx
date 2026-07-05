@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { submitApplication } from "@/src/lib/api/parentApplications";
 
 const STEPS = ["Step 1", "Step 2", "Step 3", "Step 4"];
 
@@ -18,7 +22,37 @@ function InfoRow({ label, value, bold }: InfoRowProps) {
 }
 
 export default function EnrolStep3() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const childProfileId = params.get("childProfileId") ?? "";
+  const schoolId = params.get("schoolId") ?? "";
+  const desiredClass = params.get("desiredClass") ?? "";
+
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const ready = childProfileId && schoolId;
+
+  const handleSubmit = async () => {
+    if (!ready || !confirmed) return;
+    setSubmitting(true);
+    try {
+      const { application, message } = await submitApplication({
+        childProfileId,
+        schoolId,
+        desiredClass: desiredClass || undefined,
+      });
+      toast.success(message);
+      router.push(
+        `/parent/dashboard/enrol/payment?applicationId=${application.id}`
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not submit your application."
+      );
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="px-[88px] py-[31px] pb-[60px]">
@@ -43,87 +77,71 @@ export default function EnrolStep3() {
         </div>
       </div>
 
-      {/* Review card */}
-      <div className="mt-[16px] rounded-[10px] border border-[#ccc] px-[32px] py-[32px]">
-        {/* Photo + info row */}
-        <div className="flex gap-[28px]">
-          {/* Circular photo */}
-          <div className="h-[110px] w-[110px] shrink-0 overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
-            {/* placeholder — replace with actual uploaded photo */}
-            <div className="flex h-full w-full items-center justify-center text-[32px] text-[#ccc]">
-              👤
-            </div>
+      {!ready ? (
+        <div className="mt-[16px] rounded-[10px] border border-[#ccc] px-[32px] py-[40px] text-center">
+          <p className="text-[15px] font-medium text-[#1b1b1b]">
+            Missing application details
+          </p>
+          <p className="mt-[6px] text-[14px] text-[#888]">
+            Start again from the school you want to apply to.
+          </p>
+          <Link
+            href="/parent/dashboard/search"
+            className="mt-[16px] inline-block text-[14px] font-medium text-[#1ca95c] hover:underline"
+          >
+            Find a school
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-[16px] rounded-[10px] border border-[#ccc] px-[32px] py-[32px]">
+          <p className="mb-[18px] text-[16px] font-medium text-[#1b1b1b]">
+            Confirm and submit
+          </p>
+
+          <div className="flex flex-col gap-[10px]">
+            <InfoRow label="Desired class" value={desiredClass || "—"} bold />
           </div>
 
-          {/* Details */}
-          <div className="flex flex-1 flex-col gap-[14px]">
-            {/* Name + Edit */}
-            <div className="flex items-center justify-between">
-              <p className="text-[20px] font-medium text-[#1b1b1b]">
-                Seun Tolu Tinubu
-              </p>
-              <Link
-                href="/parent/dashboard/enrol/child-info"
-                className="text-[14px] font-medium text-[#ff8d28] hover:underline"
-              >
-                Edit
-              </Link>
-            </div>
-
-            {/* Info rows */}
-            <div className="flex flex-col gap-[10px]">
-              <InfoRow label="Date of birth" value="10/10/2010" />
-              <InfoRow label="Desired class" value="Primary 5" bold />
-              <InfoRow label="Gender" value="Female" bold />
-              <InfoRow label="School" value="Greenfield Academy" bold />
-              <InfoRow label="Previous school (Optional)" value="Nil" />
-              <InfoRow label="Medical information (Optional)" value="Nil" />
-            </div>
-
-            {/* Additional guardian */}
-            <div className="flex flex-col gap-[10px]">
-              <p className="text-[13px] text-[#888]">Additional guardian</p>
-              <InfoRow label="First and last name" value="Ruka Iyabo" bold />
-              <InfoRow label="Phone number" value="1234567890" />
-              <InfoRow label="Relationship" value="Mother" bold />
-            </div>
+          <div className="mt-[24px]">
+            <label className="flex cursor-pointer items-center gap-[10px]">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) => setConfirmed(e.target.checked)}
+                className="h-[16px] w-[16px] cursor-pointer accent-[#1ca95c]"
+              />
+              <span className="text-[14px] text-[#666]">
+                I confirm all information is correct
+              </span>
+            </label>
           </div>
-        </div>
 
-        {/* Confirmation checkbox */}
-        <div className="mt-[28px]">
-          <label className="flex cursor-pointer items-center gap-[10px]">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              className="h-[16px] w-[16px] cursor-pointer accent-[#1ca95c]"
-            />
-            <span className="text-[14px] text-[#666]">
-              I confirm all information is correct
-            </span>
-          </label>
-        </div>
+          <div className="mt-[20px] flex items-center justify-between rounded-[8px] bg-[#f5f5f5] px-[20px] py-[16px]">
+            <p className="text-[14px] text-[#666]">Application fee</p>
+            <p className="text-[14px] font-medium text-[#1b1b1b]">₦0</p>
+          </div>
 
-        {/* Application fee row */}
-        <div className="mt-[20px] flex items-center justify-between rounded-[8px] bg-[#f5f5f5] px-[20px] py-[16px]">
-          <p className="text-[14px] text-[#666]">Application fee</p>
-          <p className="text-[14px] font-medium text-[#1b1b1b]">₦10,000</p>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!confirmed || submitting}
+            className={`mt-[24px] flex h-[54px] w-full items-center justify-center rounded-[5px] text-[18px] font-normal text-white transition-opacity ${
+              confirmed && !submitting
+                ? "bg-[#1ca95c] hover:opacity-90"
+                : "cursor-not-allowed bg-[#ccc]"
+            }`}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Submitting…
+              </>
+            ) : (
+              "Submit application"
+            )}
+          </button>
         </div>
-
-        {/* Proceed to payment */}
-        <Link
-          href={confirmed ? "/parent/dashboard/enrol/payment" : "#"}
-          onClick={(e) => !confirmed && e.preventDefault()}
-          className={`mt-[24px] flex h-[54px] w-full items-center justify-center rounded-[5px] text-[18px] font-normal text-white transition-opacity ${
-            confirmed
-              ? "bg-[#1ca95c] hover:opacity-90"
-              : "pointer-events-none bg-[#ccc]"
-          }`}
-        >
-          Proceed to payment
-        </Link>
-      </div>
+      )}
     </div>
   );
 }

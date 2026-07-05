@@ -17,7 +17,8 @@ import {
   parentSignUpSchema,
   type ParentSignUpValues,
 } from "@/src/lib/validations/parentRegister";
-import { registerParent } from "@/src/lib/api/parents";
+import { toast } from "sonner";
+import { registerParent } from "@/src/lib/api/parentAuth";
 
 interface Props {
   onSuccess: (email: string) => void;
@@ -43,13 +44,25 @@ export default function ParentSignUpForm({ onSuccess }: Props) {
   } = form;
 
   const onSubmit = async (values: ParentSignUpValues) => {
-    await registerParent({
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      password: values.password,
-    });
-    onSuccess(values.phone);
+    // The backend takes first/last separately; split the single "full name" field.
+    const parts = values.fullName.trim().split(/\s+/);
+    const firstName = parts[0] ?? "";
+    const lastName = parts.slice(1).join(" ") || firstName;
+
+    try {
+      const message = await registerParent({
+        firstName,
+        lastName,
+        phone: values.phone,
+        email: values.email,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
+      });
+      toast.success(message);
+      onSuccess(values.phone);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create your account.");
+    }
   };
 
   const AUTH_INPUT =

@@ -100,7 +100,8 @@ export const saveOnboardingClasses = async (_levels: string[]) =>
   mockResponse({ message: "Classes saved." });
 
 export const saveAcademicCalendar = async (_payload: {
-  academicYear: string;
+  startYear: number;
+  endYear: number;
   term: "first" | "second" | "third";
   startDate: string;
   endDate: string;

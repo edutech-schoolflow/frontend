@@ -1,107 +1,62 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getChildCaScoresByChild } from "@/src/lib/api/grades";
-import type { Grade } from "@/src/types/reportCard";
+import { FileText } from "lucide-react";
+import { useChildReportCards } from "@/src/lib/api/useParentChildren";
 import Spinner from "./Spinner";
 
-function gradeColor(g?: string) {
-  if (!g) return "text-[#888]";
-  if (["A", "A+"].includes(g)) return "text-[#1ca95c] font-semibold";
-  if (g.startsWith("B")) return "text-[#3b82f6] font-semibold";
-  if (g.startsWith("C")) return "text-[#f59e0b] font-semibold";
-  return "text-[#e53e3e] font-semibold";
-}
+export default function ResultsTab({
+  childProfileId,
+}: {
+  childProfileId: string;
+}) {
+  const { data: cards, isPending, isError, error } =
+    useChildReportCards(childProfileId);
 
-export default function ResultsTab({ studentId }: { studentId: string }) {
-  const [allScores, setAllScores] = useState<
-    Record<string, Grade[]> | undefined
-  >(undefined);
-  const [selectedTerm, setSelectedTerm] = useState("");
-
-  useEffect(() => {
-    getChildCaScoresByChild(studentId).then((scores) => {
-      setAllScores(scores);
-      const terms = Object.keys(scores);
-      if (terms.length > 0) setSelectedTerm(terms[terms.length - 1]);
-    });
-  }, [studentId]);
-
-  if (allScores === undefined) return <Spinner />;
-
-  const terms = Object.keys(allScores);
-  if (terms.length === 0)
+  if (isPending) return <Spinner />;
+  if (isError)
+    return (
+      <p className="py-[48px] text-center text-[14px] text-[#e53e3e]">
+        {error instanceof Error ? error.message : "Could not load results."}
+      </p>
+    );
+  if (!cards || cards.length === 0)
     return (
       <p className="py-[48px] text-center text-[14px] text-[#888]">
-        No results available yet.
+        No published report cards yet. They&apos;ll appear here once the school
+        releases them.
       </p>
     );
 
-  const grades = allScores[selectedTerm] ?? [];
-
   return (
-    <div className="flex flex-col gap-[20px]">
-      <div className="flex items-center gap-[12px]">
-        <span className="text-[13px] text-[#666]">Term:</span>
-        <select
-          value={selectedTerm}
-          onChange={(e) => setSelectedTerm(e.target.value)}
-          className="rounded-[8px] border border-[#ccc] bg-white px-[12px] py-[7px] text-[13px] text-[#1b1b1b] outline-none"
+    <div className="flex flex-col gap-[12px]">
+      {cards.map((card) => (
+        <div
+          key={card.id}
+          className="flex items-center gap-[16px] rounded-[10px] border border-[#e0e0e0] bg-white px-[20px] py-[16px]"
         >
-          {terms.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="overflow-hidden rounded-[10px] border border-[#e0e0e0]">
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="bg-[#f9f9f9]">
-              <th className="px-[16px] py-[12px] font-medium text-[#888]">
-                Subject
-              </th>
-              <th className="px-[16px] py-[12px] text-center font-medium text-[#888]">
-                CA 1
-              </th>
-              <th className="px-[16px] py-[12px] text-center font-medium text-[#888]">
-                CA 2
-              </th>
-              <th className="px-[16px] py-[12px] text-center font-medium text-[#888]">
-                Total
-              </th>
-              <th className="px-[16px] py-[12px] text-center font-medium text-[#888]">
-                Grade
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {grades.map((g) => (
-              <tr key={g.subjectId} className="border-t border-[#f0f0f0]">
-                <td className="px-[16px] py-[12px] text-[#1b1b1b]">
-                  {g.subjectName}
-                </td>
-                <td className="px-[16px] py-[12px] text-center text-[#555]">
-                  {g.ca1 ?? "—"}
-                </td>
-                <td className="px-[16px] py-[12px] text-center text-[#555]">
-                  {g.ca2 ?? "—"}
-                </td>
-                <td className="px-[16px] py-[12px] text-center font-medium text-[#1b1b1b]">
-                  {(g.ca1 ?? 0) + (g.ca2 ?? 0)}
-                </td>
-                <td
-                  className={`px-[16px] py-[12px] text-center ${gradeColor(g.grade)}`}
-                >
-                  {g.grade ?? "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[10px] bg-[#e8f5ee]">
+            <FileText className="h-[20px] w-[20px] text-[#1ca95c]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-medium text-[#1b1b1b]">
+              {card.term ?? "Report card"}
+              {card.academicYear ? ` · ${card.academicYear}` : ""}
+            </p>
+            <p className="truncate text-[13px] text-[#888]">
+              {card.schoolName ?? ""}
+              {card.publishedAt
+                ? ` · Published ${new Date(card.publishedAt).toLocaleDateString(
+                    "en-GB",
+                    { day: "numeric", month: "short", year: "numeric" }
+                  )}`
+                : ""}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-[#e8f8ef] px-[10px] py-[3px] text-[11px] font-medium capitalize text-[#1ca95c]">
+            {card.status}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

@@ -55,6 +55,13 @@ export const schoolRoutes: Route[] = [
   },
   {
     icon: (
+      <Image src="/icons/user-v1.svg" alt="students" width={20} height={20} />
+    ),
+    label: "Students",
+    link: "students",
+  },
+  {
+    icon: (
       <Image src="/icons/clock.svg" alt="calendar" width={20} height={20} />
     ),
     label: "Academic Calendar",

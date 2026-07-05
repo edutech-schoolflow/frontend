@@ -5,6 +5,8 @@ export type TermName = "first" | "second" | "third";
 export interface AcademicYear {
   id: string;
   name: string;
+  startYear: number;
+  endYear: number;
   isCurrent: boolean;
 }
 
@@ -49,8 +51,14 @@ export async function getAcademicYears(): Promise<AcademicYear[]> {
   return data;
 }
 
-export async function createAcademicYear(name: string): Promise<AcademicYear> {
-  const { data } = await apiPost<AcademicYear>("/academic-years", { name });
+export async function createAcademicYear(
+  startYear: number,
+  endYear: number
+): Promise<AcademicYear> {
+  const { data } = await apiPost<AcademicYear>("/academic-years", {
+    startYear,
+    endYear,
+  });
   return data;
 }
 
@@ -60,9 +68,13 @@ export async function setCurrentYear(yearId: string): Promise<void> {
 
 export async function renameAcademicYear(
   yearId: string,
-  name: string
+  startYear: number,
+  endYear: number
 ): Promise<void> {
-  await apiPut<null>(`/academic-years/${yearId}`, { name });
+  await apiPut<null>(`/academic-years/${yearId}`, {
+    startYear,
+    endYear,
+  });
 }
 
 export async function deleteAcademicYear(yearId: string): Promise<void> {

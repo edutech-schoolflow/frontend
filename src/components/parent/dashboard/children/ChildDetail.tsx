@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserRound } from "lucide-react";
-import { getParentChildren } from "@/src/lib/api/parents";
-import type { ParentChild } from "@/src/types/parent";
+import { useMyChildren } from "@/src/lib/api/useParentChildren";
 import FeesTab from "./tabs/FeesTab";
 import ResultsTab from "./tabs/ResultsTab";
 import AttendanceTab from "./tabs/AttendanceTab";
@@ -19,18 +18,14 @@ const TABS: { id: Tab; label: string }[] = [
 export default function ChildDetail() {
   const params = useParams();
   const router = useRouter();
-  const studentId = params?.id as string;
+  // Route param is the childProfileId (academic data is keyed by profile, not enrollment).
+  const childProfileId = params?.id as string;
 
-  const [child, setChild] = useState<ParentChild | null | undefined>(undefined);
+  const { data: children, isPending } = useMyChildren();
+  const child = children?.find((c) => c.childProfileId === childProfileId);
   const [activeTab, setActiveTab] = useState<Tab>("fees");
 
-  useEffect(() => {
-    getParentChildren().then((children) => {
-      setChild(children.find((c) => c.studentId === studentId) ?? null);
-    });
-  }, [studentId]);
-
-  if (child === undefined)
+  if (isPending)
     return (
       <div className="flex justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-2 border-[#eee] border-t-[#1ca95c]" />
@@ -93,9 +88,21 @@ export default function ChildDetail() {
         ))}
       </div>
 
-      {activeTab === "fees" && <FeesTab studentId={studentId} />}
-      {activeTab === "results" && <ResultsTab studentId={studentId} />}
-      {activeTab === "attendance" && <AttendanceTab studentId={studentId} />}
+      {activeTab === "fees" &&
+        (child.studentId ? (
+          <FeesTab studentId={child.studentId} />
+        ) : (
+          <p className="py-[48px] text-center text-[14px] text-[#888]">
+            No active enrollment yet — fees appear once a school admits your
+            child.
+          </p>
+        ))}
+      {activeTab === "results" && (
+        <ResultsTab childProfileId={childProfileId} />
+      )}
+      {activeTab === "attendance" && (
+        <AttendanceTab childProfileId={childProfileId} />
+      )}
     </div>
   );
 }

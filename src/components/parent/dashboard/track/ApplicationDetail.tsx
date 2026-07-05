@@ -1,11 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserRound, CheckCircle2, XCircle } from "lucide-react";
-import { getApplication } from "@/src/lib/api/applications";
-import type { Application } from "@/src/types/application";
+import { useApplication } from "@/src/lib/api/useParentApplications";
 import { formatCurrency } from "../fees/feeUtils";
 import ApplicationTimeline from "./ApplicationTimeline";
 
@@ -53,13 +51,9 @@ export default function ApplicationDetail() {
   const router = useRouter();
   const id = params?.id as string;
 
-  const [app, setApp] = useState<Application | null | undefined>(undefined);
+  const { data: app, isPending } = useApplication(id);
 
-  useEffect(() => {
-    getApplication(id).then((data) => setApp(data ?? null));
-  }, [id]);
-
-  if (app === undefined)
+  if (isPending)
     return (
       <div className="flex justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-2 border-[#eee] border-t-[#1ca95c]" />

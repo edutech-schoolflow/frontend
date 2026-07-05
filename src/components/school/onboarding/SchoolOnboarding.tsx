@@ -23,7 +23,8 @@ type WizardData = {
   logoFile: File | null;
   logoPreviewUrl: string | null;
   selectedLevels: string[];
-  academicYear: string;
+  startYear: string;
+  endYear: string;
   currentTerm: "first" | "second" | "third";
   termStart: string;
   termEnd: string;
@@ -33,7 +34,8 @@ const INITIAL: WizardData = {
   logoFile: null,
   logoPreviewUrl: null,
   selectedLevels: [],
-  academicYear: "2024/2025",
+  startYear: "2024",
+  endYear: "2025",
   currentTerm: "second",
   termStart: "",
   termEnd: "",
@@ -60,7 +62,8 @@ export default function SchoolOnboarding() {
 
   async function handleCalendarNext() {
     await saveAcademicCalendar({
-      academicYear: data.academicYear,
+      startYear: Number(data.startYear),
+      endYear: Number(data.endYear),
       term: data.currentTerm,
       startDate: data.termStart,
       endDate: data.termEnd,
@@ -92,7 +95,8 @@ export default function SchoolOnboarding() {
         )}
         {step === 2 && (
           <Step3Calendar
-            academicYear={data.academicYear}
+            startYear={data.startYear}
+            endYear={data.endYear}
             currentTerm={data.currentTerm}
             termStart={data.termStart}
             termEnd={data.termEnd}

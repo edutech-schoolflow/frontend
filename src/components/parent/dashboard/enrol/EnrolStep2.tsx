@@ -1,44 +1,63 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import ChildInfoForm, {
   type ChildInfoValues,
 } from "@/src/components/shared/ChildInfoForm";
-import { getChildProfiles } from "@/src/lib/api/parents";
-import type { ChildProfile } from "@/src/types/parent";
+import { upsertChild } from "@/src/lib/api/parentChildren";
+import { useChildProfile } from "@/src/lib/api/useParentChildren";
 
 const STEPS = ["Step 1", "Step 2", "Step 3", "Step 4"];
 
 export default function EnrolStep2() {
   const router = useRouter();
   const params = useSearchParams();
-  const childId = params.get("childId");
+  const childId = params.get("childId"); // existing child_profile id, if any
+  const schoolId = params.get("schoolId") ?? "";
 
-  // null = still loading, undefined = no childId / not found
-  const [prefill, setPrefill] = useState<ChildProfile | undefined | null>(
-    childId ? null : undefined
+  // For an existing child, prefill the form from their saved profile.
+  const { data: profile, isPending: loadingProfile } = useChildProfile(
+    childId ?? undefined
   );
 
-  useEffect(() => {
-    if (!childId) return;
-    getChildProfiles().then((profiles) => {
-      const match = profiles.find((p) => p.id === childId);
-      setPrefill(match ?? undefined);
-    });
-  }, [childId]);
-
   const handleSubmit = async (
-    _values: ChildInfoValues,
+    values: ChildInfoValues,
     _photo: File | null,
     _birthCert: File | null,
     _medicalDoc: File | null
   ) => {
-    router.push("/parent/dashboard/enrol/review");
+    if (!schoolId) {
+      toast.error("Choose a school first.");
+      router.push("/parent/dashboard/search");
+      return;
+    }
+    try {
+      // Persist the child profile (create, or update the one we're enrolling), then carry the
+      // resulting id + the chosen class + school into the review step.
+      const { childProfileId } = await upsertChild({
+        id: childId ?? undefined,
+        firstName: values.firstName,
+        middleName: values.middleName || undefined,
+        lastName: values.lastName,
+        dateOfBirth: values.dateOfBirth,
+        gender: values.gender,
+        previousSchool: values.previousSchool || undefined,
+        medicalInfo: values.medicalInfo || undefined,
+        relationship: values.guardianRelationship || undefined,
+      });
+      const qs = new URLSearchParams({
+        childProfileId,
+        schoolId,
+        desiredClass: values.desiredClass,
+      });
+      router.push(`/parent/dashboard/enrol/review?${qs.toString()}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not save your child's details."
+      );
+    }
   };
-
-  // Wait for pre-fill data before mounting the form so defaultValues are correct
-  const isReady = prefill !== null;
 
   return (
     <div className="px-[88px] py-[31px] pb-[60px]">
@@ -66,17 +85,29 @@ export default function EnrolStep2() {
         <p className="mb-[20px] text-[18px] font-normal text-[#1b1b1b]">
           Tell us about your child
         </p>
-        {isReady ? (
-          <ChildInfoForm
-            submitLabel="Review"
-            defaultValues={prefill}
-            existingPhotoUrl={prefill?.photoUrl ?? null}
-            onSubmit={handleSubmit}
-          />
-        ) : (
+        {childId && loadingProfile ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-[#eee] border-t-[#1ca95c]" />
           </div>
+        ) : (
+          <ChildInfoForm
+            submitLabel="Review"
+            defaultValues={
+              profile
+                ? {
+                    firstName: profile.firstName,
+                    middleName: profile.middleName ?? "",
+                    lastName: profile.lastName,
+                    dateOfBirth: profile.dateOfBirth,
+                    gender: profile.gender ?? undefined,
+                    previousSchool: profile.previousSchool ?? "",
+                    medicalInfo: profile.medicalInfo ?? "",
+                  }
+                : undefined
+            }
+            existingPhotoUrl={profile?.photoUrl ?? null}
+            onSubmit={handleSubmit}
+          />
         )}
       </div>
     </div>
