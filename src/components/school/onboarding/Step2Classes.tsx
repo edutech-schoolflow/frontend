@@ -1,19 +1,45 @@
-const CLASS_GROUPS = [
-  { group: "Nursery", levels: ["Nursery 1", "Nursery 2", "Nursery 3"] },
+"use client";
+
+import { useClassLevels } from "@/src/lib/api/useClassLevels";
+import type { ClassLevel } from "@/src/lib/api/classLevels";
+
+// Fallback only — the authoritative ladder comes from GET /class-levels.
+const FALLBACK_GROUPS = [
+  { group: "Nursery", levels: ["Nursery 1", "Nursery 2"] },
   {
     group: "Primary",
-    levels: [
-      "Primary 1",
-      "Primary 2",
-      "Primary 3",
-      "Primary 4",
-      "Primary 5",
-      "Primary 6",
-    ],
+    levels: ["Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"],
   },
   { group: "JSS", levels: ["JSS 1", "JSS 2", "JSS 3"] },
   { group: "SSS", levels: ["SSS 1", "SSS 2", "SSS 3"] },
 ];
+
+const STAGE_LABEL: Record<string, string> = {
+  pre_school: "Pre-school",
+  nursery: "Nursery",
+  primary: "Primary",
+  junior_secondary: "JSS",
+  senior_secondary: "SSS",
+};
+
+/** Turn the flat ladder into stage groups, preserving ladder order. */
+function groupByStage(
+  levels: ClassLevel[]
+): { group: string; levels: string[] }[] {
+  const order: string[] = [];
+  const byStage = new Map<string, string[]>();
+  for (const l of [...levels].sort((a, b) => a.order - b.order)) {
+    if (!byStage.has(l.stage)) {
+      byStage.set(l.stage, []);
+      order.push(l.stage);
+    }
+    byStage.get(l.stage)!.push(l.name);
+  }
+  return order.map((stage) => ({
+    group: STAGE_LABEL[stage] ?? stage,
+    levels: byStage.get(stage)!,
+  }));
+}
 
 type Props = {
   selected: string[];
@@ -28,6 +54,10 @@ export default function Step2Classes({
   onNext,
   onBack,
 }: Props) {
+  const { data: levels } = useClassLevels();
+  const groups =
+    levels && levels.length > 0 ? groupByStage(levels) : FALLBACK_GROUPS;
+
   function toggleLevel(level: string) {
     onChange(
       selected.includes(level)
@@ -62,7 +92,7 @@ export default function Step2Classes({
       </div>
 
       <div className="space-y-4">
-        {CLASS_GROUPS.map(({ group, levels }) => {
+        {groups.map(({ group, levels }) => {
           const allChecked = levels.every((l) => selected.includes(l));
           const someChecked = levels.some((l) => selected.includes(l));
           return (

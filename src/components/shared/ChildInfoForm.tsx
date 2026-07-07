@@ -11,6 +11,8 @@ import {
   Square,
   Loader2,
 } from "lucide-react";
+import { useClassLevels } from "@/src/lib/api/useClassLevels";
+import { usePublicSchoolClasses } from "@/src/lib/api/useSchoolClassesPublic";
 
 // ─── schema & types ───────────────────────────────────────────────────────────
 
@@ -32,7 +34,8 @@ export type ChildInfoValues = z.infer<typeof childInfoSchema>;
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
-export const CLASS_LEVELS = [
+// Fallback only — the authoritative list comes from GET /class-levels (see useClassLevels).
+const FALLBACK_CLASS_LEVELS = [
   "Nursery 1",
   "Nursery 2",
   "Primary 1",
@@ -125,6 +128,8 @@ type ChildInfoFormProps = {
   submitLabel?: string;
   defaultValues?: Partial<ChildInfoValues>;
   existingPhotoUrl?: string | null;
+  /** When applying to a specific school, show that school's classes instead of the full ladder. */
+  schoolId?: string;
   onSubmit: (
     values: ChildInfoValues,
     photo: File | null,
@@ -137,6 +142,7 @@ export default function ChildInfoForm({
   submitLabel = "Save child",
   defaultValues,
   existingPhotoUrl,
+  schoolId,
   onSubmit,
 }: ChildInfoFormProps) {
   const [childPhoto, setChildPhoto] = useState<File | null>(null);
@@ -148,6 +154,17 @@ export default function ChildInfoForm({
     !!defaultValues?.guardianName
   );
   const changePhotoRef = useRef<HTMLInputElement>(null);
+
+  // Desired-class options come from the backend. When applying to a specific school, use that school's
+  // actual classes; otherwise the full standard ladder. Static list is only a last-resort fallback.
+  const { data: classLevels } = useClassLevels();
+  const { data: schoolClasses } = usePublicSchoolClasses(schoolId);
+  const classOptions =
+    schoolId && schoolClasses && schoolClasses.length > 0
+      ? schoolClasses.map((c) => c.name)
+      : classLevels && classLevels.length > 0
+        ? classLevels.map((l) => l.name)
+        : FALLBACK_CLASS_LEVELS;
 
   const {
     register,
@@ -256,7 +273,7 @@ export default function ChildInfoForm({
             <option value="" disabled className="text-[#aaa]">
               Select class level
             </option>
-            {CLASS_LEVELS.map((c) => (
+            {classOptions.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

@@ -23,7 +23,11 @@ export async function searchSchools(params?: {
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
 
   const { data } = await apiGet<SchoolDirectoryItem[]>(`/parent/schools${suffix}`);
-  return (data ?? []).map((s) => ({
+  return (data ?? []).map(toListing);
+}
+
+function toListing(s: SchoolDirectoryItem): SchoolListing {
+  return {
     id: s.id,
     name: s.name,
     location: s.location ?? "",
@@ -32,5 +36,29 @@ export async function searchSchools(params?: {
     rating: "—",
     verified: s.verified,
     isRecommended: false,
-  }));
+  };
+}
+
+/** A single public school's profile, or null if it isn't listed. */
+export async function getSchoolById(id: string): Promise<SchoolListing | null> {
+  try {
+    const { data } = await apiGet<SchoolDirectoryItem>(
+      `/parent/schools/${id}`
+    );
+    return toListing(data);
+  } catch {
+    return null;
+  }
+}
+
+export interface SchoolClass {
+  name: string;
+  stage: string; // snake_case level
+  order: number;
+}
+
+/** The classes a public school offers (in ladder order) — the desired-class options when applying. */
+export async function getSchoolClasses(id: string): Promise<SchoolClass[]> {
+  const { data } = await apiGet<SchoolClass[]>(`/parent/schools/${id}/classes`);
+  return data ?? [];
 }

@@ -14,6 +14,7 @@ export interface Term {
   id: string;
   academicYearId: string;
   name: TermName;
+  season?: string; // Winter | Spring | Summer (display label from backend)
   startDate?: string | null;
   endDate?: string | null;
   isCurrent: boolean;
@@ -23,6 +24,7 @@ interface TermResponse {
   id: string;
   academicYearId: string;
   name: TermName;
+  season?: string;
   startDate?: string | null;
   endDate?: string | null;
   isCurrent: boolean;

@@ -92,6 +92,7 @@ export default function EnrolStep2() {
         ) : (
           <ChildInfoForm
             submitLabel="Review"
+            schoolId={schoolId}
             defaultValues={
               profile
                 ? {

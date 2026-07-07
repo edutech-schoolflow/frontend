@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getSchoolListingById } from "@/src/lib/api/schools";
+import { getSchoolById } from "@/src/lib/api/parentSchools";
 import type { SchoolListing } from "@/src/types/school";
 import WhoToEnrolModal from "@/src/components/parent/dashboard/enrol/WhoToEnrolModal";
 
@@ -18,7 +18,7 @@ export default function SchoolProfile() {
   const [showEnrol, setShowEnrol] = useState(false);
 
   useEffect(() => {
-    getSchoolListingById(id).then((s) => setSchool(s ?? null));
+    getSchoolById(id).then((s) => setSchool(s ?? null));
   }, [id]);
 
   if (school === undefined) {

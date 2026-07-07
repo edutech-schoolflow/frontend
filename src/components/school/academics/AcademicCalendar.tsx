@@ -21,6 +21,7 @@ import {
   type TermName,
   type AcademicYear,
 } from "@/src/lib/api/terms";
+import TransitionBanner from "./TransitionBanner";
 
 const TERM_ORDER: TermName[] = ["first", "second", "third"];
 
@@ -560,6 +561,9 @@ export default function AcademicCalendar() {
         </button>
       </div>
 
+      {/* Auto-prepare + confirm: shows only when a term/session transition is due */}
+      <TransitionBanner />
+
       {/* No current term warning — fees/attendance need one */}
       {!yearsLoading && years.length > 0 && !hasCurrentTerm && (
         <div className="mb-4 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800">
@@ -677,6 +681,11 @@ export default function AcademicCalendar() {
                         <div className="flex items-center justify-between">
                           <p className="text-[13px] font-medium text-text-heading">
                             {termLabel(term.name)}
+                            {term.season && (
+                              <span className="ml-1.5 text-[11px] font-normal text-text-body">
+                                · {term.season}
+                              </span>
+                            )}
                           </p>
                           <div className="flex items-center gap-1">
                             {term.isCurrent && (
