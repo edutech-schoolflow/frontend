@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 export default function BottomCta() {
   return (
@@ -29,20 +28,6 @@ export default function BottomCta() {
                 Join Nigerian schools already saving time, reducing errors, and
                 keeping parents happier with Oneschoolplatform.
               </p>
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                <Link
-                  href="/school/register"
-                  className="flex h-[52px] min-w-[200px] items-center justify-center rounded-[8px] bg-brand-green px-8 text-[16px] font-medium text-white transition-opacity hover:opacity-90"
-                >
-                  Register your school
-                </Link>
-                <Link
-                  href="/parent/login"
-                  className="flex h-[52px] min-w-[160px] items-center justify-center rounded-[8px] border border-white/30 px-8 text-[16px] font-medium text-white transition-colors hover:bg-white/10"
-                >
-                  I&apos;m a parent
-                </Link>
-              </div>
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ export default function SchoolOwnerGuard({
   useEffect(() => {
     if (isError) {
       dispatch(clearAuth());
-      router.replace("/school/login");
+      router.replace("/login");
     }
   }, [isError, dispatch, router]);
 

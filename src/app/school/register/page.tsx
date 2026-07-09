@@ -1,13 +1,6 @@
-import SchoolAuthLayout from "@/src/layout/auth/SchoolAuthLayout";
-import SchoolRegisterForm from "@/src/components/school/auth/SchoolRegisterForm";
+import { redirect } from "next/navigation";
 
-export default function SchoolRegisterPage() {
-  return (
-    <SchoolAuthLayout
-      title="Register your school"
-      subtitle="Get started on Oneschoolplatform in 3 simple steps"
-    >
-      <SchoolRegisterForm />
-    </SchoolAuthLayout>
-  );
+// Creating a school is ONBOARDING, not registration — the account comes first (/welcome).
+export default function LegacySchoolRegisterRedirect() {
+  redirect("/welcome");
 }

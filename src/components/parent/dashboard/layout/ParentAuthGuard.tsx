@@ -26,7 +26,7 @@ export default function ParentAuthGuard({
   useEffect(() => {
     if (isError) {
       dispatch(clearParentAuth());
-      router.replace("/parent/login");
+      router.replace("/login");
     }
   }, [isError, dispatch, router]);
 

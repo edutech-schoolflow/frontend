@@ -1,5 +1,6 @@
-import ParentForgotPassword from "@/src/components/parent/auth/ParentForgotPassword";
+import { redirect } from "next/navigation";
 
-export default function ParentForgotPasswordPage() {
-  return <ParentForgotPassword />;
+// Legacy portal entry — everyone now signs in through the unified door (EDD-001).
+export default function LegacyRedirect() {
+  redirect("/forgot-password");
 }

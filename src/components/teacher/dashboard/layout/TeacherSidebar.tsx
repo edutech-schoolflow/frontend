@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, ShoppingBag, ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react";
 import Logo from "@/src/components/ui/Logo";
 import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
@@ -270,6 +270,15 @@ export default function StaffSidebar() {
                 <Image src="/icons/user-v1.svg" alt="" width={18} height={18} />
               </span>
               My Profile
+            </Link>
+            <Link
+              href="/select-context"
+              className={itemCls("/select-context")}
+            >
+              <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
+                <ArrowLeftRight size={16} className="text-white" />
+              </span>
+              Switch workspace
             </Link>
             <Link
               href="/staff/dashboard/settings"

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
+import { ChevronDown, Settings, LogOut, HelpCircle, ArrowLeftRight } from "lucide-react";
 import { useAppSelector } from "@/src/lib/store/hooks";
 import { useLogout } from "@/src/lib/api/useSchoolAuth";
 
@@ -99,6 +99,14 @@ export default function SchoolTopbar() {
                 {fullName}
               </p>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
+              <Link
+                href="/select-context"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
+                Switch workspace
+              </Link>
               <Link
                 href="/school/dashboard/settings/onboarding"
                 onClick={() => setOpen(false)}
