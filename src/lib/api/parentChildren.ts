@@ -49,7 +49,8 @@ export interface ChildAttendanceSummary {
 
 /** My children + their active enrollment (school, class, fees, new-result flag). */
 export async function getMyChildren(): Promise<ParentChild[]> {
-  const { data } = await apiGet<ParentChild[]>("/parent/children");
+  // Identity space (EDD-002): my children across schools, from the identity session — not a parent token.
+  const { data } = await apiGet<ParentChild[]>("/identity/children");
   return data ?? [];
 }
 
@@ -86,6 +87,31 @@ export interface UpsertChildInput {
   previousSchool?: string;
   medicalInfo?: string;
   relationship?: string; // mother | father | guardian (on first create)
+}
+
+/**
+ * Save a child to my account from the identity space (EDD-002): no school needed, and my parent
+ * profile is created on the first child. Returns the child_profile id. Mirrors upsertChild's body.
+ */
+export async function saveMyChild(
+  input: UpsertChildInput
+): Promise<{ childProfileId: string; message: string }> {
+  const { data, message } = await apiPost<{ childProfileId: string }>(
+    "/identity/children",
+    {
+      id: input.id ?? null,
+      firstName: input.firstName,
+      middleName: input.middleName ?? null,
+      lastName: input.lastName,
+      dateOfBirth: input.dateOfBirth,
+      gender: input.gender ?? null,
+      photoUrl: input.photoUrl ?? null,
+      previousSchool: input.previousSchool ?? null,
+      medicalInfo: input.medicalInfo ?? null,
+      relationship: input.relationship ?? null,
+    }
+  );
+  return { childProfileId: data.childProfileId, message };
 }
 
 /** Create a child profile (or update one I own). Returns the child_profile id. */

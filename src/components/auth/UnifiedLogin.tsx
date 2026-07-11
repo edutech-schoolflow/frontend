@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import AuthShell, { AUTH_INPUT, AUTH_LABEL, AUTH_BUTTON } from "./AuthShell";
 import {
   loginIdentity,
-  dashboardFor,
+  landingFor,
   type AuthContext,
 } from "@/src/lib/api/identityAuth";
 
@@ -28,8 +28,11 @@ export default function UnifiedLogin() {
     selected: string | null;
   }) {
     const selected = outcome.contexts.find((c) => c.id === outcome.selected);
-    // A pending destination (e.g. /welcome deep-link) wins over the context's home.
-    router.push(next ?? (selected ? dashboardFor(selected.type) : "/welcome"));
+    // A pending destination wins; else org contexts land in their /o/{slug} workspace, and a person
+    // with no relationship yet lands on the identity-scoped parent home.
+    router.push(
+      next ?? (selected ? landingFor(selected) : "/parent/dashboard")
+    );
   }
 
   async function handleLogin() {
@@ -42,8 +45,9 @@ export default function UnifiedLogin() {
         return;
       }
       if (outcome.contexts.length === 0) {
-        // Authenticated, no relationships yet — the identity session is set; onboard.
-        router.push(next ?? "/welcome");
+        // Authenticated, no relationships yet — the identity session powers the parent home, where
+        // they find schools and begin. No parent token; the home is an identity page (EDD-002).
+        router.push(next ?? "/parent/dashboard");
         return;
       }
       // Several — the identity session is set; the standalone chooser takes over (FE-001).

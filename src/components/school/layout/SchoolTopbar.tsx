@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   Settings,
   LogOut,
   HelpCircle,
   ArrowLeftRight,
+  GraduationCap,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAppSelector } from "@/src/lib/store/hooks";
 import { useLogout } from "@/src/lib/api/useSchoolAuth";
+import { createParentProfile } from "@/src/lib/api/identityAuth";
 
 // basePath mirrors SchoolSidebar so the topbar's links resolve within whichever tree it renders in.
 export default function SchoolTopbar({
@@ -20,8 +24,23 @@ export default function SchoolTopbar({
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const user = useAppSelector((s) => s.auth.user);
   const logout = useLogout();
+
+  // "Become a Parent" — explicit relationship creation (idempotent), then the global hub. From inside
+  // a school you're choosing to ACT as a parent, not entering a context (EDD-002).
+  async function becomeParent() {
+    setOpen(false);
+    try {
+      await createParentProfile();
+      router.push("/parent/dashboard");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not set up parent access."
+      );
+    }
+  }
 
   const fullName = user?.fullName ?? "School Admin";
   const firstName = fullName.split(" ")[0];
@@ -118,6 +137,14 @@ export default function SchoolTopbar({
                 <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
                 Switch workspace
               </Link>
+              <button
+                type="button"
+                onClick={() => void becomeParent()}
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <GraduationCap className="h-[15px] w-[15px] text-[#888]" />
+                Use as a parent
+              </button>
               <Link
                 href={`${basePath}/settings/onboarding`}
                 onClick={() => setOpen(false)}

@@ -10,11 +10,20 @@ import {
   LogOut,
   HelpCircle,
   Bell,
+  ArrowLeftRight,
+  GraduationCap,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
+import { createParentProfile } from "@/src/lib/api/identityAuth";
 
-export default function StaffTopbar() {
+// basePath mirrors StaffSidebar so the topbar's links resolve within whichever tree it renders in.
+export default function StaffTopbar({
+  basePath = "/staff/dashboard",
+}: {
+  basePath?: string;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [schoolOpen, setSchoolOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -23,6 +32,19 @@ export default function StaffTopbar() {
   const { user } = useAuth();
   const { mySchools, activeSchoolId, isPartTime, switchSchool } =
     useStaffFeatures();
+
+  // "Become a Parent" — explicit relationship creation (idempotent), then the global hub (EDD-002).
+  async function becomeParent() {
+    setMenuOpen(false);
+    try {
+      await createParentProfile();
+      router.push("/parent/dashboard");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not set up parent access."
+      );
+    }
+  }
 
   const activeSchool =
     mySchools.find((e) => e.school.id === activeSchoolId)?.school ??
@@ -142,7 +164,23 @@ export default function StaffTopbar() {
               </p>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
               <Link
-                href="/staff/dashboard/settings"
+                href="/select-context"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
+                Switch workspace
+              </Link>
+              <button
+                type="button"
+                onClick={() => void becomeParent()}
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <GraduationCap className="h-[15px] w-[15px] text-[#888]" />
+                Use as a parent
+              </button>
+              <Link
+                href={`${basePath}/settings`}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >
@@ -150,7 +188,7 @@ export default function StaffTopbar() {
                 Settings
               </Link>
               <Link
-                href="/staff/dashboard/profile"
+                href={`${basePath}/profile`}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >

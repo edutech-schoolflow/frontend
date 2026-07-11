@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   LogOut,
-  ShoppingBag,
   ChevronLeft,
   ChevronRight,
   ArrowLeftRight,
@@ -55,31 +54,8 @@ const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
     href: "/parent/dashboard/track",
     icon: <Image src="/icons/check-circle.svg" alt="" width={18} height={18} />,
   },
-  {
-    label: "School Store",
-    href: "/parent/dashboard/store",
-    icon: <ShoppingBag size={18} />,
-  },
-  {
-    label: "Fees",
-    href: "/parent/dashboard/fees",
-    icon: <Image src="/icons/finance.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "CA scores",
-    href: "/parent/dashboard/ca-scores",
-    icon: <Image src="/icons/pen-paper.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "Report card",
-    href: "/parent/dashboard/report-card",
-    icon: <Image src="/icons/drafts.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "Performance trend",
-    href: "/parent/dashboard/performance",
-    icon: <Image src="/icons/barchart.svg" alt="" width={18} height={18} />,
-  },
+  // Per-school items (Store, Fees, CA scores, Report card, Performance) live in the /o/{slug} parent
+  // workspace — they need a school context. The home keeps only identity-level, cross-school views.
   {
     label: "Payment history",
     href: "/parent/dashboard/payment-history",

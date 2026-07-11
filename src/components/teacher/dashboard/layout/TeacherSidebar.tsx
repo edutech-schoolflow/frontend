@@ -148,11 +148,20 @@ const LogoBadge = () => (
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function StaffSidebar() {
+// basePath lets the same sidebar serve the legacy /staff/dashboard tree and the workspace /o/{slug}
+// tree. NAV_ITEMS carry absolute /staff/dashboard hrefs, so `to()` swaps the prefix at render.
+export default function StaffSidebar({
+  basePath = "/staff/dashboard",
+}: {
+  basePath?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
   const { features, profile, loading } = useStaffFeatures();
+
+  const base = basePath;
+  const to = (href: string) => href.replace("/staff/dashboard", base);
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -182,7 +191,7 @@ export default function StaffSidebar() {
   const roleLabel = profile ? ROLE_LABELS[profile.staff.role] : "Staff";
 
   const isActive = (href: string) =>
-    href === "/staff/dashboard" ? pathname === href : pathname.startsWith(href);
+    href === base ? pathname === href : pathname.startsWith(href);
 
   const itemCls = (href: string) =>
     `flex h-[42px] w-full items-center rounded-[6px] text-[13.5px] font-normal text-white transition-colors ${
@@ -207,7 +216,7 @@ export default function StaffSidebar() {
             : "justify-between px-[20px] pt-[28px] pb-[24px]"
         }`}
       >
-        <Link href="/staff/dashboard">
+        <Link href={base}>
           {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
         </Link>
         <button
@@ -223,8 +232,8 @@ export default function StaffSidebar() {
         {visibleNav.map((item) => (
           <Link
             key={item.href}
-            href={item.href}
-            className={itemCls(item.href)}
+            href={to(item.href)}
+            className={itemCls(to(item.href))}
             title={collapsed ? item.label : undefined}
           >
             <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
@@ -241,7 +250,7 @@ export default function StaffSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-[8px]">
             <Link
-              href="/staff/dashboard/profile"
+              href={`${base}/profile`}
               className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
               title="My Profile"
             >
@@ -250,7 +259,7 @@ export default function StaffSidebar() {
               </span>
             </Link>
             <Link
-              href="/staff/dashboard/settings"
+              href={`${base}/settings`}
               className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
               title="Settings"
             >
@@ -269,8 +278,8 @@ export default function StaffSidebar() {
         ) : (
           <>
             <Link
-              href="/staff/dashboard/profile"
-              className={itemCls("/staff/dashboard/profile")}
+              href={`${base}/profile`}
+              className={itemCls(`${base}/profile`)}
             >
               <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                 <Image src="/icons/user-v1.svg" alt="" width={18} height={18} />
@@ -284,8 +293,8 @@ export default function StaffSidebar() {
               Switch workspace
             </Link>
             <Link
-              href="/staff/dashboard/settings"
-              className={itemCls("/staff/dashboard/settings")}
+              href={`${base}/settings`}
+              className={itemCls(`${base}/settings`)}
             >
               <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                 <Image src="/icons/chip.svg" alt="" width={18} height={18} />

@@ -81,6 +81,7 @@ export async function payFee(input: PayFeeInput): Promise<Payment> {
 }
 
 export async function getParentPayments(): Promise<Payment[]> {
-  const { data } = await apiGet<Payment[]>("/parent/payments");
+  // Identity space (EDD-002): my payment history across schools, incl. application fees.
+  const { data } = await apiGet<Payment[]>("/identity/payments");
   return data;
 }

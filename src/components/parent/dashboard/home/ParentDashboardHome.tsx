@@ -1,14 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, UserRound, AlertCircle, BookOpen } from "lucide-react";
+import {
+  Plus,
+  UserRound,
+  AlertCircle,
+  BookOpen,
+  Search,
+  FileText,
+  School as SchoolIcon,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useMyChildren } from "@/src/lib/api/useParentChildren";
+import { getMyApplications } from "@/src/lib/api/parentApplications";
+import { getIdentityMe } from "@/src/lib/api/identityAuth";
 import type { ParentChild } from "@/src/lib/api/parentChildren";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function formatFees(amount: number) {
   return `₦${amount.toLocaleString()}`;
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
 // ─── child card ───────────────────────────────────────────────────────────────
@@ -94,29 +110,68 @@ function ChildCard({ child }: { child: ParentChild }) {
   );
 }
 
-// ─── empty state ──────────────────────────────────────────────────────────────
+// ─── stat tile ────────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function StatTile({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  hint: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-[20px] py-[80px]">
-      <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#f5f5f5]">
-        <UserRound className="h-[36px] w-[36px] text-[#ccc]" />
+    <div className="flex flex-col gap-[10px] rounded-[12px] border border-[#e5e7eb] bg-white px-[20px] py-[18px]">
+      <div className="flex items-center gap-[10px]">
+        <span className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] bg-[#e8f5ee]">
+          {icon}
+        </span>
+        <span className="text-[13px] font-medium text-[#666]">{label}</span>
       </div>
-      <div className="flex flex-col items-center gap-[8px] text-center">
-        <p className="text-[18px] font-medium text-[#1b1b1b]">
-          No children enrolled yet
+      <p className="text-[28px] font-semibold leading-none text-[#1b1b1b]">
+        {value}
+      </p>
+      <p className="text-[12px] text-[#9ca3af]">{hint}</p>
+    </div>
+  );
+}
+
+// ─── first-run prompt (no children yet) ─────────────────────────────────────────
+
+function GetStarted() {
+  return (
+    <div className="flex flex-col items-center gap-[20px] rounded-[14px] border border-dashed border-[#d1d5db] bg-white py-[56px] text-center">
+      <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full bg-[#e8f5ee]">
+        <SchoolIcon className="h-[30px] w-[30px] text-brand-green" />
+      </div>
+      <div className="flex flex-col items-center gap-[6px]">
+        <p className="text-[17px] font-medium text-[#1b1b1b]">
+          Let&apos;s find a school
         </p>
-        <p className="max-w-[340px] text-[14px] text-[#888]">
-          Find a school and submit an application to get started.
+        <p className="max-w-[360px] text-[14px] text-[#888]">
+          Browse schools near you, apply for admission, and track it — all from
+          here.
         </p>
       </div>
-      <Link
-        href="/parent/dashboard/enrol"
-        className="flex h-[46px] items-center gap-[8px] rounded-[8px] bg-[#1ca95c] px-[24px] text-[14px] text-white transition-opacity hover:opacity-90"
-      >
-        <Plus className="h-[16px] w-[16px]" />
-        Enrol your child
-      </Link>
+      <div className="flex items-center gap-[10px]">
+        <Link
+          href="/parent/dashboard/search"
+          className="flex h-[44px] items-center gap-[8px] rounded-[8px] bg-brand-green px-[22px] text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+        >
+          <Search className="h-[16px] w-[16px]" />
+          Find a school
+        </Link>
+        <Link
+          href="/parent/dashboard/enrol"
+          className="flex h-[44px] items-center gap-[8px] rounded-[8px] border border-[#d1d5db] px-[22px] text-[14px] font-medium text-[#1b1b1b] transition-colors hover:border-brand-green"
+        >
+          <Plus className="h-[16px] w-[16px]" />
+          Add a child
+        </Link>
+      </div>
     </div>
   );
 }
@@ -125,6 +180,14 @@ function EmptyState() {
 
 export default function ParentDashboardHome() {
   const { data: children, isPending } = useMyChildren();
+  const { data: me } = useQuery({
+    queryKey: ["identity-me"],
+    queryFn: getIdentityMe,
+  });
+  const { data: applications } = useQuery({
+    queryKey: ["my-applications"],
+    queryFn: getMyApplications,
+  });
 
   if (isPending || !children) {
     return (
@@ -134,25 +197,77 @@ export default function ParentDashboardHome() {
     );
   }
 
+  const firstName = me?.fullName.split(" ")[0] ?? "there";
+  const schoolCount = new Set(
+    children.filter((c) => c.schoolId).map((c) => c.schoolId)
+  ).size;
+
   return (
-    <div className="px-[88px] py-[31px] pb-[60px]">
-      <div className="mb-[28px] flex items-center justify-between">
-        <h1 className="text-[24px] font-medium text-[#1b1b1b]">My children</h1>
+    <div className="px-[48px] py-[31px] pb-[60px] lg:px-[88px]">
+      {/* Greeting */}
+      <div className="mb-[24px]">
+        <h1 className="text-[26px] font-semibold text-[#1b1b1b]">
+          {greeting()}, {firstName} 👋
+        </h1>
+        <p className="mt-[4px] text-[15px] text-[#666]">
+          {children.length === 0
+            ? "Your SchoolFlow account is ready — let's get your child into a school."
+            : "Here's everything across your children and schools."}
+        </p>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="mb-[28px] grid grid-cols-1 gap-[16px] sm:grid-cols-3">
+        <StatTile
+          icon={<UserRound className="h-[18px] w-[18px] text-brand-green" />}
+          label="Children"
+          value={children.length}
+          hint={
+            children.length === 0
+              ? "No children added yet"
+              : "Linked to your account"
+          }
+        />
+        <StatTile
+          icon={<FileText className="h-[18px] w-[18px] text-brand-green" />}
+          label="Applications"
+          value={applications?.length ?? 0}
+          hint={
+            (applications?.length ?? 0) === 0
+              ? "You haven't applied yet"
+              : "Across schools"
+          }
+        />
+        <StatTile
+          icon={<SchoolIcon className="h-[18px] w-[18px] text-brand-green" />}
+          label="Schools"
+          value={schoolCount}
+          hint={
+            schoolCount === 0
+              ? "Not connected to any school"
+              : "Where your children are enrolled"
+          }
+        />
+      </div>
+
+      {/* Children, or the get-started prompt */}
+      <div className="mb-[16px] flex items-center justify-between">
+        <h2 className="text-[18px] font-medium text-[#1b1b1b]">My children</h2>
         {children.length > 0 && (
           <Link
             href="/parent/dashboard/enrol"
-            className="flex h-[40px] items-center gap-[7px] rounded-[8px] bg-[#1ca95c] px-[18px] text-[13px] text-white transition-opacity hover:opacity-90"
+            className="flex h-[38px] items-center gap-[7px] rounded-[8px] bg-brand-green px-[16px] text-[13px] text-white transition-opacity hover:opacity-90"
           >
             <Plus className="h-[14px] w-[14px]" />
-            Add a child to another school
+            Add a child
           </Link>
         )}
       </div>
 
       {children.length === 0 ? (
-        <EmptyState />
+        <GetStarted />
       ) : (
-        <div className="grid grid-cols-3 gap-[20px]">
+        <div className="grid grid-cols-1 gap-[20px] md:grid-cols-2 xl:grid-cols-3">
           {children.map((child) => (
             <ChildCard key={child.childProfileId} child={child} />
           ))}

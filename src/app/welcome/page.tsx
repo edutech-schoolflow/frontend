@@ -19,8 +19,6 @@ import {
   getWelcome,
   createOrganization,
   createParentProfile,
-  selectContext,
-  dashboardFor,
   type IdentityMe,
   type Welcome,
 } from "@/src/lib/api/identityAuth";
@@ -68,24 +66,19 @@ export default function StartPage() {
     }
   }
 
-  async function handleParentJourney() {
+  async function handleBecomeParent() {
+    // "Become a Parent" is the EXPLICIT relationship creation (Identity is global, relationships are
+    // intentional): it provisions the parent profile once, then lands on the global hub. It does NOT
+    // enter a context — a parent workspace exists only where a school has linked a child, and /home
+    // shows those (from GuardianLinked + reconciliation) alongside discovery. No select-context dance.
     setBusy("parent");
     try {
-      // Two deliberate steps: the parent context creates the PROFILE; auth switches the session.
-      const { contextId, message } = await createParentProfile();
+      const { message } = await createParentProfile();
       toast.success(message);
-      const outcome = await selectContext(contextId);
-      const selected = outcome.contexts.find((c) => c.id === outcome.selected);
-      router.push(
-        selected
-          ? `${dashboardFor(selected.type)}/search`
-          : "/parent/dashboard/search"
-      );
+      router.push("/parent/dashboard");
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Could not start the parent journey."
+        err instanceof Error ? err.message : "Could not set up parent access."
       );
       setBusy(null);
     }
@@ -224,7 +217,7 @@ export default function StartPage() {
 
               <button
                 type="button"
-                onClick={() => void handleParentJourney()}
+                onClick={() => void handleBecomeParent()}
                 disabled={busy !== null}
                 className={card}
               >
@@ -233,11 +226,11 @@ export default function StartPage() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-medium text-[#1b1b1b]">
-                    Find a school for my child
+                    Use SchoolFlow as a parent
                   </span>
                   <span className="block text-[13px] text-[#888]">
-                    Browse schools, apply, and track your child&apos;s
-                    admission.
+                    Set up parent access to follow your child, pay fees, and
+                    find schools.
                   </span>
                 </span>
                 {busy === "parent" ? (

@@ -78,15 +78,18 @@ export function dashboardFor(type: AuthContextType): string {
 }
 
 /**
- * Where entering a context lands (FE-001 Phase 2). The owner portal has moved under /o/{slug}; staff
- * and parent are still on their legacy routes and migrate in later passes, so only owner routes to the
- * workspace for now (and only when it actually has a slug).
+ * Where entering a context lands (FE-001 Phase 2). Owner and staff have moved under the /o/{slug}
+ * workspace (shared URLs, view by context type); parent is still school-agnostic on its legacy route
+ * until parenting is folded in.
  */
 export function landingFor(
   context?: Pick<AuthContext, "type" | "organizationSlug">
 ): string {
   if (!context) return "/welcome";
-  if (context.type === "owner" && context.organizationSlug) {
+  if (
+    (context.type === "owner" || context.type === "staff") &&
+    context.organizationSlug
+  ) {
     return `/o/${context.organizationSlug}`;
   }
   return dashboardFor(context.type);

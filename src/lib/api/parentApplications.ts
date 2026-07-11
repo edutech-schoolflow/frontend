@@ -80,7 +80,10 @@ function toApplication(r: ApplicationResponse): Application {
 // ── requests ────────────────────────────────────────────────────────────────────
 
 export async function getMyApplications(): Promise<Application[]> {
-  const { data } = await apiGet<ApplicationResponse[]>("/parent/applications");
+  // Identity space (EDD-002): my applications across schools, from the identity session.
+  const { data } = await apiGet<ApplicationResponse[]>(
+    "/identity/applications"
+  );
   return (data ?? []).map(toApplication);
 }
 
