@@ -8,14 +8,6 @@ import Logo from "@/src/components/ui/Logo";
 import { useAuth } from "@/src/context/AuthContext";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
 
-const BASE = "/school/dashboard";
-
-const SETTINGS_ITEMS = [
-  { label: "Permission Templates", link: `${BASE}/settings/templates` },
-  { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
-  { label: "Onboarding", link: `${BASE}/settings/onboarding` },
-];
-
 const SettingsIcon = () => (
   <svg
     width="18"
@@ -51,11 +43,24 @@ const LogoBadge = () => (
   </svg>
 );
 
-export default function SchoolSidebar() {
+// basePath lets the same sidebar serve the legacy /school/dashboard tree and the workspace
+// /o/{slug} tree — the route config is relative, so only the prefix differs.
+export default function SchoolSidebar({
+  basePath = "/school/dashboard",
+}: {
+  basePath?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
   const inSettings = pathname.includes("/settings");
+
+  const BASE = basePath;
+  const SETTINGS_ITEMS = [
+    { label: "Permission Templates", link: `${BASE}/settings/templates` },
+    { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
+    { label: "Onboarding", link: `${BASE}/settings/onboarding` },
+  ];
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -118,7 +123,7 @@ export default function SchoolSidebar() {
             : "justify-between px-[20px] pt-[28px] pb-[20px]"
         }`}
       >
-        <Link href="/school/dashboard">
+        <Link href={BASE}>
           {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
         </Link>
         <button

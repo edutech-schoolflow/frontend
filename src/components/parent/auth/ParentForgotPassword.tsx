@@ -45,7 +45,9 @@ export default function ParentForgotPassword() {
         `/parent/reset-password?phone=${encodeURIComponent(values.phone)}`
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not send the code.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not send the code."
+      );
     }
   };
 

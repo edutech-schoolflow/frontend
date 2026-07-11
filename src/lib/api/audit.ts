@@ -20,6 +20,8 @@ export async function getAuditLog(params: {
   if (params.entityType) qs.set("entityType", params.entityType);
   qs.set("page", String(params.page ?? 1));
   qs.set("limit", String(params.limit ?? 50));
-  const { data } = await apiGet<AuditEntry[]>(`/school/audit-log?${qs.toString()}`);
+  const { data } = await apiGet<AuditEntry[]>(
+    `/school/audit-log?${qs.toString()}`
+  );
   return data;
 }

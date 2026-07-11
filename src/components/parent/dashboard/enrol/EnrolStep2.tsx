@@ -54,7 +54,9 @@ export default function EnrolStep2() {
       router.push(`/parent/dashboard/enrol/review?${qs.toString()}`);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not save your child's details."
+        err instanceof Error
+          ? err.message
+          : "Could not save your child's details."
       );
     }
   };

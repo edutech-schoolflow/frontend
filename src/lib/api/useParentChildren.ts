@@ -39,7 +39,13 @@ export function useChildCaScores(
   termId?: string
 ) {
   return useQuery({
-    queryKey: ["parent", "children", childProfileId, "ca-scores", termId ?? null] as const,
+    queryKey: [
+      "parent",
+      "children",
+      childProfileId,
+      "ca-scores",
+      termId ?? null,
+    ] as const,
     queryFn: () => getChildCaScores(childProfileId as string, termId),
     enabled: !!childProfileId,
   });

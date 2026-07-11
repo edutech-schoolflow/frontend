@@ -1,4 +1,3 @@
-
 const SCHOOL_FEATURES = [
   "Collect fees via Monnify — zero cash handling",
   "Manage students, classes, and staff",

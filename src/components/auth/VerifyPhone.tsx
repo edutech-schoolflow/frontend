@@ -10,10 +10,19 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/src/components/ui/input-otp";
-import { verifyIdentityPhone, resendIdentityOtp } from "@/src/lib/api/identityAuth";
+import {
+  verifyIdentityPhone,
+  resendIdentityOtp,
+} from "@/src/lib/api/identityAuth";
 
 /** FE-001: standalone phone verification — one step of the identity journey, one route. */
-export default function VerifyPhone({ phone, next }: { phone: string; next: string | null }) {
+export default function VerifyPhone({
+  phone,
+  next,
+}: {
+  phone: string;
+  next: string | null;
+}) {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,7 +47,9 @@ export default function VerifyPhone({ phone, next }: { phone: string; next: stri
       toast.info(await resendIdentityOtp(phone));
       setOtp("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not resend the code.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not resend the code."
+      );
     }
   }
 
@@ -47,14 +58,22 @@ export default function VerifyPhone({ phone, next }: { phone: string; next: stri
       <div className="mx-auto w-full max-w-[526px] lg:mx-0">
         <div className="flex flex-col gap-[45px]">
           <div className="flex flex-col gap-[18px]">
-            <h2 className="text-[24px] font-medium text-[#1b1b1b]">Verify your phone number</h2>
+            <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+              Verify your phone number
+            </h2>
             <p className="text-[16px] font-medium text-[#1b1b1b]">
               We&apos;ve sent a 6-digit code to{" "}
-              <span className="text-brand-green">{phone || "your phone"}</span>. Enter it below.
+              <span className="text-brand-green">{phone || "your phone"}</span>.
+              Enter it below.
             </p>
 
             <div className="flex w-full max-w-[448px] flex-col items-center gap-[19px]">
-              <InputOTP maxLength={6} value={otp} onChange={setOtp} containerClassName="gap-[12px] w-full">
+              <InputOTP
+                maxLength={6}
+                value={otp}
+                onChange={setOtp}
+                containerClassName="gap-[12px] w-full"
+              >
                 <InputOTPGroup className="gap-[12px]">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
                     <InputOTPSlot

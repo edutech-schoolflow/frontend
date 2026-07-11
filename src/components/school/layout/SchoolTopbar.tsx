@@ -2,11 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Settings, LogOut, HelpCircle, ArrowLeftRight } from "lucide-react";
+import {
+  ChevronDown,
+  Settings,
+  LogOut,
+  HelpCircle,
+  ArrowLeftRight,
+} from "lucide-react";
 import { useAppSelector } from "@/src/lib/store/hooks";
 import { useLogout } from "@/src/lib/api/useSchoolAuth";
 
-export default function SchoolTopbar() {
+// basePath mirrors SchoolSidebar so the topbar's links resolve within whichever tree it renders in.
+export default function SchoolTopbar({
+  basePath = "/school/dashboard",
+}: {
+  basePath?: string;
+}) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useAppSelector((s) => s.auth.user);
@@ -59,7 +70,7 @@ export default function SchoolTopbar() {
 
         {/* Notifications */}
         <Link
-          href="/school/dashboard/notifications"
+          href={`${basePath}/notifications`}
           className="relative text-[#555] hover:text-[#1b1b1b]"
           aria-label="Notifications"
         >
@@ -108,7 +119,7 @@ export default function SchoolTopbar() {
                 Switch workspace
               </Link>
               <Link
-                href="/school/dashboard/settings/onboarding"
+                href={`${basePath}/settings/onboarding`}
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >

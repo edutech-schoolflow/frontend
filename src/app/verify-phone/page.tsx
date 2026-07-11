@@ -6,7 +6,9 @@ import VerifyPhone from "@/src/components/auth/VerifyPhone";
 
 function Inner() {
   const params = useSearchParams();
-  return <VerifyPhone phone={params.get("phone") ?? ""} next={params.get("next")} />;
+  return (
+    <VerifyPhone phone={params.get("phone") ?? ""} next={params.get("next")} />
+  );
 }
 
 export default function VerifyPhonePage() {

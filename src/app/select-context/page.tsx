@@ -10,7 +10,7 @@ import ContextPicker from "@/src/components/auth/ContextPicker";
 import {
   getIdentityMe,
   selectContext,
-  dashboardFor,
+  landingFor,
   type IdentityMe,
 } from "@/src/lib/api/identityAuth";
 
@@ -39,7 +39,7 @@ function Inner() {
       const outcome = await selectContext(contextId);
       toast.success(outcome.message);
       const selected = outcome.contexts.find((c) => c.id === outcome.selected);
-      router.push(next ?? (selected ? dashboardFor(selected.type) : "/welcome"));
+      router.push(next ?? landingFor(selected));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not enter.");
       setEnteringId(null);
@@ -56,22 +56,34 @@ function Inner() {
         ) : (
           <div className="flex flex-col gap-[18px]">
             <div>
-              <h2 className="text-[24px] font-medium text-[#1b1b1b]">Choose where to go</h2>
+              <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+                Choose where to go
+              </h2>
               <p className="mt-[6px] text-[15px] text-[#666]">
                 Your account belongs to more than one place.
               </p>
             </div>
             <div className="mt-[10px]">
-              <ContextPicker contexts={me.contexts} enteringId={enteringId} onSelect={(id) => void handleSelect(id)} />
+              <ContextPicker
+                contexts={me.contexts}
+                enteringId={enteringId}
+                onSelect={(id) => void handleSelect(id)}
+              />
             </div>
 
             <p className="mt-[6px] text-center text-[14px] text-[#666]">
               Looking for something new?{" "}
-              <Link href="/welcome" className="font-medium text-brand-green underline hover:opacity-80">
+              <Link
+                href="/welcome"
+                className="font-medium text-brand-green underline hover:opacity-80"
+              >
                 Create a school
               </Link>{" "}
               ·{" "}
-              <Link href="/join" className="font-medium text-brand-green underline hover:opacity-80">
+              <Link
+                href="/join"
+                className="font-medium text-brand-green underline hover:opacity-80"
+              >
                 Join with an invite
               </Link>
             </p>

@@ -9,7 +9,11 @@ import type { Student } from "@/src/types/student";
 
 type Props = { student: Student; onDone: () => void; onClose: () => void };
 
-export default function TransferStudentModal({ student, onDone, onClose }: Props) {
+export default function TransferStudentModal({
+  student,
+  onDone,
+  onClose,
+}: Props) {
   const { data: arms = [], isPending } = useClassArms(student.classId ?? "");
   const [armId, setArmId] = useState("");
   const transfer = useTransferStudent();
@@ -21,7 +25,9 @@ export default function TransferStudentModal({ student, onDone, onClose }: Props
       toast.success("Student transferred.");
       onDone();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not transfer student.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not transfer student."
+      );
     }
   }
 
@@ -32,7 +38,10 @@ export default function TransferStudentModal({ student, onDone, onClose }: Props
           <h2 className="text-[16px] font-semibold text-dark-blue">
             Transfer student
           </h2>
-          <button onClick={onClose} className="text-grey-text hover:text-dark-blue">
+          <button
+            onClick={onClose}
+            className="text-grey-text hover:text-dark-blue"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>

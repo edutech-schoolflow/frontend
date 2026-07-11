@@ -4,7 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut, ShoppingBag, ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react";
+import {
+  LogOut,
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeftRight,
+} from "lucide-react";
 import { useAuth } from "@/src/context/AuthContext";
 import Logo from "@/src/components/ui/Logo";
 import type { ReactNode } from "react";
@@ -184,10 +190,7 @@ export default function ParentSidebar() {
           </div>
         ) : (
           <>
-            <Link
-              href="/select-context"
-              className={itemCls("/select-context")}
-            >
+            <Link href="/select-context" className={itemCls("/select-context")}>
               <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                 <ArrowLeftRight size={16} className="text-white" />
               </span>

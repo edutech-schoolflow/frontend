@@ -23,7 +23,12 @@ export const identityRegisterSchema = z.object({
   middleName: z.string().trim().optional(),
   lastName: z.string().trim().min(1, "Required"),
   phone: phoneSchema,
-  email: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .optional()
+    .or(z.literal("")),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 export type IdentityRegisterInput = z.infer<typeof identityRegisterSchema>;
@@ -60,7 +65,7 @@ export interface IdentityMe {
   contexts: AuthContext[];
 }
 
-/** Where each context type lands after login. */
+/** Where each context type lands after login (legacy portal routes; fallback for contexts with no slug). */
 export function dashboardFor(type: AuthContextType): string {
   switch (type) {
     case "owner":
@@ -72,9 +77,26 @@ export function dashboardFor(type: AuthContextType): string {
   }
 }
 
+/**
+ * Where entering a context lands (FE-001 Phase 2). The owner portal has moved under /o/{slug}; staff
+ * and parent are still on their legacy routes and migrate in later passes, so only owner routes to the
+ * workspace for now (and only when it actually has a slug).
+ */
+export function landingFor(
+  context?: Pick<AuthContext, "type" | "organizationSlug">
+): string {
+  if (!context) return "/welcome";
+  if (context.type === "owner" && context.organizationSlug) {
+    return `/o/${context.organizationSlug}`;
+  }
+  return dashboardFor(context.type);
+}
+
 // ── requests (messages always come from the backend) ──────────────────────────
 
-export async function registerIdentity(input: IdentityRegisterInput): Promise<string> {
+export async function registerIdentity(
+  input: IdentityRegisterInput
+): Promise<string> {
   const { message } = await apiPost<null>("/auth/register", {
     firstName: input.firstName,
     middleName: input.middleName || null,
@@ -86,8 +108,14 @@ export async function registerIdentity(input: IdentityRegisterInput): Promise<st
   return message;
 }
 
-export async function verifyIdentityPhone(phone: string, code: string): Promise<string> {
-  const { message } = await apiPost<null>("/auth/verify-phone", { phone, code });
+export async function verifyIdentityPhone(
+  phone: string,
+  code: string
+): Promise<string> {
+  const { message } = await apiPost<null>("/auth/verify-phone", {
+    phone,
+    code,
+  });
   return message;
 }
 
@@ -100,7 +128,9 @@ export async function resendIdentityOtp(phone: string): Promise<string> {
  * One login. One context → auto-entered (portal cookies). Zero or several → an IDENTITY-scope
  * session is set; use selectContext (or the onboarding hub) to proceed.
  */
-export async function loginIdentity(input: IdentityLoginInput): Promise<LoginOutcome> {
+export async function loginIdentity(
+  input: IdentityLoginInput
+): Promise<LoginOutcome> {
   const { data, message } = await apiPost<{
     contexts: AuthContext[];
     selected: string | null;
@@ -121,7 +151,10 @@ export async function selectContext(contextId: string): Promise<LoginOutcome> {
  * Deliberate start of the parent journey (onboarding hub): creates the parent PROFILE (owned by the
  * parent context, not by auth), then the caller selects the returned context to enter the portal.
  */
-export async function createParentProfile(): Promise<{ contextId: string; message: string }> {
+export async function createParentProfile(): Promise<{
+  contextId: string;
+  message: string;
+}> {
   const { data, message } = await apiPost<{ contextId: string; type: string }>(
     "/parents/profile",
     {}
@@ -149,16 +182,49 @@ export async function getIdentityMe(): Promise<IdentityMe> {
   return data;
 }
 
+// ── adaptive /welcome (FE-001): what to resume, beyond the static hub cards ────
+
+/** A staff invite addressed to this phone that hasn't been accepted yet. */
+export interface PendingInvite {
+  schoolName?: string | null;
+  role: string;
+  expiresAt: string;
+}
+
+/** A bootstrapped organization that never finished the wizard — offer to resume it. */
+export interface DraftOrganization {
+  contextId: string;
+  organizationId: string;
+  slug: string;
+}
+
+export interface Welcome {
+  pendingInvites: PendingInvite[];
+  draftOrganizations: DraftOrganization[];
+}
+
+export async function getWelcome(): Promise<Welcome> {
+  const { data } = await apiGet<Welcome>("/auth/welcome");
+  return data;
+}
+
 /**
  * Organization onboarding (NOT registration): a signed-in, verified identity creates a school and
- * receives the owner context cookies. The account always exists first.
+ * receives the owner context cookies. The account always exists first. Returns the new workspace's
+ * slug so the caller can route to /o/{slug} (a fresh org is unnamed → straight to the setup wizard).
  */
-export async function createOrganization(): Promise<string> {
-  const { message } = await apiPost<{ contexts: AuthContext[]; selected: string | null }>(
-    "/organizations",
-    {}
-  );
-  return message;
+export async function createOrganization(): Promise<{
+  message: string;
+  slug: string | null;
+}> {
+  const { data, message } = await apiPost<{
+    contexts: AuthContext[];
+    selected: string | null;
+  }>("/organizations", {});
+  const owner =
+    data.contexts.find((c) => c.id === data.selected) ??
+    data.contexts.find((c) => c.type === "owner");
+  return { message, slug: owner?.organizationSlug ?? null };
 }
 
 export async function logoutIdentity(): Promise<void> {

@@ -8,7 +8,14 @@ const FALLBACK_GROUPS = [
   { group: "Nursery", levels: ["Nursery 1", "Nursery 2"] },
   {
     group: "Primary",
-    levels: ["Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"],
+    levels: [
+      "Primary 1",
+      "Primary 2",
+      "Primary 3",
+      "Primary 4",
+      "Primary 5",
+      "Primary 6",
+    ],
   },
   { group: "JSS", levels: ["JSS 1", "JSS 2", "JSS 3"] },
   { group: "SSS", levels: ["SSS 1", "SSS 2", "SSS 3"] },

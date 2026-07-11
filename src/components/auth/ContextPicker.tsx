@@ -1,6 +1,12 @@
 "use client";
 
-import { Loader2, School, Users, GraduationCap, ArrowRight } from "lucide-react";
+import {
+  Loader2,
+  School,
+  Users,
+  GraduationCap,
+  ArrowRight,
+} from "lucide-react";
 import type { AuthContext } from "@/src/lib/api/identityAuth";
 
 function contextIcon(type: AuthContext["type"]) {
@@ -17,14 +23,20 @@ function contextIcon(type: AuthContext["type"]) {
 function contextLabel(c: AuthContext): { title: string; subtitle: string } {
   switch (c.type) {
     case "owner":
-      return { title: c.organizationName ?? "Your school", subtitle: "School owner" };
+      return {
+        title: c.organizationName ?? "Your school",
+        subtitle: "School owner",
+      };
     case "staff":
       return {
         title: c.organizationName ?? "School",
         subtitle: c.role ? `Staff · ${c.role.replace(/_/g, " ")}` : "Staff",
       };
     case "parent":
-      return { title: "Parent portal", subtitle: "Your children, fees and results" };
+      return {
+        title: "Parent portal",
+        subtitle: "Your children, fees and results",
+      };
   }
 }
 
@@ -55,7 +67,9 @@ export default function ContextPicker({
               {contextIcon(c.type)}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-medium text-[#1b1b1b]">{title}</span>
+              <span className="block truncate text-[15px] font-medium text-[#1b1b1b]">
+                {title}
+              </span>
               <span className="block text-[13px] text-[#888]">{subtitle}</span>
             </span>
             {entering ? (

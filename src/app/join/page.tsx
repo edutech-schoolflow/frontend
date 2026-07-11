@@ -2,7 +2,11 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AuthShell, { AUTH_INPUT, AUTH_LABEL, AUTH_BUTTON } from "@/src/components/auth/AuthShell";
+import AuthShell, {
+  AUTH_INPUT,
+  AUTH_LABEL,
+  AUTH_BUTTON,
+} from "@/src/components/auth/AuthShell";
 import InviteAcceptFlow from "@/src/components/staff/auth/InviteAcceptFlow";
 
 /**
@@ -36,13 +40,18 @@ function Inner() {
       <div className="mx-auto w-full max-w-[526px] lg:mx-0">
         <div className="flex flex-col gap-[18px]">
           <div>
-            <h2 className="text-[24px] font-medium text-[#1b1b1b]">Join a school</h2>
+            <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+              Join a school
+            </h2>
             <p className="mt-[6px] text-[15px] text-[#666]">
               Paste the invitation link or code your school sent you.
             </p>
           </div>
 
-          <form className="mt-[14px] flex flex-col gap-[17px]" onSubmit={handleContinue}>
+          <form
+            className="mt-[14px] flex flex-col gap-[17px]"
+            onSubmit={handleContinue}
+          >
             <div className="flex flex-col gap-[6px]">
               <label className={AUTH_LABEL}>Invitation link or code</label>
               <input
@@ -52,7 +61,11 @@ function Inner() {
                 onChange={(e) => setRaw(e.target.value)}
               />
             </div>
-            <button type="submit" disabled={!raw.trim()} className={`mt-[10px] ${AUTH_BUTTON}`}>
+            <button
+              type="submit"
+              disabled={!raw.trim()}
+              className={`mt-[10px] ${AUTH_BUTTON}`}
+            >
               Continue
             </button>
           </form>

@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch } from "@/src/lib/store/hooks";
-import { setParentUser, clearParentAuth } from "@/src/lib/store/parentAuthSlice";
+import {
+  setParentUser,
+  clearParentAuth,
+} from "@/src/lib/store/parentAuthSlice";
 import {
   forgotParentPassword,
   getParentMe,
@@ -59,7 +62,9 @@ export function useResendParentOtp() {
 }
 
 export function useForgotParentPassword() {
-  return useMutation({ mutationFn: (phone: string) => forgotParentPassword(phone) });
+  return useMutation({
+    mutationFn: (phone: string) => forgotParentPassword(phone),
+  });
 }
 
 export function useResetParentPassword() {

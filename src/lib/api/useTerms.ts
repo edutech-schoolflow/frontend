@@ -45,10 +45,9 @@ function useCalendarMutation<TVars>(fn: (vars: TVars) => Promise<unknown>) {
 }
 
 export function useCreateAcademicYear() {
-  return useCalendarMutation((vars: {
-    startYear: number;
-    endYear: number;
-  }) => createAcademicYear(vars.startYear, vars.endYear));
+  return useCalendarMutation((vars: { startYear: number; endYear: number }) =>
+    createAcademicYear(vars.startYear, vars.endYear)
+  );
 }
 
 export function useSetCurrentYear() {
@@ -64,11 +63,10 @@ export function useSetCurrentTerm() {
 }
 
 export function useRenameAcademicYear() {
-  return useCalendarMutation((vars: {
-    yearId: string;
-    startYear: number;
-    endYear: number;
-  }) => renameAcademicYear(vars.yearId, vars.startYear, vars.endYear));
+  return useCalendarMutation(
+    (vars: { yearId: string; startYear: number; endYear: number }) =>
+      renameAcademicYear(vars.yearId, vars.startYear, vars.endYear)
+  );
 }
 
 export function useDeleteAcademicYear() {

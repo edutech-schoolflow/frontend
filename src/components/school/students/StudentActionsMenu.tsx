@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MoreHorizontal, UserMinus, UserCheck, ArrowRightLeft, Undo2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  UserMinus,
+  UserCheck,
+  ArrowRightLeft,
+  Undo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   useWithdrawStudent,
@@ -28,7 +34,8 @@ export default function StudentActionsMenu({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -76,7 +83,10 @@ export default function StudentActionsMenu({
               <button
                 type="button"
                 onClick={() =>
-                  run(() => withdraw.mutateAsync(student.id), "Student withdrawn.")
+                  run(
+                    () => withdraw.mutateAsync(student.id),
+                    "Student withdrawn."
+                  )
                 }
                 className={`${itemCls} text-[#e84040]`}
               >
@@ -88,7 +98,10 @@ export default function StudentActionsMenu({
             <button
               type="button"
               onClick={() =>
-                run(() => reAdmit.mutateAsync(student.id), "Student re-admitted.")
+                run(
+                  () => reAdmit.mutateAsync(student.id),
+                  "Student re-admitted."
+                )
               }
               className={`${itemCls} text-brand-green`}
             >

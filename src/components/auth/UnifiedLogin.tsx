@@ -12,8 +12,6 @@ import {
   type AuthContext,
 } from "@/src/lib/api/identityAuth";
 
-
-
 /**
  * The ONE login (EDD-001). Phone + password authenticate the person; their organization
  * relationships decide where they land. One context → straight in; several → pick below.
@@ -25,7 +23,10 @@ export default function UnifiedLogin() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  function routeAfter(outcome: { contexts: AuthContext[]; selected: string | null }) {
+  function routeAfter(outcome: {
+    contexts: AuthContext[];
+    selected: string | null;
+  }) {
     const selected = outcome.contexts.find((c) => c.id === outcome.selected);
     // A pending destination (e.g. /welcome deep-link) wins over the context's home.
     router.push(next ?? (selected ? dashboardFor(selected.type) : "/welcome"));
@@ -46,7 +47,11 @@ export default function UnifiedLogin() {
         return;
       }
       // Several — the identity session is set; the standalone chooser takes over (FE-001).
-      router.push(next ? `/select-context?next=${encodeURIComponent(next)}` : "/select-context");
+      router.push(
+        next
+          ? `/select-context?next=${encodeURIComponent(next)}`
+          : "/select-context"
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not log in.");
     } finally {
@@ -54,17 +59,18 @@ export default function UnifiedLogin() {
     }
   }
 
-
-
   return (
     <AuthShell>
       <div className="mx-auto w-full max-w-[526px] lg:mx-0">
-        {(
+        {
           <div className="flex flex-col gap-[18px]">
             <div>
-              <h2 className="text-[24px] font-medium text-[#1b1b1b]">Welcome back</h2>
+              <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+                Welcome back
+              </h2>
               <p className="mt-[6px] text-[15px] text-[#666]">
-                One account for everything — your school, your work, your children.
+                One account for everything — your school, your work, your
+                children.
               </p>
             </div>
 
@@ -83,7 +89,9 @@ export default function UnifiedLogin() {
                   type="tel"
                   autoComplete="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^\d+]/g, ""))}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/[^\d+]/g, ""))
+                  }
                 />
               </div>
 
@@ -108,7 +116,11 @@ export default function UnifiedLogin() {
                 </Link>
               </div>
 
-              <button type="submit" disabled={busy || !phone || !password} className={AUTH_BUTTON}>
+              <button
+                type="submit"
+                disabled={busy || !phone || !password}
+                className={AUTH_BUTTON}
+              >
                 {busy ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -120,15 +132,21 @@ export default function UnifiedLogin() {
               </button>
             </form>
 
-
             <p className="mt-[10px] text-center text-[14px] text-[#666]">
               New to SchoolFlow?{" "}
-              <Link href={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="font-medium text-brand-green underline hover:opacity-80">
+              <Link
+                href={
+                  next
+                    ? `/register?next=${encodeURIComponent(next)}`
+                    : "/register"
+                }
+                className="font-medium text-brand-green underline hover:opacity-80"
+              >
                 Create an account
               </Link>
             </p>
           </div>
-        )}
+        }
       </div>
     </AuthShell>
   );

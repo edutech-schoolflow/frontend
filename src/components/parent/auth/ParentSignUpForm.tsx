@@ -61,7 +61,9 @@ export default function ParentSignUpForm({ onSuccess }: Props) {
       toast.success(message);
       onSuccess(values.phone);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create your account.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not create your account."
+      );
     }
   };
 

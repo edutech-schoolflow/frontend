@@ -22,7 +22,9 @@ export async function searchSchools(params?: {
   if (params?.type) qs.set("type", params.type);
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
 
-  const { data } = await apiGet<SchoolDirectoryItem[]>(`/parent/schools${suffix}`);
+  const { data } = await apiGet<SchoolDirectoryItem[]>(
+    `/parent/schools${suffix}`
+  );
   return (data ?? []).map(toListing);
 }
 
@@ -42,9 +44,7 @@ function toListing(s: SchoolDirectoryItem): SchoolListing {
 /** A single public school's profile, or null if it isn't listed. */
 export async function getSchoolById(id: string): Promise<SchoolListing | null> {
   try {
-    const { data } = await apiGet<SchoolDirectoryItem>(
-      `/parent/schools/${id}`
-    );
+    const { data } = await apiGet<SchoolDirectoryItem>(`/parent/schools/${id}`);
     return toListing(data);
   } catch {
     return null;

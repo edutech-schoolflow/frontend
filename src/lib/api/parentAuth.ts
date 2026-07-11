@@ -12,7 +12,10 @@ const phone = z
   .trim()
   .regex(/^(\+?234|0)\d{10}$/, "Enter a valid Nigerian phone number");
 
-const otp = z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code");
+const otp = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, "Enter the 6-digit code");
 
 export const parentLoginSchema = z.object({
   phone,
@@ -80,7 +83,9 @@ interface ParentMeResponse {
 
 // Each mutating call returns the backend's own message, so the UI always shows what the server said.
 
-export async function registerParent(input: ParentRegisterInput): Promise<string> {
+export async function registerParent(
+  input: ParentRegisterInput
+): Promise<string> {
   const { message } = await apiPost<null>("/parent/auth/register", {
     firstName: input.firstName,
     middleName: input.middleName ? input.middleName : null,
@@ -92,7 +97,9 @@ export async function registerParent(input: ParentRegisterInput): Promise<string
   return message;
 }
 
-export async function verifyParentPhone(input: ParentVerifyPhoneInput): Promise<string> {
+export async function verifyParentPhone(
+  input: ParentVerifyPhoneInput
+): Promise<string> {
   const { message } = await apiPost<null>("/parent/auth/verify-phone", input);
   return message;
 }
@@ -106,12 +113,18 @@ export async function loginParent(input: ParentLoginInput): Promise<string> {
 }
 
 export async function resendParentOtp(phoneValue: string): Promise<string> {
-  const { message } = await apiPost<null>("/parent/auth/resend-otp", { phone: phoneValue });
+  const { message } = await apiPost<null>("/parent/auth/resend-otp", {
+    phone: phoneValue,
+  });
   return message;
 }
 
-export async function forgotParentPassword(phoneValue: string): Promise<string> {
-  const { message } = await apiPost<null>("/parent/auth/forgot-password", { phone: phoneValue });
+export async function forgotParentPassword(
+  phoneValue: string
+): Promise<string> {
+  const { message } = await apiPost<null>("/parent/auth/forgot-password", {
+    phone: phoneValue,
+  });
   return message;
 }
 

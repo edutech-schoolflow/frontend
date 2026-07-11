@@ -9,8 +9,12 @@ export default function ResultsTab({
 }: {
   childProfileId: string;
 }) {
-  const { data: cards, isPending, isError, error } =
-    useChildReportCards(childProfileId);
+  const {
+    data: cards,
+    isPending,
+    isError,
+    error,
+  } = useChildReportCards(childProfileId);
 
   if (isPending) return <Spinner />;
   if (isError)

@@ -102,8 +102,12 @@ function ApplicationCard({ app }: { app: Application }) {
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function ParentTrackApplication() {
-  const { data: applications = [], isPending, isError, error } =
-    useMyApplications();
+  const {
+    data: applications = [],
+    isPending,
+    isError,
+    error,
+  } = useMyApplications();
   const [activeTab, setActiveTab] = useState<ApplicationStatus>("under_review");
 
   const counts = Object.fromEntries(

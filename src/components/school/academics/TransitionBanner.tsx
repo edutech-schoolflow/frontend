@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { ArrowRight, CalendarClock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useTransition, useConfirmTransition } from "@/src/lib/api/useTransition";
+import {
+  useTransition,
+  useConfirmTransition,
+} from "@/src/lib/api/useTransition";
 import { termLabel } from "@/src/lib/api/terms";
 
 /**
@@ -54,7 +57,8 @@ export default function TransitionBanner() {
             {currentLabel} has ended
           </p>
           <p className="mt-0.5 text-[13px] text-amber-800">
-            We&apos;ve prepared <span className="font-medium">{nextLabel}</span>.
+            We&apos;ve prepared <span className="font-medium">{nextLabel}</span>
+            .
             {proposal.isSessionBoundary
               ? " Moving into a new session requires promoting your students first."
               : " Confirm to move your school onto it."}
@@ -88,7 +92,9 @@ export default function TransitionBanner() {
             </>
           ) : (
             <>
-              {proposal.isSessionBoundary ? "Start new session" : "Move to next term"}
+              {proposal.isSessionBoundary
+                ? "Start new session"
+                : "Move to next term"}
               <ArrowRight className="h-[14px] w-[14px]" />
             </>
           )}

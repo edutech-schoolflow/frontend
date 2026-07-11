@@ -29,8 +29,9 @@ export default function UnifiedRegister() {
     password: "",
   });
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set =
+    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -46,36 +47,51 @@ export default function UnifiedRegister() {
       if (next) qs.set("next", next);
       router.push(`/verify-phone?${qs.toString()}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create your account.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not create your account."
+      );
     } finally {
       setBusy(false);
     }
   }
 
-
-
   return (
     <AuthShell>
       <div className="mx-auto w-full max-w-[526px] lg:mx-0">
-        {(
+        {
           <div className="flex flex-col gap-[18px]">
             <div>
-              <h2 className="text-[24px] font-medium text-[#1b1b1b]">Create your account</h2>
+              <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+                Create your account
+              </h2>
               <p className="mt-[6px] text-[15px] text-[#666]">
-                One account for everything. What you can do comes from your schools — not from
-                signing up.
+                One account for everything. What you can do comes from your
+                schools — not from signing up.
               </p>
             </div>
 
-            <form className="mt-[14px] flex flex-col gap-[17px]" onSubmit={handleRegister}>
+            <form
+              className="mt-[14px] flex flex-col gap-[17px]"
+              onSubmit={handleRegister}
+            >
               <div className="grid grid-cols-1 gap-[17px] sm:grid-cols-2">
                 <div className="flex flex-col gap-[6px]">
                   <label className={AUTH_LABEL}>First name</label>
-                  <input className={AUTH_INPUT} placeholder="e.g. Ada" value={form.firstName} onChange={set("firstName")} />
+                  <input
+                    className={AUTH_INPUT}
+                    placeholder="e.g. Ada"
+                    value={form.firstName}
+                    onChange={set("firstName")}
+                  />
                 </div>
                 <div className="flex flex-col gap-[6px]">
                   <label className={AUTH_LABEL}>Last name</label>
-                  <input className={AUTH_INPUT} placeholder="e.g. Obi" value={form.lastName} onChange={set("lastName")} />
+                  <input
+                    className={AUTH_INPUT}
+                    placeholder="e.g. Obi"
+                    value={form.lastName}
+                    onChange={set("lastName")}
+                  />
                 </div>
               </div>
 
@@ -83,7 +99,11 @@ export default function UnifiedRegister() {
                 <label className={AUTH_LABEL}>
                   Middle name <span className="text-[#aaa]">(optional)</span>
                 </label>
-                <input className={AUTH_INPUT} value={form.middleName} onChange={set("middleName")} />
+                <input
+                  className={AUTH_INPUT}
+                  value={form.middleName}
+                  onChange={set("middleName")}
+                />
               </div>
 
               <div className="flex flex-col gap-[6px]">
@@ -95,7 +115,10 @@ export default function UnifiedRegister() {
                   autoComplete="tel"
                   value={form.phone}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, phone: e.target.value.replace(/[^\d+]/g, "") }))
+                    setForm((f) => ({
+                      ...f,
+                      phone: e.target.value.replace(/[^\d+]/g, ""),
+                    }))
                   }
                 />
               </div>
@@ -104,7 +127,13 @@ export default function UnifiedRegister() {
                 <label className={AUTH_LABEL}>
                   Email <span className="text-[#aaa]">(optional)</span>
                 </label>
-                <input className={AUTH_INPUT} type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} />
+                <input
+                  className={AUTH_INPUT}
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={set("email")}
+                />
               </div>
 
               <div className="flex flex-col gap-[6px]">
@@ -119,7 +148,11 @@ export default function UnifiedRegister() {
                 />
               </div>
 
-              <button type="submit" disabled={busy} className={`mt-[10px] ${AUTH_BUTTON}`}>
+              <button
+                type="submit"
+                disabled={busy}
+                className={`mt-[10px] ${AUTH_BUTTON}`}
+              >
                 {busy ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -133,12 +166,15 @@ export default function UnifiedRegister() {
 
             <p className="mt-[6px] text-center text-[14px] text-[#666]">
               Already have an account?{" "}
-              <Link href={loginHref} className="font-medium text-brand-green underline hover:opacity-80">
+              <Link
+                href={loginHref}
+                className="font-medium text-brand-green underline hover:opacity-80"
+              >
                 Log in
               </Link>
             </p>
           </div>
-        )}
+        }
       </div>
     </AuthShell>
   );

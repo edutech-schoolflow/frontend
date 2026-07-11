@@ -16,7 +16,10 @@ import { resetParentPassword } from "@/src/lib/api/parentAuth";
 
 const schema = z
   .object({
-    code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code"),
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, "Enter the 6-digit code"),
     newPassword: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please retype your password"),
   })
@@ -61,7 +64,9 @@ export default function ParentResetPassword() {
       toast.success(message);
       router.push("/parent/login");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not reset your password.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not reset your password."
+      );
     }
   };
 
@@ -109,8 +114,8 @@ export default function ParentResetPassword() {
                 className="flex flex-col gap-[17px]"
               >
                 <p className="text-[16px] font-medium text-[#1b1b1b]">
-                  Enter the code we sent{phone ? ` to ${phone}` : ""} and choose a
-                  new password.
+                  Enter the code we sent{phone ? ` to ${phone}` : ""} and choose
+                  a new password.
                 </p>
 
                 <FormInput

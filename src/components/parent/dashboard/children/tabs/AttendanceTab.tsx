@@ -15,8 +15,12 @@ export default function AttendanceTab({
 }: {
   childProfileId: string;
 }) {
-  const { data: records, isPending, isError, error } =
-    useChildAttendance(childProfileId);
+  const {
+    data: records,
+    isPending,
+    isError,
+    error,
+  } = useChildAttendance(childProfileId);
 
   if (isPending) return <Spinner />;
   if (isError)
@@ -36,9 +40,7 @@ export default function AttendanceTab({
     <div className="flex flex-col gap-[16px]">
       {records.map((r) => {
         const pct =
-          r.totalDays > 0
-            ? Math.round((r.presentDays / r.totalDays) * 100)
-            : 0;
+          r.totalDays > 0 ? Math.round((r.presentDays / r.totalDays) * 100) : 0;
         const barColor =
           pct >= 80 ? "#1ca95c" : pct >= 60 ? "#f59e0b" : "#e53e3e";
         return (

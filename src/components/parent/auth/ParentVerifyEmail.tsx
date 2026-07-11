@@ -49,7 +49,9 @@ export default function ParentVerifyEmail({ phone, onVerified }: Props) {
       setResultMsg(message);
       setModal("success");
     } catch (err) {
-      setResultMsg(err instanceof Error ? err.message : "The code you entered is wrong.");
+      setResultMsg(
+        err instanceof Error ? err.message : "The code you entered is wrong."
+      );
       setModal("error");
     } finally {
       setSubmitting(false);
@@ -64,7 +66,9 @@ export default function ParentVerifyEmail({ phone, onVerified }: Props) {
       setCountdown(RESEND_SECONDS);
       setOtp("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not resend the code.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not resend the code."
+      );
     } finally {
       setResending(false);
     }

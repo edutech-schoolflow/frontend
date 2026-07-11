@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useParentMe } from "@/src/lib/api/useParentAuth";
 import { useAppDispatch } from "@/src/lib/store/hooks";
-import { setParentUser, clearParentAuth } from "@/src/lib/store/parentAuthSlice";
+import {
+  setParentUser,
+  clearParentAuth,
+} from "@/src/lib/store/parentAuthSlice";
 
 /**
  * Probes /parent/auth/me. On success it hydrates Redux; on a 401 (after the client's silent refresh

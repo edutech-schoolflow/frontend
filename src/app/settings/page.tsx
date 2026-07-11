@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { Loader2, KeyRound, ArrowRight } from "lucide-react";
 import AuthShell from "@/src/components/auth/AuthShell";
 import ContextPicker from "@/src/components/auth/ContextPicker";
-import { getIdentityMe, selectContext, dashboardFor, type IdentityMe } from "@/src/lib/api/identityAuth";
+import {
+  getIdentityMe,
+  selectContext,
+  dashboardFor,
+  type IdentityMe,
+} from "@/src/lib/api/identityAuth";
 
 /**
  * FE-001: IDENTITY settings — global, organization-independent (name, phone, credentials).
@@ -44,19 +49,27 @@ export default function IdentitySettingsPage() {
         ) : (
           <div className="flex flex-col gap-[24px]">
             <div>
-              <h2 className="text-[24px] font-medium text-[#1b1b1b]">Account settings</h2>
+              <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+                Account settings
+              </h2>
               <p className="mt-[6px] text-[15px] text-[#666]">
-                Your identity — the same everywhere, whichever school you&apos;re in.
+                Your identity — the same everywhere, whichever school
+                you&apos;re in.
               </p>
             </div>
 
             <div className="rounded-[12px] border border-[#e0e0e0] px-[20px] py-[18px]">
-              <p className="text-[16px] font-medium text-[#1b1b1b]">{me.fullName}</p>
+              <p className="text-[16px] font-medium text-[#1b1b1b]">
+                {me.fullName}
+              </p>
               <p className="mt-[4px] text-[14px] text-[#666]">{me.phone}</p>
-              {me.email && <p className="text-[14px] text-[#666]">{me.email}</p>}
+              {me.email && (
+                <p className="text-[14px] text-[#666]">{me.email}</p>
+              )}
               <p className="mt-[6px] text-[12px] text-[#888]">
                 Phone {me.phoneVerified ? "verified" : "not verified"}
-                {me.profiles.length > 0 && ` · Profiles: ${me.profiles.join(", ")}`}
+                {me.profiles.length > 0 &&
+                  ` · Profiles: ${me.profiles.join(", ")}`}
               </p>
             </div>
 
@@ -68,7 +81,9 @@ export default function IdentitySettingsPage() {
                 <KeyRound className="h-[20px] w-[20px] text-brand-green" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-medium text-[#1b1b1b]">Change password</span>
+                <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                  Change password
+                </span>
                 <span className="block text-[13px] text-[#888]">
                   We&apos;ll text a confirmation code to your phone.
                 </span>
@@ -78,7 +93,9 @@ export default function IdentitySettingsPage() {
 
             {me.contexts.length > 0 && (
               <div className="flex flex-col gap-[10px]">
-                <p className="text-[14px] font-medium text-[#1b1b1b]">Your organizations</p>
+                <p className="text-[14px] font-medium text-[#1b1b1b]">
+                  Your organizations
+                </p>
                 <ContextPicker
                   contexts={me.contexts}
                   enteringId={enteringId}

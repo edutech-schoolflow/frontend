@@ -1,4 +1,3 @@
-
 export default function BottomCta() {
   return (
     <section className="w-full bg-white px-6 py-24 md:px-12 lg:px-20 xl:px-28">

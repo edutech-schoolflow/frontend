@@ -71,7 +71,11 @@ function fmt(dateStr: string) {
 export default function AuditLogPage() {
   const [tab, setTab] = useState("all");
   const [limit, setLimit] = useState(50);
-  const { data: entries = [], isPending, isFetching } = useAuditLog({
+  const {
+    data: entries = [],
+    isPending,
+    isFetching,
+  } = useAuditLog({
     entityType: tab,
     limit,
   });

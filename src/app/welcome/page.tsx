@@ -3,16 +3,26 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, School, GraduationCap, Mail, Briefcase, ArrowRight } from "lucide-react";
+import {
+  Loader2,
+  School,
+  GraduationCap,
+  Mail,
+  Briefcase,
+  ArrowRight,
+  Building2,
+} from "lucide-react";
 import { toast } from "sonner";
 import AuthShell, { AUTH_BUTTON } from "@/src/components/auth/AuthShell";
 import {
   getIdentityMe,
+  getWelcome,
   createOrganization,
   createParentProfile,
   selectContext,
   dashboardFor,
   type IdentityMe,
+  type Welcome,
 } from "@/src/lib/api/identityAuth";
 
 /**
@@ -22,22 +32,38 @@ import {
 export default function StartPage() {
   const router = useRouter();
   const [me, setMe] = useState<IdentityMe | null | undefined>(undefined); // undefined = probing
+  const [welcome, setWelcome] = useState<Welcome | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     getIdentityMe()
-      .then(setMe)
-      .catch(() => setMe(null));
+      .then((m) => {
+        if (cancelled) return;
+        setMe(m);
+        // Adaptive extras (invites, drafts) — best-effort; the hub still works without them.
+        getWelcome()
+          .then((w) => !cancelled && setWelcome(w))
+          .catch(() => {});
+      })
+      .catch(() => !cancelled && setMe(null));
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleCreateSchool() {
     setBusy("school");
     try {
-      const message = await createOrganization();
+      const { message, slug } = await createOrganization();
       toast.success(message);
-      router.push("/school/dashboard");
+      // A fresh org has no name yet → land straight in the setup wizard (/o/{slug}/setup).
+      // Fall back to the workspace chooser if the slug didn't come back.
+      router.push(slug ? `/o/${slug}/setup` : "/select-context");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create your school.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not create your school."
+      );
       setBusy(null);
     }
   }
@@ -50,12 +76,23 @@ export default function StartPage() {
       toast.success(message);
       const outcome = await selectContext(contextId);
       const selected = outcome.contexts.find((c) => c.id === outcome.selected);
-      router.push(selected ? `${dashboardFor(selected.type)}/search` : "/parent/dashboard/search");
+      router.push(
+        selected
+          ? `${dashboardFor(selected.type)}/search`
+          : "/parent/dashboard/search"
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not start the parent journey.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Could not start the parent journey."
+      );
       setBusy(null);
     }
   }
+
+  const formatRole = (role: string) =>
+    role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   const card =
     "flex w-full items-center gap-[16px] rounded-[12px] border border-[#e0e0e0] px-[20px] py-[18px] text-left transition-colors hover:border-brand-green hover:bg-[#f7fdf9] disabled:opacity-60";
@@ -72,9 +109,12 @@ export default function StartPage() {
         ) : me === null ? (
           <div className="flex flex-col gap-[18px]">
             <div>
-              <h2 className="text-[24px] font-medium text-[#1b1b1b]">Get started</h2>
+              <h2 className="text-[24px] font-medium text-[#1b1b1b]">
+                Get started
+              </h2>
               <p className="mt-[6px] text-[15px] text-[#666]">
-                First things first — you need an account. What you do with it comes right after.
+                First things first — you need an account. What you do with it
+                comes right after.
               </p>
             </div>
 
@@ -100,6 +140,62 @@ export default function StartPage() {
                 Your account is ready. What would you like to do?
               </p>
             </div>
+
+            {/* Adaptive: resume unfinished schools + surface pending staff invites. */}
+            {welcome && welcome.draftOrganizations.length > 0 && (
+              <div className="flex flex-col gap-[10px]">
+                <p className="text-[13px] font-medium uppercase tracking-[0.04em] text-[#888]">
+                  Pick up where you left off
+                </p>
+                {welcome.draftOrganizations.map((draft) => (
+                  <Link
+                    key={draft.organizationId}
+                    href={`/o/${draft.slug}/setup`}
+                    className={card}
+                  >
+                    <span className={iconWrap}>
+                      <Building2 className="h-[20px] w-[20px] text-brand-green" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                        Finish setting up your school
+                      </span>
+                      <span className="block text-[13px] text-[#888]">
+                        You started creating a school but haven&apos;t named it
+                        yet.
+                      </span>
+                    </span>
+                    <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {welcome && welcome.pendingInvites.length > 0 && (
+              <div className="flex flex-col gap-[10px]">
+                <p className="text-[13px] font-medium uppercase tracking-[0.04em] text-[#888]">
+                  You&apos;ve been invited
+                </p>
+                {welcome.pendingInvites.map((invite, i) => (
+                  <Link key={i} href="/join" className={card}>
+                    <span className={iconWrap}>
+                      <Mail className="h-[20px] w-[20px] text-brand-green" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                        {invite.schoolName ?? "A school"} invited you as{" "}
+                        {formatRole(invite.role)}
+                      </span>
+                      <span className="block text-[13px] text-[#888]">
+                        Use the link from your SMS, or tap to enter your invite
+                        code.
+                      </span>
+                    </span>
+                    <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
+                  </Link>
+                ))}
+              </div>
+            )}
 
             <div className="mt-[10px] flex flex-col gap-[12px]">
               <button
@@ -140,7 +236,8 @@ export default function StartPage() {
                     Find a school for my child
                   </span>
                   <span className="block text-[13px] text-[#888]">
-                    Browse schools, apply, and track your child&apos;s admission.
+                    Browse schools, apply, and track your child&apos;s
+                    admission.
                   </span>
                 </span>
                 {busy === "parent" ? (
@@ -159,18 +256,23 @@ export default function StartPage() {
                     Join a school
                   </span>
                   <span className="block text-[13px] text-[#888]">
-                    Been invited as staff? Use the invitation link your school sent you.
+                    Been invited as staff? Use the invitation link your school
+                    sent you.
                   </span>
                 </span>
                 <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
               </Link>
 
-              <div className={`${card} cursor-default opacity-60 hover:border-[#e0e0e0] hover:bg-white`}>
+              <div
+                className={`${card} cursor-default opacity-60 hover:border-[#e0e0e0] hover:bg-white`}
+              >
                 <span className={iconWrap}>
                   <Briefcase className="h-[20px] w-[20px] text-brand-green" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium text-[#1b1b1b]">Browse jobs</span>
+                  <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                    Browse jobs
+                  </span>
                   <span className="block text-[13px] text-[#888]">
                     Teaching and non-teaching vacancies — coming soon.
                   </span>

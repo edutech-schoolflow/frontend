@@ -15,7 +15,10 @@ import {
   ERR_PHONE_NOT_VERIFIED,
   type ParentLoginInput,
 } from "@/src/lib/api/parentAuth";
-import { useParentLogin, useResendParentOtp } from "@/src/lib/api/useParentAuth";
+import {
+  useParentLogin,
+  useResendParentOtp,
+} from "@/src/lib/api/useParentAuth";
 import { ApiError } from "@/src/lib/api/client";
 import ParentVerifyEmail from "./ParentVerifyEmail";
 

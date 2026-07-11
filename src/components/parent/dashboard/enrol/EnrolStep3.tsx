@@ -48,7 +48,9 @@ export default function EnrolStep3() {
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not submit your application."
+        err instanceof Error
+          ? err.message
+          : "Could not submit your application."
       );
       setSubmitting(false);
     }
