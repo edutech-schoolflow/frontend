@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import AuthShell, { AUTH_INPUT, AUTH_LABEL, AUTH_BUTTON } from "./AuthShell";
 import {
   loginIdentity,
+  getIdentityMe,
   landingFor,
   type AuthContext,
 } from "@/src/lib/api/identityAuth";
@@ -29,10 +30,8 @@ export default function UnifiedLogin() {
   }) {
     const selected = outcome.contexts.find((c) => c.id === outcome.selected);
     // A pending destination wins; else org contexts land in their /o/{slug} workspace, and a person
-    // with no relationship yet lands on the identity-scoped parent home.
-    router.push(
-      next ?? (selected ? landingFor(selected) : "/parent/dashboard")
-    );
+    // with no relationship yet picks their path on the onboarding hub.
+    router.push(next ?? (selected ? landingFor(selected) : "/welcome"));
   }
 
   async function handleLogin() {
@@ -45,9 +44,21 @@ export default function UnifiedLogin() {
         return;
       }
       if (outcome.contexts.length === 0) {
-        // Authenticated, no relationships yet — the identity session powers the parent home, where
-        // they find schools and begin. No parent token; the home is an identity page (EDD-002).
-        router.push(next ?? "/parent/dashboard");
+        // No org relationship yet. But the identity session IS set — read its profiles: someone who
+        // already committed to being a parent (profiles: ["parent"]) has an identity home to land on;
+        // they shouldn't be re-asked to pick a path. A true Stage-0 identity picks on the hub.
+        if (next) {
+          router.push(next);
+          return;
+        }
+        try {
+          const me = await getIdentityMe();
+          router.push(
+            me.profiles.includes("parent") ? "/parent/dashboard" : "/welcome"
+          );
+        } catch {
+          router.push("/welcome");
+        }
         return;
       }
       // Several — the identity session is set; the standalone chooser takes over (FE-001).

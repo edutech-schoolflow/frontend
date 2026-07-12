@@ -165,7 +165,7 @@ function GetStarted() {
           Find a school
         </Link>
         <Link
-          href="/parent/dashboard/enrol"
+          href="/parent/dashboard/enrol/child-info"
           className="flex h-[44px] items-center gap-[8px] rounded-[8px] border border-[#d1d5db] px-[22px] text-[14px] font-medium text-[#1b1b1b] transition-colors hover:border-brand-green"
         >
           <Plus className="h-[16px] w-[16px]" />
@@ -255,7 +255,7 @@ export default function ParentDashboardHome() {
         <h2 className="text-[18px] font-medium text-[#1b1b1b]">My children</h2>
         {children.length > 0 && (
           <Link
-            href="/parent/dashboard/enrol"
+            href="/parent/dashboard/enrol/child-info"
             className="flex h-[38px] items-center gap-[7px] rounded-[8px] bg-brand-green px-[16px] text-[13px] text-white transition-opacity hover:opacity-90"
           >
             <Plus className="h-[14px] w-[14px]" />

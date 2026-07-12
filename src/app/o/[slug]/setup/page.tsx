@@ -2,32 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useWorkspace } from "@/src/context/WorkspaceContext";
 import { setupOrganization } from "@/src/lib/api/organizations";
+import OrganizationDetailsForm, {
+  type OrganizationDetailsValues,
+} from "@/src/components/organization/OrganizationDetailsForm";
 
-// Organization Wizard (FE-001 Phase 2). Names a bootstrapped org — the backend re-slugs from the
-// name, so on success we route to the NEW /o/{slug}. Owner-only, and skipped once already named.
-
-const SCHOOL_TYPES = [
-  { value: "nursery", label: "Nursery" },
-  { value: "primary", label: "Primary" },
-  { value: "secondary", label: "Secondary" },
-  { value: "combined", label: "Combined (Nursery – Secondary)" },
-] as const;
-
-const schema = z.object({
-  name: z.string().trim().min(2, "Enter your school's name"),
-  type: z.enum(["nursery", "primary", "secondary", "combined"], {
-    message: "Choose the kind of school",
-  }),
-  state: z.string().trim().optional(),
-});
-type FormValues = z.infer<typeof schema>;
+// Names a legacy/abandoned bootstrapped org — the only path that still needs the "unnamed org exists
+// first" model (new schools are created form-first via CreateSchoolModal). Naming re-slugs, so on
+// success we route to the NEW /o/{slug}. Owner-only, and skipped once already named.
 
 export default function OrganizationWizardPage() {
   const router = useRouter();
@@ -39,18 +24,7 @@ export default function OrganizationWizardPage() {
     if (!canSetUp) router.replace(`/o/${ws.slug}`);
   }, [canSetUp, ws.slug, router]);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    mode: "onTouched",
-    defaultValues: { name: "", type: undefined, state: "" },
-  });
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = form;
-
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: OrganizationDetailsValues) {
     try {
       const workspace = await setupOrganization(ws.slug, values);
       toast.success("School set up.");
@@ -82,85 +56,12 @@ export default function OrganizationWizardPage() {
           refine everything later.
         </p>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="mt-6 flex flex-col gap-5"
-        >
-          <Field label="School name" error={errors.name?.message}>
-            <input
-              {...register("name")}
-              autoFocus
-              placeholder="e.g. Divine Wisdom Citadel School"
-              className={inputClass(!!errors.name)}
-            />
-          </Field>
-
-          <Field label="Type of school" error={errors.type?.message}>
-            <select
-              {...register("type")}
-              defaultValue=""
-              className={inputClass(!!errors.type)}
-            >
-              <option value="" disabled>
-                Select…
-              </option>
-              {SCHOOL_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="State" hint="Optional" error={errors.state?.message}>
-            <input
-              {...register("state")}
-              placeholder="e.g. Lagos"
-              className={inputClass(false)}
-            />
-          </Field>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="mt-2 inline-flex items-center justify-center gap-2 rounded-[10px] bg-brand-green px-5 py-3 text-[14px] font-medium text-white transition-colors hover:bg-brand-green/90 disabled:opacity-60"
-          >
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? "Setting up…" : "Create school"}
-          </button>
-        </form>
+        <OrganizationDetailsForm
+          onSubmit={onSubmit}
+          submitLabel="Save school"
+          submittingLabel="Setting up…"
+        />
       </div>
     </div>
   );
-}
-
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-medium text-[#1b1b1b]">
-        {label}
-        {hint && (
-          <span className="ml-1.5 font-normal text-[#9ca3af]">{hint}</span>
-        )}
-      </span>
-      {children}
-      {error && <span className="text-[12px] text-[#dc2626]">{error}</span>}
-    </label>
-  );
-}
-
-function inputClass(hasError: boolean): string {
-  return `h-11 rounded-[10px] border px-3.5 text-[14px] text-[#1b1b1b] outline-none transition-colors focus:border-brand-green ${
-    hasError ? "border-[#dc2626]" : "border-[#d1d5db]"
-  }`;
 }

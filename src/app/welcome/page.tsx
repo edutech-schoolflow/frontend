@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import AuthShell, { AUTH_BUTTON } from "@/src/components/auth/AuthShell";
+import CreateSchoolModal from "@/src/components/organization/CreateSchoolModal";
 import {
   getIdentityMe,
   getWelcome,
-  createOrganization,
   createParentProfile,
   type IdentityMe,
   type Welcome,
@@ -32,6 +32,7 @@ export default function StartPage() {
   const [me, setMe] = useState<IdentityMe | null | undefined>(undefined); // undefined = probing
   const [welcome, setWelcome] = useState<Welcome | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,22 +50,6 @@ export default function StartPage() {
       cancelled = true;
     };
   }, []);
-
-  async function handleCreateSchool() {
-    setBusy("school");
-    try {
-      const { message, slug } = await createOrganization();
-      toast.success(message);
-      // A fresh org has no name yet → land straight in the setup wizard (/o/{slug}/setup).
-      // Fall back to the workspace chooser if the slug didn't come back.
-      router.push(slug ? `/o/${slug}/setup` : "/select-context");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not create your school."
-      );
-      setBusy(null);
-    }
-  }
 
   async function handleBecomeParent() {
     // "Become a Parent" is the EXPLICIT relationship creation (Identity is global, relationships are
@@ -193,7 +178,7 @@ export default function StartPage() {
             <div className="mt-[10px] flex flex-col gap-[12px]">
               <button
                 type="button"
-                onClick={() => void handleCreateSchool()}
+                onClick={() => setCreateOpen(true)}
                 disabled={busy !== null}
                 className={card}
               >
@@ -208,37 +193,52 @@ export default function StartPage() {
                     Set up a new school and become its owner.
                   </span>
                 </span>
-                {busy === "school" ? (
-                  <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-brand-green" />
-                ) : (
-                  <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
-                )}
+                <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => void handleBecomeParent()}
-                disabled={busy !== null}
-                className={card}
-              >
-                <span className={iconWrap}>
-                  <GraduationCap className="h-[20px] w-[20px] text-brand-green" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium text-[#1b1b1b]">
-                    Use SchoolFlow as a parent
+              {/* Only offered to someone who ISN'T a parent yet — once the profile exists, this action
+                  is done, so we send them to their family home instead of re-offering it. */}
+              {!me.profiles.includes("parent") ? (
+                <button
+                  type="button"
+                  onClick={() => void handleBecomeParent()}
+                  disabled={busy !== null}
+                  className={card}
+                >
+                  <span className={iconWrap}>
+                    <GraduationCap className="h-[20px] w-[20px] text-brand-green" />
                   </span>
-                  <span className="block text-[13px] text-[#888]">
-                    Set up parent access to follow your child, pay fees, and
-                    find schools.
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                      Use SchoolFlow as a parent
+                    </span>
+                    <span className="block text-[13px] text-[#888]">
+                      Set up parent access to follow your child, pay fees, and
+                      find schools.
+                    </span>
                   </span>
-                </span>
-                {busy === "parent" ? (
-                  <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-brand-green" />
-                ) : (
+                  {busy === "parent" ? (
+                    <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-brand-green" />
+                  ) : (
+                    <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
+                  )}
+                </button>
+              ) : (
+                <Link href="/parent/dashboard" className={card}>
+                  <span className={iconWrap}>
+                    <GraduationCap className="h-[20px] w-[20px] text-brand-green" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                      Go to my family home
+                    </span>
+                    <span className="block text-[13px] text-[#888]">
+                      Follow your children, pay fees, and find schools.
+                    </span>
+                  </span>
                   <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
-                )}
-              </button>
+                </Link>
+              )}
 
               <Link href="/join" className={card}>
                 <span className={iconWrap}>
@@ -275,6 +275,11 @@ export default function StartPage() {
           </div>
         )}
       </div>
+
+      <CreateSchoolModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
     </AuthShell>
   );
 }

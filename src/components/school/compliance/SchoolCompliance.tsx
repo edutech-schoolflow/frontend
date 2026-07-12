@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
   Upload,
   Trash2,
-  Camera,
   MapPin,
   Navigation,
   Link2,
@@ -13,6 +12,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,11 +33,7 @@ interface KycForm {
   address: string;
   city: string;
   state: string;
-  // Contact setup (UI-only — no backend home yet)
-  contactName: string;
-  position: string;
-  officialEmail: string;
-  contactPhone: string;
+  // School location (proof of address) — part of the profile section
   mapsUrl: string;
   lat: number | null;
   lng: number | null;
@@ -47,8 +43,6 @@ interface KycForm {
   proprietorLastName: string;
   nin: string;
   bvn: string;
-  proprietorAddress: string;
-  faceDone: boolean;
   // Business registration + settlement account
   businessName: string;
   bankName: string;
@@ -58,7 +52,6 @@ interface KycForm {
 
 const SECTION_IDS = [
   "school_profile",
-  "contact_setup",
   "proprietor",
   "business_registration",
   "review",
@@ -67,7 +60,6 @@ type SectionId = (typeof SECTION_IDS)[number];
 
 const SECTION_LABELS: Record<SectionId, string> = {
   school_profile: "School Profile",
-  contact_setup: "Contact Setup",
   proprietor: "Proprietor / Owner",
   business_registration: "Business Registration",
   review: "Review & Submit",
@@ -85,14 +77,6 @@ const TIPS: Record<
       "Ensure your phone number is reachable",
     ],
     note: "You can update these details before final submission.",
-  },
-  contact_setup: {
-    heading: "Contact Setup",
-    bullets: [
-      "Enter the primary admin contact for the school",
-      "This email will receive all platform notifications",
-      "Phone number must be active and reachable",
-    ],
   },
   proprietor: {
     heading: "Identity Verification",
@@ -208,6 +192,19 @@ function Field({
   );
 }
 
+// A field whose value was set at school creation — shown read-only here so KYC can't diverge from it.
+function LockedValue({ value }: { value: string }) {
+  return (
+    <div className="flex h-[46px] w-full items-center justify-between rounded-[8px] border border-[#e5e7eb] bg-[#f9fafb] px-4">
+      <span className="text-[14px] text-text-heading">{value || "—"}</span>
+      <span className="flex items-center gap-1 text-[11px] text-text-body">
+        <Lock className="h-[12px] w-[12px]" />
+        From your school setup
+      </span>
+    </div>
+  );
+}
+
 // ─── Section forms (controlled by the parent) ─────────────────────────────────
 
 type SectionProps = {
@@ -216,7 +213,48 @@ type SectionProps = {
   onNext: () => void;
 };
 
-function SchoolProfileForm({ form, set, onNext }: SectionProps) {
+function SchoolProfileForm({
+  form,
+  set,
+  locked,
+  onNext,
+}: SectionProps & {
+  locked: { name: boolean; type: boolean; state: boolean };
+}) {
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState("");
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocError("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    setLocError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocError(
+          "Could not get your location. Allow location access or paste a Google Maps link instead."
+        );
+        setLocating(false);
+      }
+    );
+  }
+
+  function handleMapsUrl(val: string) {
+    const match = val.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    set({
+      mapsUrl: val,
+      lat: match ? parseFloat(match[1]) : null,
+      lng: match ? parseFloat(match[2]) : null,
+    });
+  }
+
+  const locationSet = form.lat !== null && form.lng !== null;
   const canSave =
     form.name.trim() &&
     form.type &&
@@ -224,33 +262,45 @@ function SchoolProfileForm({ form, set, onNext }: SectionProps) {
     form.email.trim() &&
     form.address.trim() &&
     form.city.trim() &&
-    form.state;
+    form.state &&
+    locationSet;
+
+  const typeLabel =
+    SCHOOL_TYPE_OPTIONS.find((t) => t.value === form.type)?.label ?? form.type;
 
   return (
     <div className="flex flex-col gap-5">
       <Field label="School Name">
-        <input
-          className={inputCls}
-          placeholder="e.g. Greenfield Academy"
-          value={form.name}
-          onChange={(e) => set({ name: e.target.value })}
-        />
+        {locked.name ? (
+          <LockedValue value={form.name} />
+        ) : (
+          <input
+            className={inputCls}
+            placeholder="e.g. Greenfield Academy"
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+          />
+        )}
       </Field>
       <Field label="School Type">
-        <select
-          className={selectCls}
-          value={form.type}
-          onChange={(e) => set({ type: e.target.value })}
-        >
-          <option value="" disabled>
-            Select school type
-          </option>
-          {SCHOOL_TYPE_OPTIONS.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
+        {locked.type ? (
+          <LockedValue value={typeLabel} />
+        ) : (
+          <select
+            className={selectCls}
+            value={form.type}
+            onChange={(e) => set({ type: e.target.value })}
+          >
+            <option value="" disabled>
+              Select school type
             </option>
-          ))}
-        </select>
+            {SCHOOL_TYPE_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        )}
       </Field>
       <Field label="School Phone">
         <input
@@ -290,109 +340,24 @@ function SchoolProfileForm({ form, set, onNext }: SectionProps) {
           />
         </Field>
         <Field label="State">
-          <select
-            className={selectCls}
-            value={form.state}
-            onChange={(e) => set({ state: e.target.value })}
-          >
-            <option value="" disabled>
-              Select state
-            </option>
-            {STATES.map((s) => (
-              <option key={s} value={s}>
-                {s}
+          {locked.state ? (
+            <LockedValue value={form.state} />
+          ) : (
+            <select
+              className={selectCls}
+              value={form.state}
+              onChange={(e) => set({ state: e.target.value })}
+            >
+              <option value="" disabled>
+                Select state
               </option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      <SaveButton disabled={!canSave} onClick={onNext} />
-    </div>
-  );
-}
-
-function ContactSetupForm({ form, set, onNext }: SectionProps) {
-  const [locating, setLocating] = useState(false);
-  const [locError, setLocError] = useState("");
-
-  function useCurrentLocation() {
-    if (!navigator.geolocation) {
-      setLocError("Geolocation is not supported by your browser.");
-      return;
-    }
-    setLocating(true);
-    setLocError("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating(false);
-      },
-      () => {
-        setLocError(
-          "Could not get your location. Allow location access or paste a Google Maps link instead."
-        );
-        setLocating(false);
-      }
-    );
-  }
-
-  function handleMapsUrl(val: string) {
-    const match = val.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    set({
-      mapsUrl: val,
-      lat: match ? parseFloat(match[1]) : null,
-      lng: match ? parseFloat(match[2]) : null,
-    });
-  }
-
-  const locationSet = form.lat !== null && form.lng !== null;
-  const canSave =
-    form.contactName.trim() &&
-    form.position.trim() &&
-    form.officialEmail.trim() &&
-    form.contactPhone.trim() &&
-    locationSet;
-
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Contact Name">
-          <input
-            className={inputCls}
-            placeholder="e.g. Chukwuemeka Okonkwo"
-            value={form.contactName}
-            onChange={(e) => set({ contactName: e.target.value })}
-          />
-        </Field>
-        <Field label="Position / Title">
-          <input
-            className={inputCls}
-            placeholder="e.g. Principal, Director"
-            value={form.position}
-            onChange={(e) => set({ position: e.target.value })}
-          />
-        </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Official Email">
-          <input
-            className={inputCls}
-            placeholder="e.g. info@greenfield.com"
-            type="email"
-            value={form.officialEmail}
-            onChange={(e) => set({ officialEmail: e.target.value })}
-          />
-        </Field>
-        <Field label="Phone Number">
-          <input
-            className={inputCls}
-            placeholder="e.g. 08012345678"
-            type="tel"
-            value={form.contactPhone}
-            onChange={(e) =>
-              set({ contactPhone: e.target.value.replace(/[^\d+]/g, "") })
-            }
-          />
+              {STATES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          )}
         </Field>
       </div>
 
@@ -449,12 +414,20 @@ function ContactSetupForm({ form, set, onNext }: SectionProps) {
           </div>
         )}
       </div>
+
       <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
   );
 }
 
-function ProprietorForm({ form, set, onNext }: SectionProps) {
+function ProprietorForm({
+  form,
+  set,
+  locked,
+  onNext,
+}: SectionProps & {
+  locked: { firstName: boolean; lastName: boolean; middleName: boolean };
+}) {
   const idReady = form.nin.length === 11 && form.bvn.length === 11;
   const canSave =
     idReady &&
@@ -465,29 +438,41 @@ function ProprietorForm({ form, set, onNext }: SectionProps) {
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
         <Field label="First Name">
-          <input
-            className={inputCls}
-            placeholder="e.g. Chidi"
-            value={form.proprietorFirstName}
-            onChange={(e) => set({ proprietorFirstName: e.target.value })}
-          />
+          {locked.firstName ? (
+            <LockedValue value={form.proprietorFirstName} />
+          ) : (
+            <input
+              className={inputCls}
+              placeholder="e.g. Chidi"
+              value={form.proprietorFirstName}
+              onChange={(e) => set({ proprietorFirstName: e.target.value })}
+            />
+          )}
         </Field>
         <Field label="Last Name">
-          <input
-            className={inputCls}
-            placeholder="e.g. Okonkwo"
-            value={form.proprietorLastName}
-            onChange={(e) => set({ proprietorLastName: e.target.value })}
-          />
+          {locked.lastName ? (
+            <LockedValue value={form.proprietorLastName} />
+          ) : (
+            <input
+              className={inputCls}
+              placeholder="e.g. Okonkwo"
+              value={form.proprietorLastName}
+              onChange={(e) => set({ proprietorLastName: e.target.value })}
+            />
+          )}
         </Field>
       </div>
       <Field label="Middle Name (optional)">
-        <input
-          className={inputCls}
-          placeholder="e.g. Emeka"
-          value={form.proprietorMiddleName}
-          onChange={(e) => set({ proprietorMiddleName: e.target.value })}
-        />
+        {locked.middleName ? (
+          <LockedValue value={form.proprietorMiddleName} />
+        ) : (
+          <input
+            className={inputCls}
+            placeholder="e.g. Emeka"
+            value={form.proprietorMiddleName}
+            onChange={(e) => set({ proprietorMiddleName: e.target.value })}
+          />
+        )}
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label="National Identity Number (NIN)">
@@ -509,45 +494,6 @@ function ProprietorForm({ form, set, onNext }: SectionProps) {
           />
         </Field>
       </div>
-      <Field label="Proprietor Address (optional)">
-        <input
-          className={inputCls}
-          placeholder="Residential address"
-          value={form.proprietorAddress}
-          onChange={(e) => set({ proprietorAddress: e.target.value })}
-        />
-      </Field>
-
-      <div>
-        <p className={labelCls}>Liveliness Check (optional)</p>
-        <div className="flex items-center gap-4 rounded-[8px] border border-[#e5e7eb] bg-white px-4 py-3">
-          <div className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full bg-[#f3f4f6]">
-            <Camera className="h-[20px] w-[20px] text-[#9ca3af]" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[13px] font-medium text-text-heading">
-              Face verification
-            </p>
-            <p className="text-[12px] text-text-body">
-              {idReady ? "Click to start face check" : "Enter NIN & BVN first"}
-            </p>
-          </div>
-          {form.faceDone ? (
-            <span className="text-[12px] font-medium text-brand-green">
-              Done ✓
-            </span>
-          ) : (
-            <button
-              type="button"
-              disabled={!idReady}
-              onClick={() => set({ faceDone: true })}
-              className="rounded-[6px] border border-[#e5e7eb] px-4 py-1.5 text-[12px] font-medium text-text-heading transition-colors hover:border-brand-green hover:text-brand-green disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Start check
-            </button>
-          )}
-        </div>
-      </div>
       <SaveButton disabled={!canSave} onClick={onNext} />
     </div>
   );
@@ -565,6 +511,7 @@ function BusinessRegistrationForm({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const canSave =
+    form.businessName.trim() &&
     !!cacFile &&
     form.bankName.trim() &&
     form.accountNumber.length === 10 &&
@@ -572,7 +519,7 @@ function BusinessRegistrationForm({
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Business Name (as registered with CAC) — optional">
+      <Field label="Business Name (as registered with CAC)">
         <input
           className={inputCls}
           placeholder="e.g. Greenfield Academy Ltd"
@@ -825,10 +772,6 @@ export default function SchoolCompliance() {
       address: "",
       city: "",
       state: "",
-      contactName: owner?.fullName ?? "",
-      position: "",
-      officialEmail: owner?.email ?? "",
-      contactPhone: owner?.phone ? owner.phone.replace(/^\+234/, "0") : "",
       mapsUrl: "",
       lat: null,
       lng: null,
@@ -838,8 +781,6 @@ export default function SchoolCompliance() {
       proprietorLastName: parts.length > 1 ? parts[parts.length - 1] : "",
       nin: "",
       bvn: "",
-      proprietorAddress: "",
-      faceDone: false,
       businessName: "",
       bankName: "",
       accountNumber: "",
@@ -850,47 +791,69 @@ export default function SchoolCompliance() {
   const set = (patch: Partial<KycForm>) =>
     setForm((prev) => ({ ...prev, ...patch }));
 
+  // The school's name/type/state (set at creation) and the proprietor's name (from the owning identity)
+  // are LOCKED — so we DERIVE them over the editable form during render (locked values always win)
+  // rather than syncing them into state via an effect. The user's edits to other fields are untouched.
+  const effectiveForm = useMemo<KycForm>(
+    () => ({
+      ...form,
+      name: kyc?.schoolName ?? form.name,
+      type: kyc?.schoolType ?? form.type,
+      state: kyc?.schoolState ?? form.state,
+      proprietorFirstName: kyc?.proprietorFirstName ?? form.proprietorFirstName,
+      proprietorMiddleName:
+        kyc?.proprietorMiddleName ?? form.proprietorMiddleName,
+      proprietorLastName: kyc?.proprietorLastName ?? form.proprietorLastName,
+    }),
+    [form, kyc]
+  );
+
+  const lockedProfile = {
+    name: Boolean(kyc?.schoolName),
+    type: Boolean(kyc?.schoolType),
+    state: Boolean(kyc?.schoolState),
+  };
+
+  const lockedProprietor = {
+    firstName: Boolean(kyc?.proprietorFirstName),
+    lastName: Boolean(kyc?.proprietorLastName),
+    // Middle name is optional on an identity — lock the field only when we actually have one to show.
+    middleName: Boolean(kyc?.proprietorMiddleName),
+  };
+
   // A section is "ready" when its required fields are filled (client-side wizard gate).
   const ready = useMemo(
     () => ({
       school_profile: Boolean(
-        form.name.trim() &&
-        form.type &&
-        form.phone.trim() &&
-        form.email.trim() &&
-        form.address.trim() &&
-        form.city.trim() &&
-        form.state
-      ),
-      contact_setup: Boolean(
-        form.contactName.trim() &&
-        form.position.trim() &&
-        form.officialEmail.trim() &&
-        form.contactPhone.trim() &&
-        form.lat !== null &&
-        form.lng !== null
+        effectiveForm.name.trim() &&
+        effectiveForm.type &&
+        effectiveForm.phone.trim() &&
+        effectiveForm.email.trim() &&
+        effectiveForm.address.trim() &&
+        effectiveForm.city.trim() &&
+        effectiveForm.state &&
+        effectiveForm.lat !== null &&
+        effectiveForm.lng !== null
       ),
       proprietor: Boolean(
-        form.nin.length === 11 &&
-        form.bvn.length === 11 &&
-        form.proprietorFirstName.trim() &&
-        form.proprietorLastName.trim()
+        effectiveForm.nin.length === 11 &&
+        effectiveForm.bvn.length === 11 &&
+        effectiveForm.proprietorFirstName.trim() &&
+        effectiveForm.proprietorLastName.trim()
       ),
       business_registration: Boolean(
+        effectiveForm.businessName.trim() &&
         cacFile &&
-        form.bankName.trim() &&
-        form.accountNumber.length === 10 &&
-        form.accountName.trim()
+        effectiveForm.bankName.trim() &&
+        effectiveForm.accountNumber.length === 10 &&
+        effectiveForm.accountName.trim()
       ),
     }),
-    [form, cacFile]
+    [effectiveForm, cacFile]
   );
 
   const allReady =
-    ready.school_profile &&
-    ready.contact_setup &&
-    ready.proprietor &&
-    ready.business_registration;
+    ready.school_profile && ready.proprietor && ready.business_registration;
 
   const locked =
     !editing && (kyc?.status === "under_review" || kyc?.status === "approved");
@@ -916,6 +879,9 @@ export default function SchoolCompliance() {
       state: form.state,
       phone: form.phone,
       email: form.email,
+      latitude: form.lat,
+      longitude: form.lng,
+      businessName: form.businessName,
       proprietorFirstName: form.proprietorFirstName,
       proprietorMiddleName: form.proprietorMiddleName || undefined,
       proprietorLastName: form.proprietorLastName,
@@ -953,10 +919,6 @@ export default function SchoolCompliance() {
       school_profile: {
         title: "School Profile",
         subtitle: "Enter your school's basic information",
-      },
-      contact_setup: {
-        title: "Contact Setup",
-        subtitle: "Enter the primary contact for your school account",
       },
       proprietor: {
         title: "Proprietor / Owner Verification",
@@ -1028,20 +990,15 @@ export default function SchoolCompliance() {
               <SchoolProfileForm
                 form={form}
                 set={set}
+                locked={lockedProfile}
                 onNext={() => goNext("school_profile")}
-              />
-            )}
-            {activeId === "contact_setup" && (
-              <ContactSetupForm
-                form={form}
-                set={set}
-                onNext={() => goNext("contact_setup")}
               />
             )}
             {activeId === "proprietor" && (
               <ProprietorForm
                 form={form}
                 set={set}
+                locked={lockedProprietor}
                 onNext={() => goNext("proprietor")}
               />
             )}

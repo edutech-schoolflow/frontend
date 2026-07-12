@@ -7,6 +7,7 @@ import SchoolSidebar from "@/src/components/school/layout/SchoolSidebar";
 import SchoolTopbar from "@/src/components/school/layout/SchoolTopbar";
 import StaffSidebar from "@/src/components/teacher/dashboard/layout/TeacherSidebar";
 import StaffTopbar from "@/src/components/teacher/dashboard/layout/TeacherTopbar";
+import ParentWorkspaceSidebar from "@/src/components/parent/workspace/ParentWorkspaceSidebar";
 import { StaffFeaturesProvider } from "@/src/context/StaffFeaturesContext";
 import { useWorkspace } from "@/src/context/WorkspaceContext";
 
@@ -26,7 +27,7 @@ export default function WorkspaceChromeLayout({
   const type = ws.myContext.type;
 
   const ownerNeedsSetup = type === "owner" && ws.name == null;
-  const unsupported = type !== "owner" && type !== "staff";
+  const unsupported = type !== "owner" && type !== "staff" && type !== "parent";
 
   useEffect(() => {
     if (unsupported) router.replace("/select-context");
@@ -52,6 +53,17 @@ export default function WorkspaceChromeLayout({
           </div>
         </div>
       </StaffFeaturesProvider>
+    );
+  }
+
+  if (type === "parent") {
+    return (
+      <div className="flex h-screen overflow-hidden">
+        <ParentWorkspaceSidebar basePath={base} />
+        <main className="flex-1 overflow-y-auto bg-surface-muted px-[32px] py-[28px]">
+          {children}
+        </main>
+      </div>
     );
   }
 

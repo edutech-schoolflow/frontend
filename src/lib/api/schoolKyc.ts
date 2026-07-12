@@ -29,12 +29,19 @@ export const kycSchema = z.object({
     .regex(/^(\+?234|0)\d{10}$/, "Enter a valid Nigerian phone number"),
   email: z.email("Enter a valid email"),
 
+  // School location (proof of address) — captured via GPS or a Google Maps link.
+  latitude: z.number({ message: "Capture your school's location" }),
+  longitude: z.number({ message: "Capture your school's location" }),
+
   // Proprietor identity (verified digitally via NIN + BVN)
   proprietorFirstName: z.string().trim().min(2, "First name is required"),
   proprietorMiddleName: z.string().trim().optional(),
   proprietorLastName: z.string().trim().min(2, "Last name is required"),
   proprietorNin: elevenDigits,
   proprietorBvn: elevenDigits,
+
+  // Business registration (CAC) — the certificate is attached separately.
+  businessName: z.string().trim().min(2, "Business name is required"),
 
   // Settlement bank account
   bankName: z.string().trim().min(2, "Bank name is required"),
@@ -64,6 +71,14 @@ export interface KycSubmission {
   submittedAt?: string | null;
   reviewedAt?: string | null;
   schoolMessage?: string | null;
+  // School identity captured at creation — prefilled and locked in the KYC form.
+  schoolName?: string | null;
+  schoolType?: string | null;
+  schoolState?: string | null;
+  // Proprietor name from the owning identity — prefilled and locked in the KYC form.
+  proprietorFirstName?: string | null;
+  proprietorMiddleName?: string | null;
+  proprietorLastName?: string | null;
 }
 
 // ── requests ──────────────────────────────────────────────────────────────────
@@ -86,6 +101,9 @@ export async function submitKyc(
   form.append("state", input.state);
   form.append("phone", input.phone);
   form.append("email", input.email);
+  form.append("latitude", String(input.latitude));
+  form.append("longitude", String(input.longitude));
+  form.append("businessName", input.businessName);
   form.append("proprietorFirstName", input.proprietorFirstName);
   if (input.proprietorMiddleName) {
     form.append("proprietorMiddleName", input.proprietorMiddleName);

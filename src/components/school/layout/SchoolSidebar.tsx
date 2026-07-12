@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
-import Logo from "@/src/components/ui/Logo";
+import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
 import { useAuth } from "@/src/context/AuthContext";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
 
@@ -21,25 +21,6 @@ const SettingsIcon = () => (
   >
     <circle cx="12" cy="12" r="3" />
     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-  </svg>
-);
-
-const LogoBadge = () => (
-  <svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-    <rect width={28} height={28} rx={6} fill="#1ca95c" />
-    <text
-      x="50%"
-      y="54%"
-      dominantBaseline="middle"
-      textAnchor="middle"
-      fill="white"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      fontWeight="700"
-      fontSize={10}
-      letterSpacing="-0.5"
-    >
-      1SP
-    </text>
   </svg>
 );
 
@@ -115,20 +96,20 @@ export default function SchoolSidebar({
         collapsed ? "w-[64px]" : "w-[256px]"
       }`}
     >
-      {/* Logo + toggle */}
+      {/* Workspace switcher + collapse toggle */}
       <div
         className={`flex items-center ${
           collapsed
-            ? "flex-col gap-[8px] px-[12px] pt-[20px] pb-[14px]"
-            : "justify-between px-[20px] pt-[28px] pb-[20px]"
+            ? "flex-col gap-[8px] px-[10px] pt-[16px] pb-[12px]"
+            : "gap-[6px] px-[12px] pt-[16px] pb-[14px]"
         }`}
       >
-        <Link href={BASE}>
-          {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
-        </Link>
+        <div className={collapsed ? "" : "min-w-0 flex-1"}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
         <button
           onClick={toggleCollapsed}
-          className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}

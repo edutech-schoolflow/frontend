@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/src/context/AuthContext";
 import Logo from "@/src/components/ui/Logo";
+import WorkspaceSwitcherModal from "@/src/components/shared/WorkspaceSwitcherModal";
 import type { ReactNode } from "react";
 
 const LogoBadge = () => (
@@ -67,6 +68,8 @@ export default function ParentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
+
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -147,6 +150,16 @@ export default function ParentSidebar() {
       <div className="border-t border-white/10 px-[12px] py-[16px]">
         {collapsed ? (
           <div className="flex flex-col items-center gap-[8px]">
+            <button
+              type="button"
+              onClick={() => setSwitcherOpen(true)}
+              className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
+              title="Switch workspace"
+            >
+              <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-white/15">
+                <ArrowLeftRight size={16} className="text-white" />
+              </span>
+            </button>
             <Link
               href="/parent/dashboard/settings"
               className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
@@ -166,12 +179,16 @@ export default function ParentSidebar() {
           </div>
         ) : (
           <>
-            <Link href="/select-context" className={itemCls("/select-context")}>
+            <button
+              type="button"
+              onClick={() => setSwitcherOpen(true)}
+              className={itemCls("/__switch__")}
+            >
               <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                 <ArrowLeftRight size={16} className="text-white" />
               </span>
               Switch workspace
-            </Link>
+            </button>
 
             <Link
               href="/parent/dashboard/settings"
@@ -204,6 +221,11 @@ export default function ParentSidebar() {
           </>
         )}
       </div>
+
+      <WorkspaceSwitcherModal
+        open={switcherOpen}
+        onClose={() => setSwitcherOpen(false)}
+      />
     </aside>
   );
 }

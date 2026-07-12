@@ -11,7 +11,7 @@ import {
   ChevronRight,
   ArrowLeftRight,
 } from "lucide-react";
-import Logo from "@/src/components/ui/Logo";
+import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
 import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 import { ROLE_LABELS } from "@/src/types/staff";
@@ -125,27 +125,6 @@ const NAV_ITEMS: Array<{
   },
 ];
 
-// ─── Logo badge (icon only) ─────────────────────────────────────────────────────
-
-const LogoBadge = () => (
-  <svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-    <rect width={28} height={28} rx={6} fill="#1ca95c" />
-    <text
-      x="50%"
-      y="54%"
-      dominantBaseline="middle"
-      textAnchor="middle"
-      fill="white"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      fontWeight="700"
-      fontSize={10}
-      letterSpacing="-0.5"
-    >
-      1SP
-    </text>
-  </svg>
-);
-
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 // basePath lets the same sidebar serve the legacy /staff/dashboard tree and the workspace /o/{slug}
@@ -208,20 +187,20 @@ export default function StaffSidebar({
         collapsed ? "w-[64px]" : "w-[243px]"
       }`}
     >
-      {/* Logo + toggle */}
+      {/* Workspace switcher + collapse toggle */}
       <div
         className={`flex items-center ${
           collapsed
-            ? "flex-col gap-[8px] px-[12px] pt-[20px] pb-[14px]"
-            : "justify-between px-[20px] pt-[28px] pb-[24px]"
+            ? "flex-col gap-[8px] px-[10px] pt-[16px] pb-[12px]"
+            : "gap-[6px] px-[12px] pt-[16px] pb-[16px]"
         }`}
       >
-        <Link href={base}>
-          {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
-        </Link>
+        <div className={collapsed ? "" : "min-w-0 flex-1"}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
         <button
           onClick={toggleCollapsed}
-          className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}

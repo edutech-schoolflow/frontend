@@ -63,6 +63,8 @@ export interface IdentityMe {
   /** Profile kinds this identity owns (e.g. "parent", "staff") — distinct from contexts. */
   profiles: string[];
   contexts: AuthContext[];
+  /** The context this session is currently inside (null for an identity-scope session). */
+  currentContextId?: string | null;
 }
 
 /** Where each context type lands after login (legacy portal routes; fallback for contexts with no slug). */
@@ -78,18 +80,16 @@ export function dashboardFor(type: AuthContextType): string {
 }
 
 /**
- * Where entering a context lands (FE-001 Phase 2). Owner and staff have moved under the /o/{slug}
- * workspace (shared URLs, view by context type); parent is still school-agnostic on its legacy route
- * until parenting is folded in.
+ * Where entering a context lands (FE-001 Phase 2). Every context is org-scoped now — owner, staff and
+ * parent all live under the /o/{slug} workspace (shared URLs, view by context type). A parent's
+ * school-agnostic FAMILY home is a different thing (/parent/dashboard) and is reached on its own, not
+ * by entering a context. The dashboardFor fallback only fires for a context that has no slug yet.
  */
 export function landingFor(
   context?: Pick<AuthContext, "type" | "organizationSlug">
 ): string {
   if (!context) return "/welcome";
-  if (
-    (context.type === "owner" || context.type === "staff") &&
-    context.organizationSlug
-  ) {
+  if (context.organizationSlug) {
     return `/o/${context.organizationSlug}`;
   }
   return dashboardFor(context.type);
@@ -211,19 +211,28 @@ export async function getWelcome(): Promise<Welcome> {
   return data;
 }
 
+export interface CreateOrganizationInput {
+  name: string;
+  type?: string;
+  state?: string;
+}
+
 /**
  * Organization onboarding (NOT registration): a signed-in, verified identity creates a school and
- * receives the owner context cookies. The account always exists first. Returns the new workspace's
- * slug so the caller can route to /o/{slug} (a fresh org is unnamed → straight to the setup wizard).
+ * receives the owner context cookies. Form-first — the school is born NAMED, so an abandoned create
+ * writes nothing (no unnamed shell). Returns the new workspace's slug; the caller routes to /o/{slug}.
  */
-export async function createOrganization(): Promise<{
-  message: string;
-  slug: string | null;
-}> {
+export async function createOrganization(
+  input: CreateOrganizationInput
+): Promise<{ message: string; slug: string | null }> {
   const { data, message } = await apiPost<{
     contexts: AuthContext[];
     selected: string | null;
-  }>("/organizations", {});
+  }>("/organizations", {
+    name: input.name,
+    type: input.type || null,
+    state: input.state?.trim() ? input.state.trim() : null,
+  });
   const owner =
     data.contexts.find((c) => c.id === data.selected) ??
     data.contexts.find((c) => c.type === "owner");
