@@ -61,7 +61,7 @@ export default function SchoolRegisterForm() {
       <PhoneVerificationStep
         phone={pending.phone}
         password={pending.password}
-        onVerified={() => router.push("/school/dashboard")}
+        onVerified={() => router.push("/select-context")}
       />
     );
   }

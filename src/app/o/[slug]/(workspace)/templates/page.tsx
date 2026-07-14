@@ -1,1 +1,1 @@
-export { default } from "@/src/app/staff/dashboard/templates/page";
+export { default } from "@/src/views/staff/templates/page";

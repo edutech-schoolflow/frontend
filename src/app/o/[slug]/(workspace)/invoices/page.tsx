@@ -1,1 +1,1 @@
-export { default } from "@/src/app/staff/dashboard/invoices/page";
+export { default } from "@/src/views/staff/invoices/page";

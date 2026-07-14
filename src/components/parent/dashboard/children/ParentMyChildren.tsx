@@ -82,6 +82,12 @@ function EmptyState() {
           attendance.
         </p>
       </div>
+      <Link
+        href="/parent/dashboard/enrol/child-info"
+        className="flex h-[44px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[24px] text-[14px] font-medium text-white hover:opacity-90"
+      >
+        Add a child
+      </Link>
     </div>
   );
 }
@@ -101,7 +107,15 @@ export default function ParentMyChildren() {
 
   return (
     <div className="px-[88px] py-[31px] pb-[60px]">
-      <h1 className="text-[24px] font-medium text-[#1b1b1b]">My children</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-[24px] font-medium text-[#1b1b1b]">My children</h1>
+        <Link
+          href="/parent/dashboard/enrol/child-info"
+          className="flex h-[40px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[20px] text-[14px] font-medium text-white hover:opacity-90"
+        >
+          Add a child
+        </Link>
+      </div>
 
       {isPending && <Spinner />}
 

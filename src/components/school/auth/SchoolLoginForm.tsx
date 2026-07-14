@@ -44,7 +44,7 @@ export default function SchoolLoginForm() {
     try {
       await login.mutateAsync(values);
       toast.success("Welcome back!");
-      router.push("/school/dashboard");
+      router.push("/select-context");
     } catch (err) {
       if (err instanceof ApiError && err.errorCode === ERR_PHONE_NOT_VERIFIED) {
         // Take them through verification instead of a dead-end error.
@@ -61,7 +61,7 @@ export default function SchoolLoginForm() {
         phone={unverified.phone}
         password={unverified.password}
         sendOnMount
-        onVerified={() => router.push("/school/dashboard")}
+        onVerified={() => router.push("/select-context")}
       />
     );
   }

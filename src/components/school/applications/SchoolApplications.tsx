@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { useApplications } from "@/src/lib/api/useSchoolApplications";
 import type { ApplicationStatus } from "@/src/types/application";
 import AppStatusChip from "./AppStatusChip";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 type Tab = "all" | ApplicationStatus;
 
@@ -26,6 +27,7 @@ function fmt(dateStr: string) {
 }
 
 export default function SchoolApplications() {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
   const { data: all = [], isPending: loading } = useApplications();
   const [tab, setTab] = useState<Tab>("all");
@@ -168,7 +170,7 @@ export default function SchoolApplications() {
                       : ""
                   }`}
                   onClick={() =>
-                    router.push(`/school/dashboard/applications/${app.id}`)
+                    router.push(wsHref(`/school/dashboard/applications/${app.id}`))
                   }
                 >
                   <td className="px-[16px] py-[14px]">

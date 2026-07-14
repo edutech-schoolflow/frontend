@@ -4,13 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 import {
   LogOut,
   ChevronLeft,
   ChevronRight,
   ArrowLeftRight,
 } from "lucide-react";
-import { useAuth } from "@/src/context/AuthContext";
 import Logo from "@/src/components/ui/Logo";
 import WorkspaceSwitcherModal from "@/src/components/shared/WorkspaceSwitcherModal";
 import type { ReactNode } from "react";
@@ -67,7 +67,7 @@ const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
 export default function ParentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -85,7 +85,7 @@ export default function ParentSidebar() {
     });
   };
 
-  const fullName = user?.name ?? "John Okafor";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)

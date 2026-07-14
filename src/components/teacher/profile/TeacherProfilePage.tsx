@@ -19,7 +19,6 @@ import {
 } from "@/src/lib/api/teacherProfile";
 import { getMyMonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
 import type { MonthlyAttendanceSummary } from "@/src/lib/api/staffAttendance";
-import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 import type { StaffPortalProfile } from "@/src/lib/api/teacherProfile";
 
@@ -325,9 +324,8 @@ function AttendanceHistorySection({
 }
 
 export default function StaffProfilePage() {
-  const { user, setUser } = useAuth();
   const { profile: staffCtx, activeSchoolId } = useStaffFeatures();
-  const effectiveUserId = staffCtx?.staff.userId ?? user?.id;
+  const effectiveUserId = staffCtx?.staff.userId;
 
   const [profile, setProfile] = useState<StaffPortalProfile | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -392,12 +390,6 @@ export default function StaffProfilePage() {
       activeSchoolId
     );
     setProfile(updated);
-    setUser({
-      ...user!,
-      name: `${updated.firstName} ${updated.lastName}`,
-      email: updated.email,
-      phone: updated.phone,
-    });
     setEditing(false);
     setSaving(false);
   };

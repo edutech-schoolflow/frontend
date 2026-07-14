@@ -1,7 +1,7 @@
 import { apiGet } from "./client";
 import type { SchoolListing } from "@/src/types/school";
 
-// ── backend shape (api/v1/parent/schools) ──────────────────────────────────────
+// ── backend shape (api/v1/family/schools) ──────────────────────────────────────
 
 interface SchoolDirectoryItem {
   id: string;
@@ -23,7 +23,7 @@ export async function searchSchools(params?: {
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
 
   const { data } = await apiGet<SchoolDirectoryItem[]>(
-    `/parent/schools${suffix}`
+    `/family/schools${suffix}`
   );
   return (data ?? []).map(toListing);
 }
@@ -44,7 +44,7 @@ function toListing(s: SchoolDirectoryItem): SchoolListing {
 /** A single public school's profile, or null if it isn't listed. */
 export async function getSchoolById(id: string): Promise<SchoolListing | null> {
   try {
-    const { data } = await apiGet<SchoolDirectoryItem>(`/parent/schools/${id}`);
+    const { data } = await apiGet<SchoolDirectoryItem>(`/family/schools/${id}`);
     return toListing(data);
   } catch {
     return null;
@@ -59,6 +59,6 @@ export interface SchoolClass {
 
 /** The classes a public school offers (in ladder order) — the desired-class options when applying. */
 export async function getSchoolClasses(id: string): Promise<SchoolClass[]> {
-  const { data } = await apiGet<SchoolClass[]>(`/parent/schools/${id}/classes`);
+  const { data } = await apiGet<SchoolClass[]>(`/family/schools/${id}/classes`);
   return data ?? [];
 }

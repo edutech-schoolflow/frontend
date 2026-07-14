@@ -62,6 +62,12 @@ export interface IdentityMe {
   phoneVerified: boolean;
   /** Profile kinds this identity owns (e.g. "parent", "staff") — distinct from contexts. */
   profiles: string[];
+  /**
+   * Platform-level actions available right now (EDD-005 capability model), e.g. "create_school",
+   * "find_school", "add_child", "accept_invitation", "resume_school_setup". Render what arrives —
+   * never branch on "am I a parent?".
+   */
+  capabilities: string[];
   contexts: AuthContext[];
   /** The context this session is currently inside (null for an identity-scope session). */
   currentContextId?: string | null;
@@ -71,9 +77,9 @@ export interface IdentityMe {
 export function dashboardFor(type: AuthContextType): string {
   switch (type) {
     case "owner":
-      return "/school/dashboard";
+      return "/select-context";
     case "staff":
-      return "/staff/dashboard";
+      return "/select-context";
     case "parent":
       return "/parent/dashboard";
   }
@@ -159,7 +165,7 @@ export async function createParentProfile(): Promise<{
   message: string;
 }> {
   const { data, message } = await apiPost<{ contextId: string; type: string }>(
-    "/parents/profile",
+    "/family/profile",
     {}
   );
   return { contextId: data.contextId, message };

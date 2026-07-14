@@ -72,7 +72,13 @@ function Inner() {
             </div>
 
             <p className="mt-[6px] text-center text-[14px] text-[#666]">
-              Looking for something new?{" "}
+              <Link
+                href="/parent/dashboard"
+                className="font-medium text-brand-green underline hover:opacity-80"
+              >
+                Family home
+              </Link>{" "}
+              ·{" "}
               <Link
                 href="/welcome"
                 className="font-medium text-brand-green underline hover:opacity-80"

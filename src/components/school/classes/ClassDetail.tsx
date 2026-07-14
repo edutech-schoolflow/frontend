@@ -24,6 +24,7 @@ import {
   useSchoolTeachers,
 } from "@/src/lib/api/useSchoolClasses";
 import type { ClassArm } from "@/src/types/school";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Add Arm Modal ─────────────────────────────────────────────────────────────
 
@@ -252,24 +253,24 @@ function TeacherRow({
 
 // ─── Arm Card ──────────────────────────────────────────────────────────────────
 
-const QUICK_LINKS = (classId: string, armId: string) => [
+const QUICK_LINKS = (classId: string, armId: string, wsHref: (p: string) => string) => [
   {
     label: "Attendance",
-    href: `/school/dashboard/attendance?class=${classId}&arm=${armId}`,
+    href: wsHref(`/school/dashboard/attendance?class=${classId}&arm=${armId}`),
     icon: CheckSquare,
     color: "text-[#4a6cf7]",
     bg: "bg-[#e8f0ff]",
   },
   {
     label: "Grades",
-    href: `/school/dashboard/grades/ca?class=${classId}&arm=${armId}`,
+    href: wsHref(`/school/dashboard/grades/ca?class=${classId}&arm=${armId}`),
     icon: BarChart2,
     color: "text-[#f47e14]",
     bg: "bg-[#fff3e8]",
   },
   {
     label: "Exam Questions",
-    href: `/school/dashboard/exams?arm=${armId}`,
+    href: wsHref(`/school/dashboard/exams?arm=${armId}`),
     icon: BookOpen,
     color: "text-brand-green",
     bg: "bg-[#e8f5ee]",
@@ -285,7 +286,8 @@ function ArmCard({
   classId: string;
   onAssign: (arm: ClassArm) => void;
 }) {
-  const links = QUICK_LINKS(classId, arm.id);
+  const wsHref = useWorkspaceHref();
+  const links = QUICK_LINKS(classId, arm.id, wsHref);
 
   return (
     <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-5">
@@ -349,6 +351,7 @@ export default function ClassDetail({
   classId: string;
   className?: string;
 }) {
+  const wsHref = useWorkspaceHref();
   const { data: cls } = useClass(classId);
   const { data: arms = [], isPending } = useClassArms(classId);
   const setClassTeacher = useSetClassLevelTeacher(classId);
@@ -371,7 +374,7 @@ export default function ClassDetail({
       <div className="px-[32px] py-[28px] pb-[60px]">
         <div className="mb-6">
           <Link
-            href="/school/dashboard/classes"
+            href={wsHref("/school/dashboard/classes")}
             className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-text-body hover:text-text-heading"
           >
             <ArrowLeft className="h-[13px] w-[13px]" />

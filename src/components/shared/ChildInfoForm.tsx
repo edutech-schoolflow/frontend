@@ -20,7 +20,11 @@ export const childInfoSchema = z.object({
   firstName: z.string().min(1, "Required"),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Required"),
-  dateOfBirth: z.string().min(1, "Required"),
+  // The API binds DateOnly, so the wire format is ISO yyyy-MM-dd — exactly what type="date" emits.
+  dateOfBirth: z
+    .string()
+    .min(1, "Required")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date"),
   desiredClass: z.string().min(1, "Required"),
   gender: z.enum(["male", "female"]),
   previousSchool: z.string().optional(),
@@ -128,6 +132,7 @@ type ChildInfoFormProps = {
   submitLabel?: string;
   defaultValues?: Partial<ChildInfoValues>;
   existingPhotoUrl?: string | null;
+  existingBirthCertUrl?: string | null;
   /** When applying to a specific school, show that school's classes instead of the full ladder. */
   schoolId?: string;
   onSubmit: (
@@ -142,10 +147,12 @@ export default function ChildInfoForm({
   submitLabel = "Save child",
   defaultValues,
   existingPhotoUrl,
+  existingBirthCertUrl,
   schoolId,
   onSubmit,
 }: ChildInfoFormProps) {
   const [childPhoto, setChildPhoto] = useState<File | null>(null);
+  const [childPhotoError, setChildPhotoError] = useState("");
   const [birthCert, setBirthCert] = useState<File | null>(null);
   const [birthCertError, setBirthCertError] = useState("");
   const [medicalDoc, setMedicalDoc] = useState<File | null>(null);
@@ -191,14 +198,15 @@ export default function ChildInfoForm({
 
   const handleFormSubmit = async (values: ChildInfoValues) => {
     let hasError = false;
-    if (!birthCert) {
+    if (!childPhoto && !existingPhotoUrl) {
+      setChildPhotoError("Child's photo is required");
+      hasError = true;
+    }
+    if (!birthCert && !existingBirthCertUrl) {
       setBirthCertError("Birth certificate is required");
       hasError = true;
     }
-    if (!medicalDoc) {
-      setMedicalDocError("Medical / fitness record is required");
-      hasError = true;
-    }
+    // The medical / fitness record is optional.
     if (hasError) return;
     await onSubmit(values, childPhoto, birthCert, medicalDoc);
   };
@@ -251,7 +259,8 @@ export default function ChildInfoForm({
         <p className={LBL}>Date of birth</p>
         <input
           {...register("dateOfBirth")}
-          placeholder="DD/MM/YYYY"
+          type="date"
+          max={new Date().toISOString().slice(0, 10)}
           className={FLD}
         />
         {errors.dateOfBirth && (
@@ -395,8 +404,14 @@ export default function ChildInfoForm({
             <DropZone
               label="Upload child's photo"
               file={childPhoto}
-              onChange={setChildPhoto}
+              onChange={(f) => {
+                setChildPhoto(f);
+                if (f) setChildPhotoError("");
+              }}
             />
+          )}
+          {childPhotoError && (
+            <p className="text-[11px] text-red-500">{childPhotoError}</p>
           )}
         </div>
 
@@ -480,7 +495,9 @@ export default function ChildInfoForm({
       {/* Submit */}
       <button
         type="submit"
-        disabled={!isValid || !birthCert || !medicalDoc || isSubmitting}
+        // Files are validated on submit (photo + birth cert required, medical optional) so the
+        // person gets told WHICH document is missing instead of facing a silently dead button.
+        disabled={!isValid || isSubmitting}
         className="mx-auto flex h-[59px] w-[447px] items-center justify-center rounded-[5px] text-[20px] font-normal transition-colors disabled:cursor-not-allowed disabled:bg-[#eee] disabled:text-[#888] enabled:bg-[#1ca95c] enabled:text-white enabled:hover:opacity-90"
       >
         {isSubmitting ? (

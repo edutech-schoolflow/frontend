@@ -1,1 +1,1 @@
-export { default } from "@/src/app/staff/dashboard/exams/[paperId]/page";
+export { default } from "@/src/views/staff/exams/[paperId]/page";

@@ -12,11 +12,11 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
-import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
 import { ROLE_LABELS } from "@/src/types/staff";
 import type { StaffFeatures } from "@/src/types/staffFeatures";
 import type { ReactNode } from "react";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 // ─── Nav definition ────────────────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ export default function StaffSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const { features, profile, loading } = useStaffFeatures();
 
   const base = basePath;
@@ -158,7 +158,7 @@ export default function StaffSidebar({
 
   const fullName = profile
     ? `${profile.staff.firstName} ${profile.staff.lastName}`
-    : (user?.name ?? "Staff");
+    : (user?.fullName ?? "");
 
   const initials = fullName
     .split(" ")

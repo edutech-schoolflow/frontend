@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from "./client";
 import type { Application, ApplicationStatus } from "@/src/types/application";
 
-// ── backend shape (api/v1/parent/applications) ─────────────────────────────────
+// ── backend shape (api/v1/family/applications) ─────────────────────────────────
 
 interface ApplicationResponse {
   id: string;
@@ -89,7 +89,7 @@ export async function getMyApplications(): Promise<Application[]> {
 
 export async function getApplication(id: string): Promise<Application> {
   const { data } = await apiGet<ApplicationResponse>(
-    `/parent/applications/${id}`
+    `/family/applications/${id}`
   );
   return toApplication(data);
 }
@@ -105,7 +105,7 @@ export async function submitApplication(
   input: SubmitApplicationInput
 ): Promise<{ application: Application; message: string }> {
   const { data, message } = await apiPost<ApplicationResponse>(
-    "/parent/applications",
+    "/family/applications",
     {
       childProfileId: input.childProfileId,
       schoolId: input.schoolId,
@@ -120,7 +120,7 @@ export async function payApplicationFee(
   applicationId: string
 ): Promise<{ application: Application; message: string }> {
   const { data, message } = await apiPost<ApplicationResponse>(
-    `/parent/applications/${applicationId}/pay`,
+    `/family/applications/${applicationId}/pay`,
     {}
   );
   return { application: toApplication(data), message };

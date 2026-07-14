@@ -8,6 +8,7 @@ import {
   useConfirmTransition,
 } from "@/src/lib/api/useTransition";
 import { termLabel } from "@/src/lib/api/terms";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 /**
  * The confirm half of the auto-prepare + confirm calendar flow. The platform prepares the next
@@ -15,6 +16,7 @@ import { termLabel } from "@/src/lib/api/terms";
  * is due. At a session boundary it enforces the promotion gate before letting them confirm.
  */
 export default function TransitionBanner() {
+  const wsHref = useWorkspaceHref();
   const { data: proposal } = useTransition();
   const confirm = useConfirmTransition();
 
@@ -69,7 +71,7 @@ export default function TransitionBanner() {
               {awaiting} active student{awaiting === 1 ? "" : "s"} still need
               {awaiting === 1 ? "s" : ""} to be promoted.{" "}
               <Link
-                href="/school/dashboard/students"
+                href={wsHref("/school/dashboard/students")}
                 className="font-medium underline hover:opacity-80"
               >
                 Run end-of-session promotion

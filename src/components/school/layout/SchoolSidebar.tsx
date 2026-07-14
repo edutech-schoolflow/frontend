@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
-import { useAuth } from "@/src/context/AuthContext";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 const SettingsIcon = () => (
   <svg
@@ -33,7 +33,7 @@ export default function SchoolSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const inSettings = pathname.includes("/settings");
 
   const BASE = basePath;
@@ -77,7 +77,7 @@ export default function SchoolSidebar({
       return next;
     });
 
-  const fullName = user?.name ?? "School Admin";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)

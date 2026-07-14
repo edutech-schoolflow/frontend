@@ -11,7 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
-import { useAuth } from "@/src/context/AuthContext";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 /**
  * Parent workspace chrome (FE-001, Stage 3). A parent context is scoped to ONE school, so this
@@ -27,7 +27,7 @@ export default function ParentWorkspaceSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -43,7 +43,7 @@ export default function ParentWorkspaceSidebar({
     });
   };
 
-  const fullName = user?.name ?? "Parent";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)

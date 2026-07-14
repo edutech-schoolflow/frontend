@@ -19,6 +19,7 @@ import ScheduleExamModal from "./ScheduleExamModal";
 import RejectModal from "./RejectModal";
 import RecordAssessmentModal from "./RecordAssessmentModal";
 import AdmitModal from "./AdmitModal";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 type Modal = "schedule" | "reject" | "assess" | "admit" | null;
 
@@ -174,6 +175,7 @@ export default function ApplicationDetail({
   backPath?: string;
 }) {
   const router = useRouter();
+  const wsHref = useWorkspaceHref();
   const { data: app, isPending: loading } = useApplication(id);
   const [modal, setModal] = useState<Modal>(null);
   const [done, setDone] = useState<
@@ -213,7 +215,7 @@ export default function ApplicationDetail({
     <>
       {/* Back */}
       <button
-        onClick={() => router.push(backPath)}
+        onClick={() => router.push(wsHref(backPath))}
         className="mb-5 flex items-center gap-[6px] text-[13px] text-grey-text hover:text-dark-blue"
       >
         <ArrowLeft className="h-[14px] w-[14px]" /> Back to Applications

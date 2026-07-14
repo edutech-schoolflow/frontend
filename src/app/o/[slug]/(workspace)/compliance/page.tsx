@@ -1,8 +1,8 @@
 "use client";
 
 import { useWorkspace } from "@/src/context/WorkspaceContext";
-import OwnerView from "@/src/app/school/dashboard/compliance/page";
-import StaffView from "@/src/app/staff/dashboard/compliance/page";
+import OwnerView from "@/src/views/school/compliance/page";
+import StaffView from "@/src/views/staff/compliance/page";
 
 // Shared workspace path — same URL, view depends on the caller's context.
 export default function Page() {

@@ -59,7 +59,7 @@ function toChildFees(c: ChildFeesResponse): ChildFees {
 }
 
 export async function getParentFees(): Promise<ChildFees[]> {
-  const { data } = await apiGet<ChildFeesResponse[]>("/parent/fees");
+  const { data } = await apiGet<ChildFeesResponse[]>("/family/fees");
   return data.map(toChildFees);
 }
 
@@ -71,7 +71,7 @@ export interface PayFeeInput {
 }
 
 export async function payFee(input: PayFeeInput): Promise<Payment> {
-  const { data } = await apiPost<Payment>("/parent/fees/pay", {
+  const { data } = await apiPost<Payment>("/family/fees/pay", {
     studentId: input.studentId,
     feeTypeId: input.feeTypeId,
     amount: input.amount,

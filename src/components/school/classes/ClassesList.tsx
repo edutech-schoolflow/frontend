@@ -22,6 +22,7 @@ import {
   useSchoolTeachers,
 } from "@/src/lib/api/useSchoolClasses";
 import type { SchoolClass, ClassLevel } from "@/src/types/school";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -257,6 +258,7 @@ function ClassCard({
   cls: SchoolClass;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const wsHref = useWorkspaceHref();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -279,7 +281,7 @@ function ClassCard({
 
   return (
     <Link
-      href={`/school/dashboard/classes/${cls.id}?name=${encodeURIComponent(cls.name)}`}
+      href={wsHref(`/school/dashboard/classes/${cls.id}?name=${encodeURIComponent(cls.name)}`)}
       className="group flex flex-col rounded-[12px] border border-[#e5e7eb] bg-white p-5 transition-shadow hover:shadow-md"
     >
       <div className="mb-4 flex items-start justify-between">

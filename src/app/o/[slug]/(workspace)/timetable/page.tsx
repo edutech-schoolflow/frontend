@@ -1,1 +1,1 @@
-export { default } from "@/src/app/staff/dashboard/timetable/page";
+export { default } from "@/src/views/staff/timetable/page";

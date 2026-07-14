@@ -20,6 +20,7 @@ import type {
   StaffCheckIn,
   StaffAttendanceSettings,
 } from "@/src/types/staffAttendance";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 type GeoState = "idle" | "requesting" | "success" | "denied" | "unavailable";
 
@@ -30,6 +31,7 @@ const STATUS_STYLE = {
 };
 
 export default function StaffCheckInWidget() {
+  const wsHref = useWorkspaceHref();
   const { profile, loading: profileLoading } = useStaffFeatures();
   const [checkIn, setCheckIn] = useState<StaffCheckIn | null>(null);
   const [settings, setSettings] = useState<StaffAttendanceSettings | null>(
@@ -205,7 +207,7 @@ export default function StaffCheckInWidget() {
 
       <div className="border-t border-[#f3f4f6] px-5 py-2.5">
         <Link
-          href="/staff/dashboard/profile"
+          href={wsHref("/staff/dashboard/profile")}
           className="flex items-center gap-1 text-[12px] text-[#9ca3af] transition-colors hover:text-brand-green"
         >
           View attendance history in My Profile

@@ -1,8 +1,8 @@
 "use client";
 
 import { useWorkspace } from "@/src/context/WorkspaceContext";
-import OwnerView from "@/src/app/school/dashboard/page";
-import StaffView from "@/src/app/staff/dashboard/page";
+import OwnerView from "@/src/views/school/page";
+import StaffView from "@/src/views/staff/page";
 import ParentView from "@/src/components/parent/workspace/ParentWorkspaceHome";
 
 // Shared workspace path — same URL, view depends on the caller's context.

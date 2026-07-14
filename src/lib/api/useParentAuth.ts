@@ -1,47 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch } from "@/src/lib/store/hooks";
-import {
-  setParentUser,
-  clearParentAuth,
-} from "@/src/lib/store/parentAuthSlice";
+import { clearParentAuth } from "@/src/lib/store/parentAuthSlice";
 import {
   forgotParentPassword,
-  getParentMe,
   loginParent,
   logoutParent,
   registerParent,
   resendParentOtp,
   resetParentPassword,
-  setPaymentPin,
   verifyParentPhone,
   type ParentLoginInput,
   type ParentRegisterInput,
   type ParentVerifyPhoneInput,
 } from "./parentAuth";
 
-export const parentMeKey = ["parent", "me"] as const;
-
-/** Probes /parent/auth/me. The query→Redux sync is done in the consuming guard via an effect. */
-export function useParentMe() {
-  return useQuery({
-    queryKey: parentMeKey,
-    queryFn: getParentMe,
-    retry: false,
-    refetchOnWindowFocus: true,
-    staleTime: 60_000,
-  });
-}
-
+// Legacy portal login (endpoint deleted) — kept only so the unmounted legacy form compiles.
 export function useParentLogin() {
-  const queryClient = useQueryClient();
-  const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (input: ParentLoginInput) => loginParent(input),
-    onSuccess: async () => {
-      const user = await getParentMe();
-      dispatch(setParentUser(user));
-      queryClient.setQueryData(parentMeKey, user);
-    },
   });
 }
 
@@ -74,19 +50,6 @@ export function useResetParentPassword() {
   });
 }
 
-export function useSetPaymentPin() {
-  const queryClient = useQueryClient();
-  const dispatch = useAppDispatch();
-  return useMutation({
-    mutationFn: (pin: string) => setPaymentPin(pin),
-    // Once a PIN exists, refresh /me so hasPaymentPin flips true everywhere.
-    onSuccess: async () => {
-      const user = await getParentMe();
-      dispatch(setParentUser(user));
-      queryClient.setQueryData(parentMeKey, user);
-    },
-  });
-}
 
 export function useParentLogout() {
   const queryClient = useQueryClient();
@@ -95,7 +58,7 @@ export function useParentLogout() {
     mutationFn: logoutParent,
     onSettled: () => {
       dispatch(clearParentAuth());
-      queryClient.removeQueries({ queryKey: parentMeKey });
+      queryClient.clear();
     },
   });
 }

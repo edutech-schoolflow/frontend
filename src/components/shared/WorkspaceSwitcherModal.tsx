@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { X, Plus, GraduationCap, Loader2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { X, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getIdentityMe,
   selectContext,
-  createParentProfile,
   landingFor,
   type AuthContext,
   type AuthContextType,
@@ -43,8 +42,8 @@ export default function WorkspaceSwitcherModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [contexts, setContexts] = useState<AuthContext[] | null>(null);
-  const [profiles, setProfiles] = useState<string[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -57,7 +56,6 @@ export default function WorkspaceSwitcherModal({
       .then((me) => {
         if (cancelled) return;
         setContexts(me.contexts);
-        setProfiles(me.profiles);
         setCurrentId(me.currentContextId ?? null);
       })
       .catch(() => {
@@ -79,13 +77,11 @@ export default function WorkspaceSwitcherModal({
 
   if (!open) return null;
 
-  // The one you're inside is never a switch target. On the family home there's no current context, so
-  // every workspace is reachable.
-  const others = (contexts ?? []).filter((c) => c.id !== currentId);
-  const hasParent =
-    profiles.includes("parent") ||
-    (contexts ?? []).some((c) => c.type === "parent");
-
+  // The one you're inside is never a switch target — and "inside" means the PAGE, not the token.
+  // On the family home no workspace is current (the session may still carry a school token from
+  // login auto-enter), so every workspace stays reachable.
+  const inWorkspace = pathname.startsWith("/o/");
+  const others = (contexts ?? []).filter((c) => !inWorkspace || c.id !== currentId);
   async function switchTo(ctx: AuthContext) {
     setBusy(ctx.id);
     try {
@@ -102,19 +98,6 @@ export default function WorkspaceSwitcherModal({
     }
   }
 
-  async function becomeParent() {
-    setBusy("parent");
-    try {
-      await createParentProfile();
-      onClose();
-      router.push("/parent/dashboard");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Couldn't set up parent access."
-      );
-      setBusy(null);
-    }
-  }
 
   return (
     <div
@@ -202,23 +185,6 @@ export default function WorkspaceSwitcherModal({
                 </span>
                 Create or join a school
               </button>
-              {!hasParent && (
-                <button
-                  type="button"
-                  onClick={() => void becomeParent()}
-                  disabled={busy !== null}
-                  className="flex w-full items-center gap-[12px] px-[20px] py-[11px] text-left text-[14px] text-[#1b1b1b] transition-colors hover:bg-[#f5f5f5] disabled:opacity-60"
-                >
-                  <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#f3f4f6]">
-                    {busy === "parent" ? (
-                      <Loader2 className="h-[16px] w-[16px] animate-spin text-[#666]" />
-                    ) : (
-                      <GraduationCap className="h-[17px] w-[17px] text-[#666]" />
-                    )}
-                  </span>
-                  Use as a parent
-                </button>
-              )}
             </>
           )}
         </div>

@@ -39,22 +39,28 @@ export default function EnrolStep2() {
 
   const handleSubmit = async (
     values: ChildInfoValues,
-    _photo: File | null,
-    _birthCert: File | null,
-    _medicalDoc: File | null
+    photo: File | null,
+    birthCert: File | null,
+    medicalDoc: File | null
   ) => {
+    const withFiles = (base: ReturnType<typeof childFields>) => ({
+      ...base,
+      photo,
+      birthCert,
+      medicalDoc,
+    });
     try {
       if (saveMode) {
         // Save the child to my account (creates the parent profile on the first child), then back to
         // the list — no school picked, no application.
-        await saveMyChild(childFields(values));
+        await saveMyChild(withFiles(childFields(values)));
         toast.success("Child saved to your account.");
         router.push("/parent/dashboard/children");
         return;
       }
 
       // Enrol: persist the child, then carry id + class + school into review.
-      const { childProfileId } = await upsertChild(childFields(values));
+      const { childProfileId } = await upsertChild(withFiles(childFields(values)));
       const qs = new URLSearchParams({
         childProfileId,
         schoolId,
@@ -106,6 +112,7 @@ export default function EnrolStep2() {
         ) : (
           <ChildInfoForm
             submitLabel={saveMode ? "Save child" : "Review"}
+            existingBirthCertUrl={profile?.birthCertUrl}
             schoolId={schoolId}
             defaultValues={
               profile

@@ -11,7 +11,6 @@ import {
 } from "@/src/lib/api/gradeEntry";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import { getStudentsForArm } from "@/src/lib/api/attendance";
-import { useAuth } from "@/src/context/AuthContext";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
 import type {
   GradeRecord,
@@ -24,6 +23,7 @@ import {
   ASSESSMENT_MAX,
 } from "@/src/types/scoreEntry";
 import type { ClassLevel } from "@/src/types/school";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ function SummaryBar({
 
 export default function StaffGradesPage() {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
 
   // Arm selection
   const [arms, setArms] = useState<ArmSelectOption[]>([]);
@@ -219,7 +219,7 @@ export default function StaffGradesPage() {
   // Load arms on mount
   useEffect(() => {
     let cancelled = false;
-    getTeacherGradeArms(user?.id).then((data) => {
+    getTeacherGradeArms(undefined).then((data) => {
       if (cancelled) return;
       const sorted = [...data].sort(
         (a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]
@@ -235,7 +235,7 @@ export default function StaffGradesPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, searchParams]);
+  }, [searchParams]);
 
   // Load students when arm changes — resets subject selection too
   useEffect(() => {
@@ -316,7 +316,7 @@ export default function StaffGradesPage() {
       term: selectedTerm,
       assessmentType: selectedAssessment,
       entries,
-      submittedBy: user?.name ?? "Teacher",
+      submittedBy: user?.fullName ?? "Teacher",
     });
     setExistingRecord(record);
     setReadOnly(true);

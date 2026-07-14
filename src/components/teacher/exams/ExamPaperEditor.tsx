@@ -34,6 +34,7 @@ import {
 } from "@/src/types/examPaper";
 import { TERM_LABELS } from "@/src/types/scoreEntry";
 import ExamPaperPreview from "./ExamPaperPreview";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -329,6 +330,7 @@ function QuestionCard({
 // ─── Main editor ───────────────────────────────────────────────────────────────
 
 export default function ExamPaperEditor({ paperId }: { paperId: string }) {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
 
   // Paper state
@@ -468,7 +470,7 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
           Exam paper not found
         </p>
         <button
-          onClick={() => router.push("/staff/dashboard/exams")}
+          onClick={() => router.push(wsHref("/staff/dashboard/exams"))}
           className="text-[13px] text-brand-green hover:underline"
         >
           Back to exam papers
@@ -482,7 +484,7 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
       {/* Top bar */}
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push("/staff/dashboard/exams")}
+          onClick={() => router.push(wsHref("/staff/dashboard/exams"))}
           className="flex h-[36px] w-[36px] items-center justify-center rounded-[8px] border border-[#e5e7eb] text-text-body hover:bg-[#f3f4f6]"
         >
           <ArrowLeft className="h-[16px] w-[16px]" />

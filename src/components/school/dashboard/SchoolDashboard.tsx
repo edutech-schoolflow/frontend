@@ -22,6 +22,7 @@ import type {
   ActivityItem,
   DashboardApplication,
 } from "@/src/types/school";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ function StatCard({
 }
 
 function FeeCollection({ stats }: { stats: DashboardStats }) {
+  const wsHref = useWorkspaceHref();
   const pct =
     stats.feeTargetThisTerm > 0
       ? Math.min(
@@ -104,7 +106,7 @@ function FeeCollection({ stats }: { stats: DashboardStats }) {
           Term Fee Collection
         </h2>
         <Link
-          href="/school/dashboard/bursar"
+          href={wsHref("/school/dashboard/bursar")}
           className="text-[12px] font-medium text-brand-green hover:underline"
         >
           View collections
@@ -145,6 +147,7 @@ function FeeCollection({ stats }: { stats: DashboardStats }) {
 }
 
 function RecentApplications({ items }: { items: DashboardApplication[] }) {
+  const wsHref = useWorkspaceHref();
   return (
     <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-6">
       <div className="mb-5 flex items-center justify-between">
@@ -152,7 +155,7 @@ function RecentApplications({ items }: { items: DashboardApplication[] }) {
           Recent Applications
         </h2>
         <Link
-          href="/school/dashboard/applications"
+          href={wsHref("/school/dashboard/applications")}
           className="text-[12px] font-medium text-brand-green hover:underline"
         >
           View all
@@ -176,7 +179,7 @@ function RecentApplications({ items }: { items: DashboardApplication[] }) {
             return (
               <Link
                 key={app.id}
-                href={`/school/dashboard/applications/${app.id}`}
+                href={wsHref(`/school/dashboard/applications/${app.id}`)}
                 className="flex items-center gap-3 py-3 hover:opacity-80"
               >
                 <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#e8f5ee] text-[12px] font-semibold text-brand-green">
@@ -239,6 +242,7 @@ const QUICK_ACTIONS = [
 ];
 
 function QuickActions() {
+  const wsHref = useWorkspaceHref();
   return (
     <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-6">
       <h2 className="mb-5 text-[15px] font-semibold text-text-heading">
@@ -250,7 +254,7 @@ function QuickActions() {
           return (
             <Link
               key={a.label}
-              href={a.href}
+              href={wsHref(a.href)}
               className="flex items-center gap-3 rounded-[10px] border border-[#e5e7eb] px-4 py-3 transition-shadow hover:shadow-sm"
             >
               <div
@@ -313,6 +317,7 @@ function RecentActivity({ items }: { items: ActivityItem[] }) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function SchoolDashboard() {
+  const wsHref = useWorkspaceHref();
   // Real KYC status (from /me, mirrored into Redux by the guard) — not the mock dashboard stats.
   const kycStatus = useAppSelector((s) => s.auth.user?.kycStatus);
 
@@ -341,7 +346,7 @@ export default function SchoolDashboard() {
       {/* Compliance banner — driven by real KYC status; hidden once approved. */}
       {kycStatus && kycStatus !== "approved" && (
         <Link
-          href="/school/dashboard/compliance"
+          href={wsHref("/school/dashboard/compliance")}
           className="mb-6 flex items-center justify-between rounded-[10px] border border-amber-200 bg-amber-50 px-5 py-3.5 transition-opacity hover:opacity-90"
         >
           <div className="flex items-center gap-3">

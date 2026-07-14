@@ -33,14 +33,9 @@ export class ApiError extends Error {
 
 let refreshing: Promise<boolean> | null = null;
 
-function refreshEndpointForCurrentPortal(): string | null {
-  if (typeof window === "undefined") return null;
-  const path = window.location.pathname;
-  if (path.startsWith("/school")) return "/school/auth/refresh";
-  if (path.startsWith("/parent")) return "/parent/auth/refresh";
-  if (path.startsWith("/staff")) return "/staff/auth/refresh";
-  return null;
-}
+// EDD-005 Principle 6 — sessions are independent of routes. ONE refresh endpoint; the server
+// derives what to mint from the refresh session itself, never from the browser URL.
+const REFRESH_ENDPOINT = "/auth/refresh";
 
 async function postRefresh(url: string): Promise<boolean> {
   const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
@@ -67,9 +62,8 @@ async function rawRequest(path: string, init: RequestInit): Promise<Response> {
 }
 
 async function tryRefresh(): Promise<boolean> {
-  const url = refreshEndpointForCurrentPortal();
-  if (!url) return false;
-  refreshing ??= postRefresh(url)
+  if (typeof window === "undefined") return false;
+  refreshing ??= postRefresh(REFRESH_ENDPOINT)
     .catch(() => false)
     .finally(() => {
       refreshing = null;

@@ -1,1 +1,1 @@
-export { default } from "@/src/app/staff/dashboard/permissions/page";
+export { default } from "@/src/views/staff/permissions/page";

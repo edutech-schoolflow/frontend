@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
 import NotificationButton from "./NotificationButton";
-import { useAppSelector } from "@/src/lib/store/hooks";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 import { useParentLogout } from "@/src/lib/api/useParentAuth";
 
 export default function ParentTopbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const user = useAppSelector((s) => s.parentAuth.user);
+  // The family home is IDENTITY territory (EDD-005 P7) — greet the identity, membership or not.
+  const { data: user } = useIdentity();
   const logout = useParentLogout();
 
   const fullName = user?.fullName ?? "Parent";

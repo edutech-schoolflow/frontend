@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useAppSelector } from "@/src/lib/store/hooks";
-import { useSetPaymentPin } from "@/src/lib/api/useParentAuth";
+import {
+  useFamilyProfile,
+  useSetFamilyPaymentPin,
+} from "@/src/lib/api/family";
 
 const cls =
   "h-[44px] w-full rounded-[8px] border border-[#ccc] bg-white px-[14px] text-[14px] text-[#1b1b1b] focus:outline-none focus:ring-2 focus:ring-[#1ca95c]/30";
 
 export default function PaymentPinSection() {
-  const hasPin = useAppSelector(
-    (s) => s.parentAuth.user?.hasPaymentPin ?? false
-  );
-  const setPin = useSetPaymentPin();
+  const hasPin = useFamilyProfile().data?.hasPaymentPin ?? false;
+  const setPin = useSetFamilyPaymentPin();
   const [pin, setPinValue] = useState("");
   const [confirm, setConfirm] = useState("");
 

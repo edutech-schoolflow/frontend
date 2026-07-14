@@ -175,30 +175,47 @@ export default function StartPage() {
               </div>
             )}
 
+            {/* EDD-005: every card below renders from me.capabilities — the backend decides what
+                this person can do; the page never asks "am I a parent?" or "do I own a school?". */}
             <div className="mt-[10px] flex flex-col gap-[12px]">
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                disabled={busy !== null}
-                className={card}
-              >
-                <span className={iconWrap}>
-                  <School className="h-[20px] w-[20px] text-brand-green" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium text-[#1b1b1b]">
-                    Create a school
+              {me.capabilities.includes("create_school") && (
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  disabled={busy !== null}
+                  className={card}
+                >
+                  <span className={iconWrap}>
+                    <School className="h-[20px] w-[20px] text-brand-green" />
                   </span>
-                  <span className="block text-[13px] text-[#888]">
-                    Set up a new school and become its owner.
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                      Create a school
+                    </span>
+                    <span className="block text-[13px] text-[#888]">
+                      Set up a new school and become its owner.
+                    </span>
                   </span>
-                </span>
-                <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
-              </button>
+                  <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
+                </button>
+              )}
 
-              {/* Only offered to someone who ISN'T a parent yet — once the profile exists, this action
-                  is done, so we send them to their family home instead of re-offering it. */}
-              {!me.profiles.includes("parent") ? (
+              {me.capabilities.includes("open_family_home") ? (
+                <Link href="/parent/dashboard" className={card}>
+                  <span className={iconWrap}>
+                    <GraduationCap className="h-[20px] w-[20px] text-brand-green" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium text-[#1b1b1b]">
+                      Go to my family home
+                    </span>
+                    <span className="block text-[13px] text-[#888]">
+                      Follow your children, pay fees, and find schools.
+                    </span>
+                  </span>
+                  <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
+                </Link>
+              ) : me.capabilities.includes("add_child") ? (
                 <button
                   type="button"
                   onClick={() => void handleBecomeParent()}
@@ -223,22 +240,7 @@ export default function StartPage() {
                     <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
                   )}
                 </button>
-              ) : (
-                <Link href="/parent/dashboard" className={card}>
-                  <span className={iconWrap}>
-                    <GraduationCap className="h-[20px] w-[20px] text-brand-green" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-medium text-[#1b1b1b]">
-                      Go to my family home
-                    </span>
-                    <span className="block text-[13px] text-[#888]">
-                      Follow your children, pay fees, and find schools.
-                    </span>
-                  </span>
-                  <ArrowRight className="h-[18px] w-[18px] shrink-0 text-[#ccc]" />
-                </Link>
-              )}
+              ) : null}
 
               <Link href="/join" className={card}>
                 <span className={iconWrap}>

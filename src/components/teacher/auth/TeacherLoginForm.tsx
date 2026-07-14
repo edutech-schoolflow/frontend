@@ -30,7 +30,7 @@ export default function StaffLoginForm() {
 
   const onSubmit = async (_values: loginFormType) => {
     // TODO: call staff login API
-    router.push("/staff/dashboard");
+    router.push("/select-context");
   };
 
   return (

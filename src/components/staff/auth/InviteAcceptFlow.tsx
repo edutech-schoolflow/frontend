@@ -170,7 +170,7 @@ export default function InviteAcceptFlow({ token }: { token: string }) {
     try {
       await accept.mutateAsync({ token, password, code: otp.join("") });
       toast.success("Welcome aboard!");
-      router.push("/staff/dashboard");
+      router.push("/select-context");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }

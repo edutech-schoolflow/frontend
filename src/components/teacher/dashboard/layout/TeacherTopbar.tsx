@@ -11,12 +11,10 @@ import {
   HelpCircle,
   Bell,
   ArrowLeftRight,
-  GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/src/context/AuthContext";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
-import { createParentProfile } from "@/src/lib/api/identityAuth";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 // basePath mirrors StaffSidebar so the topbar's links resolve within whichever tree it renders in.
 export default function StaffTopbar({
@@ -29,28 +27,17 @@ export default function StaffTopbar({
   const menuRef = useRef<HTMLDivElement>(null);
   const schoolRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const { mySchools, activeSchoolId, isPartTime, switchSchool } =
     useStaffFeatures();
 
   // "Become a Parent" — explicit relationship creation (idempotent), then the global hub (EDD-002).
-  async function becomeParent() {
-    setMenuOpen(false);
-    try {
-      await createParentProfile();
-      router.push("/parent/dashboard");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not set up parent access."
-      );
-    }
-  }
 
   const activeSchool =
     mySchools.find((e) => e.school.id === activeSchoolId)?.school ??
     mySchools[0]?.school;
 
-  const fullName = user?.name ?? "Staff";
+  const fullName = user?.fullName ?? "";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")
@@ -171,14 +158,6 @@ export default function StaffTopbar({
                 <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
                 Switch workspace
               </Link>
-              <button
-                type="button"
-                onClick={() => void becomeParent()}
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
-              >
-                <GraduationCap className="h-[15px] w-[15px] text-[#888]" />
-                Use as a parent
-              </button>
               <Link
                 href={`${basePath}/settings`}
                 onClick={() => setMenuOpen(false)}
