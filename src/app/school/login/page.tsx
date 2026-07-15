@@ -1,13 +1,7 @@
-import SchoolAuthLayout from "@/src/layout/auth/SchoolAuthLayout";
-import SchoolLoginForm from "@/src/components/school/auth/SchoolLoginForm";
+import { redirect } from "next/navigation";
 
-export default function SchoolLoginPage() {
-  return (
-    <SchoolAuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your school portal"
-    >
-      <SchoolLoginForm />
-    </SchoolAuthLayout>
-  );
+// Identity-first routing (EDD-001): nobody is a school/staff/parent until AFTER they have an
+// identity — so there is exactly one login. This legacy address just forwards to it.
+export default function LegacyLoginRedirect() {
+  redirect("/login");
 }

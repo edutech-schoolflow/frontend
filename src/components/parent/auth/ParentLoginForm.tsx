@@ -1,47 +1,70 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { z } from "zod";
+import { toast } from "sonner";
 
 import { Form } from "@/src/components/ui/form";
 import FormInput from "@/src/components/ui/formInput";
-import { loginParent } from "@/src/lib/api/parents";
-import { useAuth } from "@/src/context/AuthContext";
-
-const schema = z.object({
-  phone: z.string().min(10, "Enter a valid phone number"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type Values = z.infer<typeof schema>;
+import {
+  parentLoginSchema,
+  ERR_PHONE_NOT_VERIFIED,
+  type ParentLoginInput,
+} from "@/src/lib/api/parentAuth";
+import {
+  useParentLogin,
+  useResendParentOtp,
+} from "@/src/lib/api/useParentAuth";
+import { ApiError } from "@/src/lib/api/client";
+import ParentVerifyEmail from "./ParentVerifyEmail";
 
 export default function ParentLoginForm() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const login = useParentLogin();
+  const resend = useResendParentOtp();
+  const [verifyPhone, setVerifyPhone] = useState<string | null>(null);
 
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<ParentLoginInput>({
+    resolver: zodResolver(parentLoginSchema),
     mode: "onTouched",
     defaultValues: { phone: "", password: "" },
   });
 
   const {
     handleSubmit,
-    formState: { isSubmitting, isValid },
+    formState: { isValid },
   } = form;
 
-  const onSubmit = async (values: Values) => {
-    const user = await loginParent({
-      phone: values.phone,
-      password: values.password,
-    });
-    setUser(user);
-    router.push("/parent/dashboard");
+  const onSubmit = async (values: ParentLoginInput) => {
+    try {
+      await login.mutateAsync(values);
+      router.push("/parent/dashboard");
+    } catch (err) {
+      // Not verified yet → send a fresh code and drop into the OTP step inline.
+      if (err instanceof ApiError && err.errorCode === ERR_PHONE_NOT_VERIFIED) {
+        const message = await resend.mutateAsync(values.phone).catch(() => "");
+        if (message) toast.info(message);
+        setVerifyPhone(values.phone);
+        return;
+      }
+      toast.error(err instanceof Error ? err.message : "Could not log in.");
+    }
   };
+
+  if (verifyPhone) {
+    // Already on the login page — after verifying, drop back to the login form
+    // (their phone/password are still filled) so they can sign in.
+    return (
+      <ParentVerifyEmail
+        phone={verifyPhone}
+        onVerified={() => setVerifyPhone(null)}
+      />
+    );
+  }
 
   const AUTH_INPUT =
     "h-[46px] w-full rounded-[10px] border border-[#ccc] bg-white px-[17px] text-[14px] text-[#1b1b1b] placeholder:text-[#aaa] pr-10 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none outline-none";
@@ -89,12 +112,12 @@ export default function ParentLoginForm() {
 
           <button
             type="submit"
-            disabled={!isValid || isSubmitting}
+            disabled={!isValid || login.isPending}
             className="flex h-[59px] w-full items-center justify-center rounded-[5px] text-[20px] font-normal transition-colors
               disabled:cursor-not-allowed disabled:bg-[#eee] disabled:text-[#888]
               enabled:bg-brand-green enabled:text-white enabled:hover:opacity-90"
           >
-            {isSubmitting ? (
+            {login.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Logging in…

@@ -9,8 +9,8 @@ import {
   Camera,
 } from "lucide-react";
 import { getComplianceRecord, submitNIN } from "@/src/lib/api/compliance";
-import { useAuth } from "@/src/context/AuthContext";
 import type { StepStatus } from "@/src/types/compliance";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 function maskNIN(nin: string) {
   return `${nin.slice(0, 3)}****${nin.slice(-3)}`;
@@ -79,9 +79,10 @@ const FACE_BULLETS = [
 ];
 
 export default function NINCompliancePage() {
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
 
-  const actorType = user?.role === "parent" ? "parent" : "teacher";
+  const currentType = user?.contexts.find((c) => c.id === user?.currentContextId)?.type;
+  const actorType = currentType === "parent" ? "parent" : "teacher";
 
   const [ninStatus, setNinStatus] = useState<StepStatus>("not_started");
   const [submittedNIN, setSubmittedNIN] = useState<string | undefined>();
@@ -97,7 +98,7 @@ export default function NINCompliancePage() {
 
   useEffect(() => {
     let cancelled = false;
-    getComplianceRecord(actorType, user?.id).then((record) => {
+    getComplianceRecord(actorType, undefined).then((record) => {
       if (cancelled) return;
       const ninStep = record.steps.find((s) => s.id === "nin");
       setNinStatus(ninStep?.status ?? "not_started");
@@ -109,7 +110,7 @@ export default function NINCompliancePage() {
     return () => {
       cancelled = true;
     };
-  }, [actorType, user?.id]);
+  }, [actorType]);
 
   const idReady = nin.length === 11;
   const canSubmit = idReady && address.trim().length > 0 && faceDone;
@@ -120,7 +121,7 @@ export default function NINCompliancePage() {
       return;
     }
     setSubmitting(true);
-    const record = await submitNIN(actorType, user?.id, nin);
+    const record = await submitNIN(actorType, undefined, nin);
     const ninStep = record.steps.find((s) => s.id === "nin");
     setNinStatus(ninStep?.status ?? "pending");
     setSubmittedNIN(ninStep?.data?.nin);

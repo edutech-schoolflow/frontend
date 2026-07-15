@@ -126,6 +126,25 @@ export const rejectExamPaper = async (
   return mockResponse(MOCK_EXAM_PAPERS[idx]);
 };
 
+export const saveAdminFeedback = async (
+  paperId: string,
+  feedback: string,
+  questionNotes: Record<string, string>
+): Promise<ExamPaper> => {
+  const idx = MOCK_EXAM_PAPERS.findIndex((p) => p.id === paperId);
+  if (idx < 0) throw new Error("Exam paper not found");
+  MOCK_EXAM_PAPERS[idx] = {
+    ...MOCK_EXAM_PAPERS[idx],
+    adminFeedback: feedback || undefined,
+    questions: MOCK_EXAM_PAPERS[idx].questions.map((q) => ({
+      ...q,
+      reviewNote: questionNotes[q.id] || undefined,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+  return mockResponse(MOCK_EXAM_PAPERS[idx]);
+};
+
 export const createUnifiedPaper = async (payload: {
   className: string;
   subject: string;

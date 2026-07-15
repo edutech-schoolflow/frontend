@@ -1,147 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Plus, UserRound, X } from "lucide-react";
-import ChildInfoForm, {
-  type ChildInfoValues,
-} from "@/src/components/shared/ChildInfoForm";
-import { getChildProfiles } from "@/src/lib/api/parents";
-import type { ChildProfile } from "@/src/types/parent";
-
-type Child = ChildProfile;
+import Link from "next/link";
+import { UserRound, School, AlertCircle } from "lucide-react";
+import { useMyChildren } from "@/src/lib/api/useParentChildren";
+import type { ParentChild } from "@/src/lib/api/parentChildren";
 
 // ─── child card ───────────────────────────────────────────────────────────────
 
-function ChildCard({ child, onEdit }: { child: Child; onEdit: () => void }) {
-  const fullName = [child.firstName, child.middleName, child.lastName]
-    .filter(Boolean)
-    .join(" ");
-
+function ChildCard({ child }: { child: ParentChild }) {
   return (
-    <div className="flex flex-col gap-[12px] rounded-[10px] border border-[#ccc] p-[20px]">
-      <div className="h-[64px] w-[64px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
-        {child.photoUrl ? (
-          <img
-            src={child.photoUrl}
-            alt={fullName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <UserRound className="h-[32px] w-[32px] text-[#ccc]" />
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-[3px]">
-        <p className="text-[16px] font-medium text-[#1b1b1b]">{fullName}</p>
-        <p className="text-[14px] text-[#666]">{child.desiredClass}</p>
-        {child.previousSchool && (
-          <p className="text-[14px] text-[#666]">{child.previousSchool}</p>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="mt-auto text-left text-[14px] text-[#ff8d28] hover:underline"
-      >
-        View/edit details
-      </button>
-    </div>
-  );
-}
-
-// ─── edit modal ───────────────────────────────────────────────────────────────
-
-function EditModal({
-  child,
-  onSave,
-  onClose,
-}: {
-  child: Child;
-  onSave: (
-    id: string,
-    values: ChildInfoValues,
-    photo: File | null,
-    birthCert: File | null,
-    medicalDoc: File | null
-  ) => void;
-  onClose: () => void;
-}) {
-  const fullName = [child.firstName, child.middleName, child.lastName]
-    .filter(Boolean)
-    .join(" ");
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-10">
-      <div className="w-full max-w-[860px] rounded-[10px] bg-white">
-        {/* Modal header */}
-        <div className="flex items-center justify-between border-b border-[#eee] px-[44px] py-[24px]">
-          <div className="flex items-center gap-[12px]">
-            <div className="h-[40px] w-[40px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
-              {child.photoUrl ? (
-                <img
-                  src={child.photoUrl}
-                  alt={fullName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <UserRound className="h-[20px] w-[20px] text-[#ccc]" />
-                </div>
-              )}
+    <Link
+      href={`/parent/dashboard/children/${child.childProfileId}`}
+      className="flex flex-col gap-[12px] rounded-[10px] border border-[#ccc] p-[20px] transition-shadow hover:shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
+    >
+      <div className="flex items-start justify-between">
+        <div className="h-[64px] w-[64px] overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
+          {child.schoolLogoUrl ? (
+            <img
+              src={child.schoolLogoUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <UserRound className="h-[32px] w-[32px] text-[#ccc]" />
             </div>
-            <p className="text-[18px] font-medium text-[#1b1b1b]">{fullName}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-[32px] w-[32px] items-center justify-center rounded-full hover:bg-[#f5f5f5] transition-colors"
-          >
-            <X className="h-[18px] w-[18px] text-[#666]" />
-          </button>
+          )}
         </div>
-
-        {/* Form */}
-        <div className="px-[44px] py-[32px]">
-          <ChildInfoForm
-            submitLabel="Save changes"
-            defaultValues={child}
-            existingPhotoUrl={child.photoUrl}
-            onSubmit={(values, photo, birthCert, medicalDoc) =>
-              onSave(child.id, values, photo, birthCert, medicalDoc)
-            }
-          />
-        </div>
+        {child.hasNewResult && (
+          <span className="rounded-full bg-[#e8f8ef] px-[10px] py-[3px] text-[11px] font-medium text-[#1ca95c]">
+            New result
+          </span>
+        )}
       </div>
-    </div>
+
+      <div className="flex flex-col gap-[3px]">
+        <p className="text-[16px] font-medium text-[#1b1b1b]">
+          {child.studentName}
+        </p>
+        {child.schoolName ? (
+          <p className="flex items-center gap-[6px] text-[14px] text-[#666]">
+            <School className="h-[14px] w-[14px] text-[#999]" />
+            {child.schoolName}
+          </p>
+        ) : (
+          <p className="text-[14px] text-[#888]">Not enrolled yet</p>
+        )}
+        {child.className && (
+          <p className="text-[13px] text-[#888]">
+            {child.className}
+            {child.admissionNumber ? ` · ${child.admissionNumber}` : ""}
+          </p>
+        )}
+      </div>
+
+      {child.outstandingFees > 0 && (
+        <p className="mt-auto flex items-center gap-[6px] text-[13px] font-medium text-[#e53e3e]">
+          <AlertCircle className="h-[14px] w-[14px]" />₦
+          {child.outstandingFees.toLocaleString()} outstanding
+        </p>
+      )}
+    </Link>
   );
 }
 
-// ─── empty state ──────────────────────────────────────────────────────────────
+// ─── states ─────────────────────────────────────────────────────────────────────
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center gap-[16px] py-[80px]">
       <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#f5f5f5]">
         <UserRound className="h-[36px] w-[36px] text-[#ccc]" />
       </div>
-      <div className="flex flex-col items-center gap-[6px] text-center">
+      <div className="flex max-w-[420px] flex-col items-center gap-[6px] text-center">
         <p className="text-[16px] font-medium text-[#1b1b1b]">
-          No children added yet
+          No children linked yet
         </p>
         <p className="text-[14px] text-[#888]">
-          Add your child&apos;s details to keep their profile in one place.
+          When a school enrols your child using your phone number, they&apos;ll
+          appear here automatically. You can then track their fees, results, and
+          attendance.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="flex h-[46px] items-center gap-[8px] rounded-[8px] bg-[#1ca95c] px-[24px] text-[14px] text-white transition-opacity hover:opacity-90"
+      <Link
+        href="/parent/dashboard/enrol/child-info"
+        className="flex h-[44px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[24px] text-[14px] font-medium text-white hover:opacity-90"
       >
-        <Plus className="h-[16px] w-[16px]" />
         Add a child
-      </button>
+      </Link>
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <div className="flex justify-center py-[80px]">
+      <div className="h-[32px] w-[32px] animate-spin rounded-full border-2 border-[#eee] border-t-[#1ca95c]" />
     </div>
   );
 }
@@ -149,105 +103,38 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function ParentMyChildren() {
-  const [children, setChildren] = useState<Child[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingChild, setEditingChild] = useState<Child | null>(null);
-
-  useEffect(() => {
-    getChildProfiles().then(setChildren);
-  }, []);
-
-  const handleAdd = (
-    values: ChildInfoValues,
-    photo: File | null,
-    _birthCert: File | null,
-    _medicalDoc: File | null
-  ) => {
-    const photoUrl = photo ? URL.createObjectURL(photo) : null;
-    setChildren((prev) => [
-      ...prev,
-      { ...values, id: crypto.randomUUID(), photoUrl },
-    ]);
-    setShowForm(false);
-  };
-
-  const handleUpdate = (
-    id: string,
-    values: ChildInfoValues,
-    photo: File | null,
-    _birthCert: File | null,
-    _medicalDoc: File | null
-  ) => {
-    setChildren((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...values,
-              id,
-              photoUrl: photo ? URL.createObjectURL(photo) : c.photoUrl,
-            }
-          : c
-      )
-    );
-    setEditingChild(null);
-  };
+  const { data: children, isPending, isError, error } = useMyChildren();
 
   return (
     <div className="px-[88px] py-[31px] pb-[60px]">
       <div className="flex items-center justify-between">
         <h1 className="text-[24px] font-medium text-[#1b1b1b]">My children</h1>
-        {children.length > 0 && !showForm && (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="flex h-[40px] items-center gap-[7px] rounded-[8px] bg-[#1ca95c] px-[18px] text-[13px] text-white transition-opacity hover:opacity-90"
-          >
-            <Plus className="h-[14px] w-[14px]" />
-            Add a child
-          </button>
-        )}
+        <Link
+          href="/parent/dashboard/enrol/child-info"
+          className="flex h-[40px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[20px] text-[14px] font-medium text-white hover:opacity-90"
+        >
+          Add a child
+        </Link>
       </div>
 
-      {children.length === 0 && !showForm && (
-        <EmptyState onAdd={() => setShowForm(true)} />
+      {isPending && <Spinner />}
+
+      {isError && (
+        <p className="mt-[24px] text-[14px] text-[#e53e3e]">
+          {error instanceof Error
+            ? error.message
+            : "Could not load your children."}
+        </p>
       )}
 
-      {showForm && (
-        <div className="mt-[24px] rounded-[10px] border border-[#ccc] px-[44px] py-[41px]">
-          <div className="mb-[20px] flex items-center justify-between">
-            <p className="text-[18px] font-normal text-[#1b1b1b]">
-              Tell us about your child
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="text-[13px] text-[#888] hover:text-[#1b1b1b]"
-            >
-              Cancel
-            </button>
-          </div>
-          <ChildInfoForm submitLabel="Save child" onSubmit={handleAdd} />
-        </div>
-      )}
+      {children && children.length === 0 && <EmptyState />}
 
-      {children.length > 0 && !showForm && (
+      {children && children.length > 0 && (
         <div className="mt-[24px] grid grid-cols-3 gap-[24px]">
           {children.map((child) => (
-            <ChildCard
-              key={child.id}
-              child={child}
-              onEdit={() => setEditingChild(child)}
-            />
+            <ChildCard key={child.childProfileId} child={child} />
           ))}
         </div>
-      )}
-
-      {editingChild && (
-        <EditModal
-          child={editingChild}
-          onSave={handleUpdate}
-          onClose={() => setEditingChild(null)}
-        />
       )}
     </div>
   );

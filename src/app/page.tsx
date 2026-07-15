@@ -32,12 +32,6 @@ export default function HomePage() {
             About us
           </a>
         </nav>
-        <Link
-          href="/school/register"
-          className="rounded-[5px] bg-brand-green px-5 py-2.5 text-[16px] font-normal text-white hover:opacity-90 transition-opacity"
-        >
-          Login/Register
-        </Link>
       </header>
 
       <Hero />

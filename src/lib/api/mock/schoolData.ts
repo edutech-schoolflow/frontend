@@ -1874,6 +1874,7 @@ export const MOCK_SCHOOL_CLASSES: SchoolClass[] = [
     armsCount: 2,
     studentsCount: 3,
     teacherNames: ["Amaka Adeyemi", "Emeka Obi"],
+    classTeacher: null,
   },
   {
     id: "sc-002",
@@ -1883,6 +1884,7 @@ export const MOCK_SCHOOL_CLASSES: SchoolClass[] = [
     armsCount: 1,
     studentsCount: 3,
     teacherNames: [],
+    classTeacher: null,
   },
   {
     id: "sc-003",
@@ -1892,6 +1894,7 @@ export const MOCK_SCHOOL_CLASSES: SchoolClass[] = [
     armsCount: 1,
     studentsCount: 2,
     teacherNames: [],
+    classTeacher: null,
   },
   {
     id: "sc-004",
@@ -1901,6 +1904,7 @@ export const MOCK_SCHOOL_CLASSES: SchoolClass[] = [
     armsCount: 1,
     studentsCount: 2,
     teacherNames: [],
+    classTeacher: null,
   },
 ];
 

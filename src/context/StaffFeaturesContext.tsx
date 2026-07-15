@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "./AuthContext";
 import { getMyStaffProfile, getMySchools } from "@/src/lib/api/staffProfile";
 import type {
   MyStaffProfile,
@@ -17,6 +16,7 @@ import type {
 } from "@/src/lib/api/staffProfile";
 import { DEFAULT_FEATURES } from "@/src/types/staffFeatures";
 import type { StaffFeatures } from "@/src/types/staffFeatures";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 export const STAFF_TEST_USER_KEY = "staff_test_user_id";
 export const STAFF_ACTIVE_SCHOOL_KEY = "staff_active_school_id";
@@ -42,7 +42,7 @@ export const StaffFeaturesContext = createContext<Value>({
 });
 
 export function StaffFeaturesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
 
   const [profile, setProfile] = useState<MyStaffProfile | null>(null);
@@ -59,7 +59,7 @@ export function StaffFeaturesProvider({ children }: { children: ReactNode }) {
       : null
   );
 
-  const effectiveUserId = testUserId ?? user?.id;
+  const effectiveUserId = testUserId ?? undefined;
 
   // Load the list of schools this user belongs to.
   useEffect(() => {
@@ -76,7 +76,7 @@ export function StaffFeaturesProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setProfile(p);
       setLoading(false);
-      if (p?.isSchoolAdmin) router.replace("/school/dashboard");
+      if (p?.isSchoolAdmin) router.replace(wsHref("/school/dashboard"));
     });
     return () => {
       cancelled = true;

@@ -16,7 +16,7 @@ import {
   NIGERIAN_BANKS,
 } from "@/src/lib/api/teacherSettings";
 import type { QualificationEntry } from "@/src/lib/api/teacherSettings";
-import { useAuth } from "@/src/context/AuthContext";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 const QUAL_TYPES: { value: QualificationEntry["type"]; label: string }[] = [
   { value: "degree", label: "University Degree" },
@@ -155,7 +155,7 @@ function SaveButton({
 }
 
 export default function StaffSettingsPage() {
-  const { user } = useAuth();
+
 
   const [loaded, setLoaded] = useState(false);
 
@@ -182,7 +182,7 @@ export default function StaffSettingsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getStaffSettings(user?.id).then((s) => {
+    getStaffSettings(undefined).then((s) => {
       if (cancelled) return;
       setTrcn(s.trcnNumber);
       setBankName(s.bank.bankName);
@@ -194,7 +194,7 @@ export default function StaffSettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, []);
 
   // ── TRCN ─────────────────────────────────────────────────────────────────────
   const handleSaveTrcn = async () => {
@@ -204,7 +204,7 @@ export default function StaffSettingsPage() {
     }
     setTrcnError("");
     setTrcnSaving(true);
-    await saveStaffSettings(user?.id, { trcnNumber: trcn.trim() });
+    await saveStaffSettings(undefined, { trcnNumber: trcn.trim() });
     setTrcnSaving(false);
     setTrcnSaved(true);
     setTimeout(() => setTrcnSaved(false), 3000);
@@ -224,7 +224,7 @@ export default function StaffSettingsPage() {
     }
     setBankErrors({});
     setBankSaving(true);
-    await saveStaffSettings(user?.id, {
+    await saveStaffSettings(undefined, {
       bank: {
         bankName,
         accountNumber: accountNumber.trim(),
@@ -266,7 +266,7 @@ export default function StaffSettingsPage() {
 
   const handleSaveQualifications = async () => {
     setQualSaving(true);
-    await saveStaffSettings(user?.id, { qualifications });
+    await saveStaffSettings(undefined, { qualifications });
     setQualSaving(false);
     setQualSaved(true);
     setTimeout(() => setQualSaved(false), 3000);

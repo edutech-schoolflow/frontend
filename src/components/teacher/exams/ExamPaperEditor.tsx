@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   GripVertical,
+  MessageSquare,
 } from "lucide-react";
 import {
   getExamPaper,
@@ -33,6 +34,7 @@ import {
 } from "@/src/types/examPaper";
 import { TERM_LABELS } from "@/src/types/scoreEntry";
 import ExamPaperPreview from "./ExamPaperPreview";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -275,6 +277,12 @@ function QuestionCard({
             ))}
           </div>
         )}
+        {question.reviewNote && (
+          <div className="mt-2.5 flex items-start gap-1.5 rounded-[6px] border border-[#d1fae5] bg-[#ecfdf5] px-2.5 py-2">
+            <MessageSquare className="mt-0.5 h-[12px] w-[12px] shrink-0 text-[#059669]" />
+            <p className="text-[12px] text-[#065f46]">{question.reviewNote}</p>
+          </div>
+        )}
       </div>
 
       {isEditable && (
@@ -322,6 +330,7 @@ function QuestionCard({
 // ─── Main editor ───────────────────────────────────────────────────────────────
 
 export default function ExamPaperEditor({ paperId }: { paperId: string }) {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
 
   // Paper state
@@ -461,7 +470,7 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
           Exam paper not found
         </p>
         <button
-          onClick={() => router.push("/staff/dashboard/exams")}
+          onClick={() => router.push(wsHref("/staff/dashboard/exams"))}
           className="text-[13px] text-brand-green hover:underline"
         >
           Back to exam papers
@@ -475,7 +484,7 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
       {/* Top bar */}
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push("/staff/dashboard/exams")}
+          onClick={() => router.push(wsHref("/staff/dashboard/exams"))}
           className="flex h-[36px] w-[36px] items-center justify-center rounded-[8px] border border-[#e5e7eb] text-text-body hover:bg-[#f3f4f6]"
         >
           <ArrowLeft className="h-[16px] w-[16px]" />
@@ -595,6 +604,19 @@ export default function ExamPaperEditor({ paperId }: { paperId: string }) {
           <p className="text-[13px] text-[#15803d]">
             Approved by school admin. This exam paper is ready for use.
           </p>
+        </div>
+      )}
+
+      {/* Admin feedback banner */}
+      {paper.adminFeedback && (
+        <div className="mb-5 flex items-start gap-2.5 rounded-[10px] border border-[#d1fae5] bg-[#ecfdf5] px-4 py-3">
+          <MessageSquare className="mt-0.5 h-[16px] w-[16px] shrink-0 text-[#059669]" />
+          <div>
+            <p className="text-[13px] font-medium text-[#065f46]">
+              Feedback from school admin
+            </p>
+            <p className="text-[13px] text-[#047857]">{paper.adminFeedback}</p>
+          </div>
         </div>
       )}
 

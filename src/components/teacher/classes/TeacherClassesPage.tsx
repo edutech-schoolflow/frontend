@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { getTeacherArms, getStudentsForArm } from "@/src/lib/api/attendance";
 import { getSubjectsForLevel } from "@/src/lib/api/gradeEntry";
-import { useAuth } from "@/src/context/AuthContext";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 interface ArmDetail extends ArmSelectOption {
   students: AttendanceStudentRow[];
@@ -22,6 +22,7 @@ interface ArmDetail extends ArmSelectOption {
 }
 
 function ArmCard({ arm }: { arm: ArmDetail }) {
+  const wsHref = useWorkspaceHref();
   const [open, setOpen] = useState(false);
 
   return (
@@ -51,14 +52,14 @@ function ArmCard({ arm }: { arm: ArmDetail }) {
 
         <div className="flex items-center gap-3">
           <Link
-            href={`/staff/dashboard/attendance?arm=${arm.armId}`}
+            href={wsHref(`/staff/dashboard/attendance?arm=${arm.armId}`)}
             className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#e5e7eb] px-4 text-[13px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
           >
             <ClipboardList className="h-[14px] w-[14px]" />
             Attendance
           </Link>
           <Link
-            href={`/staff/dashboard/grades?arm=${arm.armId}`}
+            href={wsHref(`/staff/dashboard/grades?arm=${arm.armId}`)}
             className="flex h-[36px] items-center gap-1.5 rounded-[8px] border border-[#e5e7eb] px-4 text-[13px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
           >
             <BarChart2 className="h-[14px] w-[14px]" />
@@ -136,13 +137,13 @@ function ArmCard({ arm }: { arm: ArmDetail }) {
 }
 
 export default function StaffClassesPage() {
-  const { user } = useAuth();
+
   const [arms, setArms] = useState<ArmDetail[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getTeacherArms(user?.id).then((options) => {
+    getTeacherArms(undefined).then((options) => {
       Promise.all(
         options.map((opt) =>
           getStudentsForArm(opt.armId).then((students) => ({
@@ -161,7 +162,7 @@ export default function StaffClassesPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, []);
 
   if (!loaded) {
     return (

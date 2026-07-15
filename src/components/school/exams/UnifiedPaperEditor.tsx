@@ -33,6 +33,7 @@ import {
 } from "@/src/types/examPaper";
 import { TERM_LABELS } from "@/src/types/scoreEntry";
 import ExamPaperPreview from "@/src/components/teacher/exams/ExamPaperPreview";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 const SCHOOL_NAME = "Greenfield Academy";
 
@@ -318,6 +319,7 @@ function QuestionCard({
 // ─── Main editor ───────────────────────────────────────────────────────────────
 
 export default function UnifiedPaperEditor({ paperId }: { paperId: string }) {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
 
   const [paper, setPaper] = useState<ExamPaper | null>(null);
@@ -448,7 +450,7 @@ export default function UnifiedPaperEditor({ paperId }: { paperId: string }) {
           Unified paper not found
         </p>
         <button
-          onClick={() => router.push("/school/dashboard/exams")}
+          onClick={() => router.push(wsHref("/school/dashboard/exams"))}
           className="text-[13px] text-brand-green hover:underline"
         >
           Back to exam questions
@@ -462,7 +464,7 @@ export default function UnifiedPaperEditor({ paperId }: { paperId: string }) {
       {/* Top bar */}
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push("/school/dashboard/exams")}
+          onClick={() => router.push(wsHref("/school/dashboard/exams"))}
           className="flex h-[36px] w-[36px] items-center justify-center rounded-[8px] border border-[#e5e7eb] text-text-body hover:bg-[#f3f4f6]"
         >
           <ArrowLeft className="h-[16px] w-[16px]" />

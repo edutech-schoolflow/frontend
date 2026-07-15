@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
-import { getStudents, getClasses } from "@/src/lib/api/students";
-import type { Student, Class } from "@/src/types/student";
+import { useState } from "react";
+import { Search, Plus, GraduationCap } from "lucide-react";
+import { useStudents } from "@/src/lib/api/useSchoolStudents";
+import { useClasses } from "@/src/lib/api/useSchoolClasses";
+import type { Student } from "@/src/types/student";
 import AddStudentModal from "./AddStudentModal";
+import PromoteStudentsModal from "./PromoteStudentsModal";
+import StudentActionsMenu from "./StudentActionsMenu";
+import TransferStudentModal from "./TransferStudentModal";
 
 function age(dob: string) {
   const diff = Date.now() - new Date(dob).getTime();
@@ -16,21 +20,20 @@ function initials(s: Student) {
 }
 
 export default function SchoolStudents() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"active" | "withdrawn">(
+    "active"
+  );
+  const { data: studentsData, isPending: loading } = useStudents({
+    status: statusFilter,
+  });
+  const { data: classes = [] } = useClasses();
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
+  const [showPromote, setShowPromote] = useState(false);
+  const [transferFor, setTransferFor] = useState<Student | null>(null);
 
-  useEffect(() => {
-    Promise.all([getStudents(), getClasses()]).then(([{ data }, cls]) => {
-      setStudents(data);
-      setClasses(cls);
-      setLoading(false);
-    });
-  }, []);
-
+  const students: Student[] = studentsData?.data ?? [];
   const classMap = Object.fromEntries(classes.map((c) => [c.id, c.name]));
 
   const filtered = students.filter((s) => {
@@ -43,8 +46,8 @@ export default function SchoolStudents() {
     return matchSearch && matchClass;
   });
 
-  function handleAdded(student: Student) {
-    setStudents((prev) => [student, ...prev]);
+  function handleAdded() {
+    // The list refreshes via the create mutation's query invalidation.
     setShowAdd(false);
   }
 
@@ -78,6 +81,18 @@ export default function SchoolStudents() {
           ))}
         </select>
 
+        {/* Status filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) =>
+            setStatusFilter(e.target.value as "active" | "withdrawn")
+          }
+          className="rounded-lg border border-border-default bg-white px-3 py-[9px] text-[13px] text-dark-blue outline-none focus:border-brand-green"
+        >
+          <option value="active">Active</option>
+          <option value="withdrawn">Withdrawn</option>
+        </select>
+
         {/* Spacer */}
         <div className="flex-1" />
 
@@ -85,6 +100,17 @@ export default function SchoolStudents() {
         <span className="text-[13px] text-grey-text">
           {filtered.length} student{filtered.length !== 1 ? "s" : ""}
         </span>
+
+        {/* Promote (end of session) */}
+        <button
+          type="button"
+          onClick={() => setShowPromote(true)}
+          disabled={classes.length === 0}
+          className="flex items-center gap-[6px] rounded-lg border border-brand-green px-4 py-2.5 text-[13px] font-medium text-brand-green hover:bg-brand-green/5 disabled:opacity-40"
+        >
+          <GraduationCap className="h-[15px] w-[15px]" />
+          Promote
+        </button>
 
         {/* Add button */}
         <button
@@ -97,8 +123,8 @@ export default function SchoolStudents() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border-default bg-white">
+      {/* Table (no overflow-hidden: it would clip the row actions dropdown) */}
+      <div className="rounded-xl border border-border-default bg-white">
         <table className="w-full text-left text-[13px]">
           <thead>
             <tr className="border-b border-border-default bg-surface-muted">
@@ -117,13 +143,14 @@ export default function SchoolStudents() {
               <th className="px-[16px] py-[12px] font-medium text-grey-text">
                 Gender
               </th>
+              <th className="px-[16px] py-[12px]" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-[16px] py-[48px] text-center text-[13px] text-grey-text"
                 >
                   Loading…
@@ -132,7 +159,7 @@ export default function SchoolStudents() {
             ) : filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-[16px] py-[48px] text-center text-[13px] text-grey-text"
                 >
                   {search || classFilter !== "all"
@@ -184,6 +211,12 @@ export default function SchoolStudents() {
                       {student.gender === "female" ? "Female" : "Male"}
                     </span>
                   </td>
+                  <td className="px-[16px] py-[14px]">
+                    <StudentActionsMenu
+                      student={student}
+                      onTransfer={setTransferFor}
+                    />
+                  </td>
                 </tr>
               ))
             )}
@@ -196,6 +229,21 @@ export default function SchoolStudents() {
           classes={classes}
           onDone={handleAdded}
           onClose={() => setShowAdd(false)}
+        />
+      )}
+
+      {showPromote && (
+        <PromoteStudentsModal
+          classes={classes}
+          onClose={() => setShowPromote(false)}
+        />
+      )}
+
+      {transferFor && (
+        <TransferStudentModal
+          student={transferFor}
+          onDone={() => setTransferFor(null)}
+          onClose={() => setTransferFor(null)}
         />
       )}
     </>

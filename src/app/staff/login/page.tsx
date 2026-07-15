@@ -1,13 +1,7 @@
-import StaffAuthLayout from "@/src/layout/auth/TeacherAuthLayout";
-import StaffLoginForm from "@/src/components/teacher/auth/TeacherLoginForm";
+import { redirect } from "next/navigation";
 
-export default function StaffLoginPage() {
-  return (
-    <StaffAuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your staff portal"
-    >
-      <StaffLoginForm />
-    </StaffAuthLayout>
-  );
+// Identity-first routing (EDD-001): nobody is a school/staff/parent until AFTER they have an
+// identity — so there is exactly one login. This legacy address just forwards to it.
+export default function LegacyLoginRedirect() {
+  redirect("/login");
 }

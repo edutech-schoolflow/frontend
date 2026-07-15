@@ -3,18 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronDown, LogOut } from "lucide-react";
-import Logo from "@/src/components/ui/Logo";
-import { useAuth } from "@/src/context/AuthContext";
+import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
-
-const BASE = "/school/dashboard";
-
-const SETTINGS_ITEMS = [
-  { label: "Permission Templates", link: `${BASE}/settings/templates` },
-  { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
-  { label: "Onboarding", link: `${BASE}/settings/onboarding` },
-];
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 const SettingsIcon = () => (
   <svg
@@ -32,11 +24,38 @@ const SettingsIcon = () => (
   </svg>
 );
 
-export default function SchoolSidebar() {
+// basePath lets the same sidebar serve the legacy /school/dashboard tree and the workspace
+// /o/{slug} tree — the route config is relative, so only the prefix differs.
+export default function SchoolSidebar({
+  basePath = "/school/dashboard",
+}: {
+  basePath?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const inSettings = pathname.includes("/settings");
+
+  const BASE = basePath;
+  const SETTINGS_ITEMS = [
+    { label: "Permission Templates", link: `${BASE}/settings/templates` },
+    { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
+    { label: "Onboarding", link: `${BASE}/settings/onboarding` },
+  ];
+
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("school-sidebar-collapsed") === "true"
+  );
+
+  const toggleCollapsed = () => {
+    setCollapsed((v) => {
+      const next = !v;
+      localStorage.setItem("school-sidebar-collapsed", String(next));
+      return next;
+    });
+  };
 
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const set = new Set<string>();
@@ -58,7 +77,7 @@ export default function SchoolSidebar() {
       return next;
     });
 
-  const fullName = user?.name ?? "School Admin";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -67,23 +86,42 @@ export default function SchoolSidebar() {
     .join("");
 
   const itemCls = (active: boolean) =>
-    `flex h-[42px] w-full items-center gap-[10px] rounded-[6px] px-[12px] text-[13.5px] font-normal text-white transition-colors ${
-      active ? "bg-[#1ca95c]" : "hover:bg-white/10"
-    }`;
+    `flex h-[42px] w-full items-center rounded-[6px] text-[13.5px] font-normal text-white transition-colors ${
+      collapsed ? "justify-center px-0" : "gap-[10px] px-[12px]"
+    } ${active ? "bg-[#1ca95c]" : "hover:bg-white/10"}`;
 
   return (
-    <aside className="flex h-screen w-[256px] shrink-0 flex-col bg-[#00512d]">
-      {/* Logo */}
-      <Link href="/school/dashboard" className="px-[20px] pt-[28px] pb-[24px]">
-        <Logo size={28} textColor="white" />
-      </Link>
+    <aside
+      className={`flex h-screen shrink-0 flex-col overflow-hidden bg-[#00512d] transition-[width] duration-200 ${
+        collapsed ? "w-[64px]" : "w-[256px]"
+      }`}
+    >
+      {/* Workspace switcher + collapse toggle */}
+      <div
+        className={`flex items-center ${
+          collapsed
+            ? "flex-col gap-[8px] px-[10px] pt-[16px] pb-[12px]"
+            : "gap-[6px] px-[12px] pt-[16px] pb-[14px]"
+        }`}
+      >
+        <div className={collapsed ? "" : "min-w-0 flex-1"}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+        <button
+          onClick={toggleCollapsed}
+          className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+        </button>
+      </div>
 
       {/* Nav */}
       <nav className="flex flex-1 flex-col overflow-y-auto px-[12px] pb-[8px]">
         {schoolRoutes.map((route, idx) => {
           const prevRoute = schoolRoutes[idx - 1];
           const showSection =
-            route.section && route.section !== prevRoute?.section;
+            !collapsed && route.section && route.section !== prevRoute?.section;
 
           const header = showSection ? (
             <p
@@ -95,23 +133,30 @@ export default function SchoolSidebar() {
           ) : null;
 
           if (route.children) {
-            const isOpen = expanded.has(route.label);
+            const isOpen = !collapsed && expanded.has(route.label);
 
             return (
               <div key={route.label}>
                 {header}
                 <button
                   type="button"
-                  onClick={() => toggle(route.label)}
+                  onClick={() =>
+                    collapsed ? toggleCollapsed() : toggle(route.label)
+                  }
                   className={itemCls(false)}
+                  title={collapsed ? route.label : undefined}
                 >
                   <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                     {route.icon}
                   </span>
-                  <span className="flex-1 text-left">{route.label}</span>
-                  <ChevronDown
-                    className={`h-[13px] w-[13px] opacity-50 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">{route.label}</span>
+                      <ChevronDown
+                        className={`h-[13px] w-[13px] opacity-50 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    </>
+                  )}
                 </button>
 
                 {isOpen && (
@@ -146,11 +191,15 @@ export default function SchoolSidebar() {
           return (
             <div key={route.label}>
               {header}
-              <Link href={href} className={itemCls(isActive)}>
+              <Link
+                href={href}
+                className={itemCls(isActive)}
+                title={collapsed ? route.label : undefined}
+              >
                 <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                   {route.icon}
                 </span>
-                {route.label}
+                {!collapsed && route.label}
               </Link>
             </div>
           );
@@ -159,61 +208,83 @@ export default function SchoolSidebar() {
 
       {/* Bottom: settings + user */}
       <div className="border-t border-white/10 px-[12px] py-[16px]">
-        {/* Settings — expandable */}
-        <button
-          type="button"
-          onClick={() => setSettingsOpen((v) => !v)}
-          className={itemCls(false)}
-        >
-          <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
-            <SettingsIcon />
-          </span>
-          <span className="flex-1 text-left">Settings</span>
-          <ChevronDown
-            className={`h-[13px] w-[13px] opacity-50 transition-transform ${settingsOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {settingsOpen && (
-          <div className="ml-[34px] mt-[2px] mb-[2px] flex flex-col gap-[1px]">
-            {SETTINGS_ITEMS.map((item) => {
-              const isActive = pathname.startsWith(item.link);
-              return (
-                <Link
-                  key={item.link}
-                  href={item.link}
-                  className={`flex h-[34px] items-center rounded-[5px] px-[10px] text-[12.5px] transition-colors ${
-                    isActive
-                      ? "bg-[#1ca95c] text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-[8px]">
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
+              title="Settings"
+            >
+              <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-white/15 text-white/60">
+                <SettingsIcon />
+              </span>
+            </button>
+            <button
+              onClick={() => router.push("/school/login")}
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white"
+              title={`${fullName} — Log out`}
+            >
+              {initials}
+            </button>
           </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((v) => !v)}
+              className={itemCls(false)}
+            >
+              <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
+                <SettingsIcon />
+              </span>
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronDown
+                className={`h-[13px] w-[13px] opacity-50 transition-transform ${settingsOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {settingsOpen && (
+              <div className="ml-[34px] mt-[2px] mb-[2px] flex flex-col gap-[1px]">
+                {SETTINGS_ITEMS.map((item) => {
+                  const isActive = pathname.startsWith(item.link);
+                  return (
+                    <Link
+                      key={item.link}
+                      href={item.link}
+                      className={`flex h-[34px] items-center rounded-[5px] px-[10px] text-[12.5px] transition-colors ${
+                        isActive
+                          ? "bg-[#1ca95c] text-white"
+                          : "text-white/60 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-[12px] flex items-center gap-[10px] px-[4px]">
+              <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-medium text-white">
+                  {fullName}
+                </p>
+                <p className="text-[11px] text-white/50">School Admin</p>
+              </div>
+              <button
+                onClick={() => router.push("/school/login")}
+                className="shrink-0 text-white/50 transition-colors hover:text-white"
+                aria-label="Log out"
+              >
+                <LogOut className="h-[15px] w-[15px]" />
+              </button>
+            </div>
+          </>
         )}
-
-        {/* User row */}
-        <div className="mt-[12px] flex items-center gap-[10px] px-[4px]">
-          <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#1ca95c] text-[12px] font-semibold text-white">
-            {initials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium text-white">
-              {fullName}
-            </p>
-            <p className="text-[11px] text-white/50">School Admin</p>
-          </div>
-          <button
-            onClick={() => router.push("/school/login")}
-            className="shrink-0 text-white/50 transition-colors hover:text-white"
-            aria-label="Log out"
-          >
-            <LogOut className="h-[15px] w-[15px]" />
-          </button>
-        </div>
       </div>
     </aside>
   );

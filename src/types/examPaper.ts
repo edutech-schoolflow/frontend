@@ -22,6 +22,7 @@ export interface ExamQuestion {
   options?: MCOption[]; // MC only — always 4
   answer?: string; // MC: correct option id; Theory: model answer (optional)
   sourceArm?: string; // set in unified papers to show which arm a question came from
+  reviewNote?: string; // admin annotation on this specific question
 }
 
 export interface ExamPaper {
@@ -40,6 +41,7 @@ export interface ExamPaper {
   updatedAt: string;
   submittedAt?: string;
   reviewComment?: string; // populated when rejected
+  adminFeedback?: string; // general feedback from admin (separate from rejection comment)
   className?: string; // class without arm suffix (e.g. "Primary 1") — set for all papers
   isUnified?: boolean; // true for school-built unified papers
   sourceArmIds?: string[]; // arm IDs whose questions were imported into a unified paper

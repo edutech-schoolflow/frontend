@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { searchSchools } from "@/src/lib/api/schools";
+import { searchSchools } from "@/src/lib/api/parentSchools";
 import type { SchoolListing } from "@/src/types/school";
 import WhoToEnrolModal from "@/src/components/parent/dashboard/enrol/WhoToEnrolModal";
 import SchoolCard from "./SchoolCard";

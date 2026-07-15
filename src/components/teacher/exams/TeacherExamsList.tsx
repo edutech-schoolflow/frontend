@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, ChevronDown, Trash2 } from "lucide-react";
+import {
+  Plus,
+  FileText,
+  ChevronDown,
+  Trash2,
+  MessageSquare,
+} from "lucide-react";
 import {
   getTeacherExamPapers,
   createExamPaper,
@@ -10,7 +16,6 @@ import {
 } from "@/src/lib/api/examPaper";
 import { getTeacherGradeArms } from "@/src/lib/api/gradeEntry";
 import { getSubjectsForLevel } from "@/src/lib/api/gradeEntry";
-import { useAuth } from "@/src/context/AuthContext";
 import type {
   ExamPaper,
   ExamType,
@@ -25,6 +30,7 @@ import {
 import type { GradeTerm } from "@/src/types/scoreEntry";
 import { TERM_LABELS } from "@/src/types/scoreEntry";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,7 +73,7 @@ function NewPaperModal({
   onClose: () => void;
   onCreate: (paper: ExamPaper) => void;
 }) {
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const [armId, setArmId] = useState(arms[0]?.armId ?? "");
   const [subject, setSubject] = useState("");
   const [term, setTerm] = useState<GradeTerm>("second_term");
@@ -89,7 +95,7 @@ function NewPaperModal({
       examType,
       duration,
       instructions: "Answer all questions.",
-      teacherName: user?.name ?? "Teacher",
+      teacherName: user?.fullName ?? "Teacher",
     });
     onCreate(paper);
   };
@@ -237,7 +243,6 @@ function NewPaperModal({
 
 export default function StaffExamsList() {
   const router = useRouter();
-  const { user } = useAuth();
 
   const [papers, setPapers] = useState<ExamPaper[]>([]);
   const [arms, setArms] = useState<ArmSelectOption[]>([]);
@@ -249,8 +254,8 @@ export default function StaffExamsList() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      getTeacherExamPapers(user?.id),
-      getTeacherGradeArms(user?.id),
+      getTeacherExamPapers(undefined),
+      getTeacherGradeArms(undefined),
     ]).then(([paperList, armList]) => {
       if (cancelled) return;
       setPapers(paperList);
@@ -260,7 +265,7 @@ export default function StaffExamsList() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, []);
 
   const handleDelete = async (paperId: string) => {
     setDeletingId(paperId);
@@ -382,6 +387,13 @@ export default function StaffExamsList() {
                     <p className="mt-1.5 text-[12px] font-medium text-[#dc2626]">
                       Rejected: {paper.reviewComment}
                     </p>
+                  )}
+                  {(paper.adminFeedback ||
+                    paper.questions.some((q) => q.reviewNote)) && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-medium text-[#059669]">
+                      <MessageSquare className="h-[12px] w-[12px]" />
+                      Feedback from admin
+                    </span>
                   )}
                 </div>
               </div>

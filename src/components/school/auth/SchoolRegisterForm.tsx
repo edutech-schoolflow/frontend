@@ -1,41 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { z } from "zod";
-import { CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { toast } from "sonner";
 
 import { Form } from "@/src/components/ui/form";
 import FormInput from "@/src/components/ui/formInput";
 import FormButton from "@/src/components/ui/formButton";
-import { registerSchool } from "@/src/lib/api/auth";
-
-const schema = z
-  .object({
-    adminName: z.string().min(2, "Your name is required"),
-    adminEmail: z.string().email("Enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type FormValues = z.infer<typeof schema>;
+import {
+  schoolRegisterSchema,
+  type SchoolRegisterInput,
+} from "@/src/lib/api/schoolAuth";
+import { useSchoolRegister } from "@/src/lib/api/useSchoolAuth";
+import PhoneVerificationStep from "./PhoneVerificationStep";
 
 export default function SchoolRegisterForm() {
-  const [submitted, setSubmitted] = useState(false);
-  const [adminEmail, setAdminEmail] = useState("");
+  const router = useRouter();
+  const register = useSchoolRegister();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  // Hold the credentials so we can auto-login after the phone is verified.
+  const [pending, setPending] = useState<{
+    phone: string;
+    password: string;
+  } | null>(null);
+
+  const form = useForm<SchoolRegisterInput>({
+    resolver: zodResolver(schoolRegisterSchema),
     mode: "onTouched",
     defaultValues: {
-      adminName: "",
-      adminEmail: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      phone: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -43,54 +43,59 @@ export default function SchoolRegisterForm() {
 
   const {
     handleSubmit,
-    formState: { isValid, isSubmitting },
+    formState: { isValid },
   } = form;
 
-  const onSubmit = async (values: FormValues) => {
-    await registerSchool({
-      adminName: values.adminName,
-      adminEmail: values.adminEmail,
-      password: values.password,
-    });
-    setAdminEmail(values.adminEmail);
-    setSubmitted(true);
+  const onSubmit = async (values: SchoolRegisterInput) => {
+    try {
+      await register.mutateAsync(values);
+      setPending({ phone: values.phone, password: values.password });
+      toast.success("We sent a 6-digit code to your phone.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed.");
+    }
   };
 
-  if (submitted) {
+  if (pending) {
     return (
-      <div className="flex flex-col items-center gap-4 py-6 text-center">
-        <CheckCircle2 className="h-14 w-14 text-brand-green" />
-        <h2 className="text-xl font-semibold text-text-heading">
-          Account created!
-        </h2>
-        <p className="text-sm text-text-body">
-          We sent a verification link to{" "}
-          <span className="font-medium text-text-heading">{adminEmail}</span>.
-          Click it to activate your account, then complete your school&apos;s
-          compliance profile inside the dashboard.
-        </p>
-        <Link
-          href="/school/login"
-          className="mt-2 text-sm font-medium text-brand-green hover:underline"
-        >
-          Go to login
-        </Link>
-      </div>
+      <PhoneVerificationStep
+        phone={pending.phone}
+        password={pending.password}
+        onVerified={() => router.push("/select-context")}
+      />
     );
   }
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <div className="grid grid-cols-2 gap-4">
+          <FormInput
+            name="firstName"
+            label="First name"
+            placeholder="e.g. Chidi"
+          />
+          <FormInput
+            name="lastName"
+            label="Last name"
+            placeholder="e.g. Okonkwo"
+          />
+        </div>
         <FormInput
-          name="adminName"
-          label="Your full name"
-          placeholder="e.g. Chukwuemeka Okonkwo"
+          name="middleName"
+          label="Middle name (optional)"
+          placeholder="e.g. Emeka"
         />
         <FormInput
-          name="adminEmail"
-          label="Email address"
-          placeholder="e.g. emeka@greenfield.com"
+          name="phone"
+          label="Phone number"
+          placeholder="e.g. 08012345678"
+          type="tel"
+        />
+        <FormInput
+          name="email"
+          label="Email address (optional)"
+          placeholder="e.g. chidi@greenfield.com"
           type="email"
         />
         <FormInput
@@ -109,8 +114,8 @@ export default function SchoolRegisterForm() {
         <FormButton
           text="Create school account"
           loadingText="Creating account…"
-          loading={isSubmitting}
-          disabled={!isValid || isSubmitting}
+          loading={register.isPending}
+          disabled={!isValid || register.isPending}
           className="mt-3! w-full bg-brand-green hover:bg-brand-green/90"
         />
       </form>

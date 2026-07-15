@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
-import { getMyApplications } from "@/src/lib/api/applications";
+import { useMyApplications } from "@/src/lib/api/useParentApplications";
 import type { Application, ApplicationStatus } from "@/src/types/application";
 
 // ─── status config ────────────────────────────────────────────────────────────
@@ -102,12 +102,13 @@ function ApplicationCard({ app }: { app: Application }) {
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 export default function ParentTrackApplication() {
-  const [applications, setApplications] = useState<Application[]>([]);
+  const {
+    data: applications = [],
+    isPending,
+    isError,
+    error,
+  } = useMyApplications();
   const [activeTab, setActiveTab] = useState<ApplicationStatus>("under_review");
-
-  useEffect(() => {
-    getMyApplications().then(setApplications);
-  }, []);
 
   const counts = Object.fromEntries(
     TABS.map(({ id }) => [
@@ -156,7 +157,17 @@ export default function ParentTrackApplication() {
       </div>
 
       {/* Content */}
-      {visible.length === 0 ? (
+      {isPending ? (
+        <div className="flex justify-center py-[60px]">
+          <div className="h-[32px] w-[32px] animate-spin rounded-full border-2 border-[#eee] border-t-[#1ca95c]" />
+        </div>
+      ) : isError ? (
+        <p className="py-[60px] text-center text-[14px] text-[#e53e3e]">
+          {error instanceof Error
+            ? error.message
+            : "Could not load your applications."}
+        </p>
+      ) : visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[#e5e7eb] py-[60px]">
           <p className="text-[15px] font-medium text-[#1b1b1b]">
             No applications here

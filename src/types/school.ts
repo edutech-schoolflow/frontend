@@ -138,6 +138,7 @@ export interface SchoolClass {
   armsCount: number;
   studentsCount: number;
   teacherNames: string[]; // class-teachers across all arms; empty = none assigned
+  classTeacher: { id: string; name: string } | null; // the class's own teacher (arm-less classes)
 }
 
 export interface SubjectTeacher {

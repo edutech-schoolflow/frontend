@@ -19,6 +19,7 @@ import type { AttendanceStudentRow } from "@/src/types/attendance";
 import type { StaffDashboardStats } from "@/src/types/teacher";
 import type { BursarSummary } from "@/src/types/fee";
 import type { Application } from "@/src/types/application";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -60,9 +61,10 @@ function QuickAction({
   bg: string;
   color: string;
 }) {
+  const wsHref = useWorkspaceHref();
   return (
     <Link
-      href={href}
+      href={wsHref(href)}
       className="flex items-center gap-3 rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-4 transition-shadow hover:shadow-md"
     >
       <div
@@ -78,6 +80,7 @@ function QuickAction({
 // ─── Teacher home ──────────────────────────────────────────────────────────────
 
 function TeacherHome({ userId }: { userId: string | undefined }) {
+  const wsHref = useWorkspaceHref();
   const [stats, setStats] = useState<StaffDashboardStats | null>(null);
   const [arms, setArms] = useState<
     (ArmSelectOption & { students: AttendanceStudentRow[] })[]
@@ -177,7 +180,7 @@ function TeacherHome({ userId }: { userId: string | undefined }) {
               Assigned classes
             </h2>
             <Link
-              href="/staff/dashboard/classes"
+              href={wsHref("/staff/dashboard/classes")}
               className="flex items-center gap-1 text-[13px] font-medium text-brand-green hover:underline"
             >
               View all <ChevronRight className="h-[13px] w-[13px]" />
@@ -205,13 +208,13 @@ function TeacherHome({ userId }: { userId: string | undefined }) {
                 </div>
                 <div className="flex gap-2">
                   <Link
-                    href={`/staff/dashboard/attendance?arm=${arm.armId}`}
+                    href={wsHref(`/staff/dashboard/attendance?arm=${arm.armId}`)}
                     className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                   >
                     Attendance
                   </Link>
                   <Link
-                    href={`/staff/dashboard/grades?arm=${arm.armId}`}
+                    href={wsHref(`/staff/dashboard/grades?arm=${arm.armId}`)}
                     className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                   >
                     Grades
