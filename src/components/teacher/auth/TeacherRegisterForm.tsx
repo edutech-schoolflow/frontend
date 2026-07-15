@@ -50,7 +50,7 @@ export default function StaffRegisterForm() {
 
   const onSubmit = async (_values: FormValues) => {
     // TODO: call staff registration API
-    router.push("/staff/dashboard");
+    router.push("/select-context");
   };
 
   return (

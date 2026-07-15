@@ -55,6 +55,20 @@ export const schoolRoutes: Route[] = [
   },
   {
     icon: (
+      <Image src="/icons/user-v1.svg" alt="students" width={20} height={20} />
+    ),
+    label: "Students",
+    link: "students",
+  },
+  {
+    icon: (
+      <Image src="/icons/clock.svg" alt="calendar" width={20} height={20} />
+    ),
+    label: "Academic Calendar",
+    link: "calendar",
+  },
+  {
+    icon: (
       <Image
         src="/icons/check-circle.svg"
         alt="attendance"
@@ -136,7 +150,6 @@ export const schoolRoutes: Route[] = [
     section: "Finance",
     children: [
       { label: "Fee Types", link: "fees/types" },
-      { label: "Invoices", link: "fees/invoices" },
       { label: "Bursar Dashboard", link: "bursar" },
     ],
   },

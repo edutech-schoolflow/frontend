@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { getApplicationPaymentDetails } from "@/src/lib/api/applications";
-import type { ApplicationPaymentDetails } from "@/src/types/application";
-import BankRow from "./BankRow";
+import { toast } from "sonner";
+import { payApplicationFee } from "@/src/lib/api/parentApplications";
 import SuccessScreen from "./SuccessScreen";
 
 const STEPS = ["Step 1", "Step 2", "Step 3", "Step 4"];
 
 export default function EnrolStep4() {
+  const applicationId = useSearchParams().get("applicationId") ?? "";
   const [paid, setPaid] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [details, setDetails] = useState<ApplicationPaymentDetails | null>(
-    null
-  );
-
-  useEffect(() => {
-    getApplicationPaymentDetails("app-001").then(setDetails);
-  }, []);
 
   const handleConfirm = async () => {
+    if (!applicationId) {
+      toast.error("Missing application — start again from the school.");
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    setPaid(true);
+    try {
+      const { message } = await payApplicationFee(applicationId);
+      toast.success(message);
+      setPaid(true);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not confirm your payment."
+      );
+      setLoading(false);
+    }
   };
 
   if (paid) return <SuccessScreen />;
@@ -56,36 +61,15 @@ export default function EnrolStep4() {
           Application fee payment
         </p>
         <p className="mt-[6px] text-[14px] text-[#666]">
-          Transfer the application fee to the account below. Your application
-          will be reviewed once payment is confirmed.
+          Your application has been submitted. Confirm the application fee to
+          send it to the school for review.
         </p>
-        <div className="mt-[24px] rounded-[10px] border border-[#ccc] px-[24px]">
-          <div className="divide-y divide-[#eee]">
-            <BankRow label="Bank" value={details?.bank ?? "—"} />
-            <BankRow
-              label="Account number"
-              value={details?.accountNumber ?? "—"}
-              copyable
-            />
-            <BankRow label="Account name" value={details?.accountName ?? "—"} />
-            <BankRow
-              label="Amount"
-              value={details ? `₦${details.amount.toLocaleString()}` : "—"}
-            />
-            <BankRow
-              label="Payment reference"
-              value={details?.reference ?? "—"}
-              copyable
-            />
-          </div>
+
+        <div className="mt-[24px] flex items-center justify-between rounded-[10px] border border-[#ccc] px-[24px] py-[18px]">
+          <p className="text-[14px] text-[#666]">Application fee</p>
+          <p className="text-[16px] font-semibold text-[#1b1b1b]">₦0</p>
         </div>
-        <div className="mt-[20px] flex gap-[10px] rounded-[8px] bg-[#fff8ec] px-[16px] py-[14px]">
-          <p className="text-[13px] text-[#888]">
-            <span className="font-medium text-[#ff8d28]">Important: </span>
-            Include the payment reference in your transfer narration so we can
-            match your payment quickly.
-          </p>
-        </div>
+
         <button
           type="button"
           onClick={handleConfirm}
@@ -95,10 +79,10 @@ export default function EnrolStep4() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Verifying…
+              Confirming…
             </>
           ) : (
-            "I have made the transfer"
+            "Confirm & submit for review"
           )}
         </button>
         <p className="mt-[12px] text-center text-[12px] text-[#aaa]">

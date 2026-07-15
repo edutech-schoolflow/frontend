@@ -22,6 +22,7 @@ import {
 import type { ExamPaper, ExamPaperStatus } from "@/src/types/examPaper";
 import type { SubmissionGroup } from "@/src/hooks/useSchoolExams";
 import QuestionReview from "./QuestionReview";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 function totalMarks(paper: ExamPaper) {
   return paper.questions.reduce((s, q) => s + q.marks, 0);
@@ -72,6 +73,7 @@ export default function SubmissionGroupCard({
   onPreview: (paper: ExamPaper) => void;
   approvingId: string | null;
 }) {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -336,7 +338,7 @@ export default function SubmissionGroupCard({
                     <button
                       onClick={() =>
                         router.push(
-                          `/school/dashboard/exams/unified/${existingUnified.id}`
+                          wsHref(`/school/dashboard/exams/unified/${existingUnified.id}`)
                         )
                       }
                       className="rounded-[8px] bg-brand-green px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90"

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { recordAssessment } from "@/src/lib/api/applications";
+import { toast } from "sonner";
+import { useRecordAssessment } from "@/src/lib/api/useSchoolApplications";
 
 type Props = { applicationId: string; onDone: () => void; onClose: () => void };
 
@@ -17,13 +18,18 @@ export default function RecordAssessmentModal({
   const [impression, setImpression] =
     useState<(typeof IMPRESSIONS)[number]>("good");
   const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+  const assess = useRecordAssessment(applicationId);
+  const saving = assess.isPending;
 
   async function handleSave() {
-    setSaving(true);
-    await recordAssessment(applicationId, { attended, impression, notes });
-    setSaving(false);
-    onDone();
+    try {
+      await assess.mutateAsync({ attended, impression, notes });
+      onDone();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not record the assessment."
+      );
+    }
   }
 
   return (

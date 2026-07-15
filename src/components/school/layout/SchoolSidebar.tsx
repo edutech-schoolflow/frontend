@@ -4,17 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
-import Logo from "@/src/components/ui/Logo";
-import { useAuth } from "@/src/context/AuthContext";
+import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
-
-const BASE = "/school/dashboard";
-
-const SETTINGS_ITEMS = [
-  { label: "Permission Templates", link: `${BASE}/settings/templates` },
-  { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
-  { label: "Onboarding", link: `${BASE}/settings/onboarding` },
-];
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 const SettingsIcon = () => (
   <svg
@@ -32,30 +24,24 @@ const SettingsIcon = () => (
   </svg>
 );
 
-const LogoBadge = () => (
-  <svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-    <rect width={28} height={28} rx={6} fill="#1ca95c" />
-    <text
-      x="50%"
-      y="54%"
-      dominantBaseline="middle"
-      textAnchor="middle"
-      fill="white"
-      fontFamily="system-ui, -apple-system, sans-serif"
-      fontWeight="700"
-      fontSize={10}
-      letterSpacing="-0.5"
-    >
-      1SP
-    </text>
-  </svg>
-);
-
-export default function SchoolSidebar() {
+// basePath lets the same sidebar serve the legacy /school/dashboard tree and the workspace
+// /o/{slug} tree — the route config is relative, so only the prefix differs.
+export default function SchoolSidebar({
+  basePath = "/school/dashboard",
+}: {
+  basePath?: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const inSettings = pathname.includes("/settings");
+
+  const BASE = basePath;
+  const SETTINGS_ITEMS = [
+    { label: "Permission Templates", link: `${BASE}/settings/templates` },
+    { label: "Staff Permissions", link: `${BASE}/settings/permissions` },
+    { label: "Onboarding", link: `${BASE}/settings/onboarding` },
+  ];
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -91,7 +77,7 @@ export default function SchoolSidebar() {
       return next;
     });
 
-  const fullName = user?.name ?? "School Admin";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -110,20 +96,20 @@ export default function SchoolSidebar() {
         collapsed ? "w-[64px]" : "w-[256px]"
       }`}
     >
-      {/* Logo + toggle */}
+      {/* Workspace switcher + collapse toggle */}
       <div
         className={`flex items-center ${
           collapsed
-            ? "flex-col gap-[8px] px-[12px] pt-[20px] pb-[14px]"
-            : "justify-between px-[20px] pt-[28px] pb-[20px]"
+            ? "flex-col gap-[8px] px-[10px] pt-[16px] pb-[12px]"
+            : "gap-[6px] px-[12px] pt-[16px] pb-[14px]"
         }`}
       >
-        <Link href="/school/dashboard">
-          {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
-        </Link>
+        <div className={collapsed ? "" : "min-w-0 flex-1"}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
         <button
           onClick={toggleCollapsed}
-          className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[6px] text-white/50 transition-colors hover:bg-white/10 hover:text-white"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}

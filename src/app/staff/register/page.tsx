@@ -1,24 +1,6 @@
-import StaffAuthLayout from "@/src/layout/auth/TeacherAuthLayout";
-import StaffRegisterForm from "@/src/components/teacher/auth/TeacherRegisterForm";
-import InviteAcceptFlow from "@/src/components/staff/auth/InviteAcceptFlow";
+import { redirect } from "next/navigation";
 
-export default async function StaffRegisterPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ token?: string }>;
-}) {
-  const { token } = await searchParams;
-
-  if (token) {
-    return <InviteAcceptFlow token={token} />;
-  }
-
-  return (
-    <StaffAuthLayout
-      title="Create your staff account"
-      subtitle="Your professional profile — portable across every school you work at"
-    >
-      <StaffRegisterForm />
-    </StaffAuthLayout>
-  );
+// One registration for everyone — roles come from relationships, not from the sign-up page.
+export default function LegacyRegisterRedirect() {
+  redirect("/register");
 }

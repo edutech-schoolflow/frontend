@@ -1,12 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, UserRound } from "lucide-react";
-import { getChildProfiles } from "@/src/lib/api/parents";
+import { useMyChildren } from "@/src/lib/api/useParentChildren";
 import type { SchoolListing } from "@/src/types/school";
-import type { ChildProfile } from "@/src/types/parent";
 
 export default function WhoToEnrolModal({
   school,
@@ -16,15 +13,11 @@ export default function WhoToEnrolModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [profiles, setProfiles] = useState<ChildProfile[]>([]);
+  const { data: children = [] } = useMyChildren();
 
-  useEffect(() => {
-    getChildProfiles().then(setProfiles);
-  }, []);
-
-  const handleSelect = (childId: string) => {
+  const handleSelect = (childProfileId: string) => {
     router.push(
-      `/parent/dashboard/enrol/child-info?childId=${childId}&schoolId=${school.id}`
+      `/parent/dashboard/enrol/child-info?childId=${childProfileId}&schoolId=${school.id}`
     );
   };
 
@@ -54,37 +47,21 @@ export default function WhoToEnrolModal({
 
         {/* Child list */}
         <div className="flex flex-col gap-[10px]">
-          {profiles.map((child) => {
-            const fullName = [child.firstName, child.middleName, child.lastName]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <button
-                key={child.id}
-                type="button"
-                onClick={() => handleSelect(child.id)}
-                className="flex items-center gap-[14px] rounded-[8px] border border-[#e0e0e0] px-[16px] py-[12px] text-left transition-colors hover:border-[#1ca95c] hover:bg-[#f7fdf9]"
-              >
-                <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
-                  {child.photoUrl ? (
-                    <Image
-                      src={child.photoUrl}
-                      alt={fullName}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <UserRound className="h-[20px] w-[20px] text-[#ccc]" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-[15px] font-medium text-[#1b1b1b]">
-                  {fullName}
-                </p>
-              </button>
-            );
-          })}
+          {children.map((child) => (
+            <button
+              key={child.childProfileId}
+              type="button"
+              onClick={() => handleSelect(child.childProfileId)}
+              className="flex items-center gap-[14px] rounded-[8px] border border-[#e0e0e0] px-[16px] py-[12px] text-left transition-colors hover:border-[#1ca95c] hover:bg-[#f7fdf9]"
+            >
+              <div className="relative flex h-[40px] w-[40px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#eee] bg-[#f5f5f5]">
+                <UserRound className="h-[20px] w-[20px] text-[#ccc]" />
+              </div>
+              <p className="text-[15px] font-medium text-[#1b1b1b]">
+                {child.studentName}
+              </p>
+            </button>
+          ))}
         </div>
 
         {/* Divider */}

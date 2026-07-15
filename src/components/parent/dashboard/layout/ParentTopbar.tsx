@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
 import NotificationButton from "./NotificationButton";
-import { useAuth } from "@/src/context/AuthContext";
+import { useIdentity } from "@/src/lib/api/useIdentity";
+import { useParentLogout } from "@/src/lib/api/useParentAuth";
 
 export default function ParentTopbar() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  // The family home is IDENTITY territory (EDD-005 P7) — greet the identity, membership or not.
+  const { data: user } = useIdentity();
+  const logout = useParentLogout();
 
-  const fullName = user?.name ?? "John Okafor";
+  const fullName = user?.fullName ?? "Parent";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")
@@ -82,8 +85,9 @@ export default function ParentTopbar() {
               </Link>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
               <button
-                onClick={() => {
+                onClick={async () => {
                   setOpen(false);
+                  await logout.mutateAsync().catch(() => {});
                   router.push("/parent/login");
                 }}
                 className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#e84040] hover:bg-[#fff5f5]"

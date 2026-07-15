@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 const SCHOOL_FEATURES = [
   "Collect fees via Monnify — zero cash handling",
   "Manage students, classes, and staff",
@@ -77,23 +75,6 @@ export default function PortalCards() {
                 </li>
               ))}
             </ul>
-            <div className="mt-auto pt-8">
-              <Link
-                href="/school/register"
-                className="flex h-[48px] w-full items-center justify-center rounded-[8px] bg-brand-green text-[14px] font-medium text-white transition-opacity hover:opacity-90"
-              >
-                Get started as a school
-              </Link>
-              <p className="mt-3 text-center text-[13px] text-text-body">
-                Already registered?{" "}
-                <Link
-                  href="/school/login"
-                  className="font-medium text-brand-green hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
           </div>
 
           {/* Parent card */}
@@ -134,23 +115,6 @@ export default function PortalCards() {
                 </li>
               ))}
             </ul>
-            <div className="mt-auto pt-8">
-              <Link
-                href="/parent/register"
-                className="flex h-[48px] w-full items-center justify-center rounded-[8px] border border-[#f47e14] text-[14px] font-medium text-[#f47e14] transition-colors hover:bg-[#fde8cc]"
-              >
-                Create parent account
-              </Link>
-              <p className="mt-3 text-center text-[13px] text-text-body">
-                Already registered?{" "}
-                <Link
-                  href="/parent/login"
-                  className="font-medium text-[#f47e14] hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
           </div>
 
           {/* Staff card */}
@@ -191,23 +155,6 @@ export default function PortalCards() {
                 </li>
               ))}
             </ul>
-            <div className="mt-auto pt-8">
-              <Link
-                href="/staff/register"
-                className="flex h-[48px] w-full items-center justify-center rounded-[8px] border border-[#5b4fcf] text-[14px] font-medium text-[#5b4fcf] transition-colors hover:bg-[#e0ddff]"
-              >
-                Create staff account
-              </Link>
-              <p className="mt-3 text-center text-[13px] text-text-body">
-                Already registered?{" "}
-                <Link
-                  href="/staff/login"
-                  className="font-medium text-[#5b4fcf] hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
           </div>
         </div>
       </div>

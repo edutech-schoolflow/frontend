@@ -9,22 +9,31 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/src/components/ui/input-otp";
-import { verifyPhoneOtp, resendPhoneOtp } from "@/src/lib/api/parents";
+import { toast } from "sonner";
+import { verifyParentPhone, resendParentOtp } from "@/src/lib/api/parentAuth";
 import OtpResultModal from "./OtpResultModal";
 
 interface Props {
   phone: string;
+  /**
+   * What "Continue to login" does after a successful verify. Defaults to navigating
+   * to /parent/login — but when this component is already rendered ON the login page
+   * (inline, after a "phone not verified" attempt), navigating there is a no-op, so
+   * the caller passes a handler that returns to the login form instead.
+   */
+  onVerified?: () => void;
 }
 
 const RESEND_SECONDS = 60;
 
-export default function ParentVerifyEmail({ phone }: Props) {
+export default function ParentVerifyEmail({ phone, onVerified }: Props) {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_SECONDS);
   const [modal, setModal] = useState<"success" | "error" | null>(null);
+  const [resultMsg, setResultMsg] = useState("");
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -36,9 +45,13 @@ export default function ParentVerifyEmail({ phone }: Props) {
     if (otp.length < 6) return;
     setSubmitting(true);
     try {
-      await verifyPhoneOtp({ phone, otp });
+      const message = await verifyParentPhone({ phone, code: otp });
+      setResultMsg(message);
       setModal("success");
-    } catch {
+    } catch (err) {
+      setResultMsg(
+        err instanceof Error ? err.message : "The code you entered is wrong."
+      );
       setModal("error");
     } finally {
       setSubmitting(false);
@@ -48,9 +61,14 @@ export default function ParentVerifyEmail({ phone }: Props) {
   const handleResend = async () => {
     setResending(true);
     try {
-      await resendPhoneOtp(phone);
+      const message = await resendParentOtp(phone);
+      toast.success(message);
       setCountdown(RESEND_SECONDS);
       setOtp("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not resend the code."
+      );
     } finally {
       setResending(false);
     }
@@ -62,9 +80,13 @@ export default function ParentVerifyEmail({ phone }: Props) {
         <OtpResultModal
           type="success"
           title="Phone verified!"
-          message="Your account has been created successfully."
-          actionLabel="Go to dashboard"
-          onAction={() => router.push("/parent/dashboard")}
+          message={resultMsg}
+          actionLabel="Continue to login"
+          onAction={() => {
+            setModal(null);
+            if (onVerified) onVerified();
+            else router.push("/parent/login");
+          }}
         />
       )}
 
@@ -72,7 +94,7 @@ export default function ParentVerifyEmail({ phone }: Props) {
         <OtpResultModal
           type="error"
           title="Incorrect code"
-          message="The code you entered is wrong. Please check and try again."
+          message={resultMsg}
           actionLabel="Try again"
           onAction={() => {
             setModal(null);

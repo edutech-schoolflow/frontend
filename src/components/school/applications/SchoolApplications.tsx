@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { getSchoolApplications } from "@/src/lib/api/applications";
-import type { Application, ApplicationStatus } from "@/src/types/application";
+import { useApplications } from "@/src/lib/api/useSchoolApplications";
+import type { ApplicationStatus } from "@/src/types/application";
 import AppStatusChip from "./AppStatusChip";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 type Tab = "all" | ApplicationStatus;
 
@@ -26,19 +27,12 @@ function fmt(dateStr: string) {
 }
 
 export default function SchoolApplications() {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
-  const [all, setAll] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: all = [], isPending: loading } = useApplications();
   const [tab, setTab] = useState<Tab>("all");
   const [classFilter, setClassFilter] = useState("all");
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    getSchoolApplications().then(({ data }) => {
-      setAll(data);
-      setLoading(false);
-    });
-  }, []);
 
   const desiredClasses = useMemo(() => {
     const set = new Set(all.map((a) => a.desiredClass));
@@ -176,7 +170,7 @@ export default function SchoolApplications() {
                       : ""
                   }`}
                   onClick={() =>
-                    router.push(`/school/dashboard/applications/${app.id}`)
+                    router.push(wsHref(`/school/dashboard/applications/${app.id}`))
                   }
                 >
                   <td className="px-[16px] py-[14px]">

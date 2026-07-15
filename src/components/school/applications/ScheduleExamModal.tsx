@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { scheduleExam } from "@/src/lib/api/applications";
+import { toast } from "sonner";
+import { useScheduleExam } from "@/src/lib/api/useSchoolApplications";
 
 type Props = { applicationId: string; onDone: () => void; onClose: () => void };
 
@@ -18,21 +19,20 @@ export default function ScheduleExamModal({
   const [time, setTime] = useState("");
   const [venue, setVenue] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [saving, setSaving] = useState(false);
+  const schedule = useScheduleExam(applicationId);
+  const saving = schedule.isPending;
 
   const canSave = date && time && venue;
 
   async function handleSave() {
-    setSaving(true);
-    await scheduleExam(applicationId, {
-      type,
-      date,
-      time,
-      venue,
-      instructions,
-    });
-    setSaving(false);
-    onDone();
+    try {
+      await schedule.mutateAsync({ type, date, time, venue, instructions });
+      onDone();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not schedule the exam."
+      );
+    }
   }
 
   return (

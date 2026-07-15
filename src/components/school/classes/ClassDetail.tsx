@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Plus,
@@ -15,26 +16,30 @@ import {
   ChevronDown,
 } from "lucide-react";
 import {
-  getClassArms,
-  assignClassTeacher,
-  getSchoolTeachers,
-} from "@/src/lib/api/schools";
+  useClass,
+  useClassArms,
+  useAddClassArm,
+  useSetClassLevelTeacher,
+  useSetClassTeacher,
+  useSchoolTeachers,
+} from "@/src/lib/api/useSchoolClasses";
 import type { ClassArm } from "@/src/types/school";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 // ─── Add Arm Modal ─────────────────────────────────────────────────────────────
 
 function AddArmModal({
+  classId,
   className,
   onClose,
-  onCreated,
 }: {
+  classId: string;
   className: string;
   onClose: () => void;
-  onCreated: (arm: ClassArm) => void;
 }) {
   const [armName, setArmName] = useState("");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const addArm = useAddClassArm(classId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,19 +47,12 @@ function AddArmModal({
       setError("Arm name is required");
       return;
     }
-    setSaving(true);
-    const newArm: ClassArm = {
-      id: `arm-${Date.now()}`,
-      classId: "",
-      className,
-      arm: armName.trim().toUpperCase(),
-      fullName: `${className} ${armName.trim().toUpperCase()}`,
-      classTeacher: null,
-      studentsCount: 0,
-      subjectTeachers: [],
-    };
-    onCreated(newArm);
-    setSaving(false);
+    try {
+      await addArm.mutateAsync({ arm: armName.trim().toUpperCase() });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add arm.");
+    }
   };
 
   return (
@@ -103,10 +101,10 @@ function AddArmModal({
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={addArm.isPending}
               className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-60"
             >
-              {saving ? "Adding…" : "Add arm"}
+              {addArm.isPending ? "Adding…" : "Add arm"}
             </button>
           </div>
         </form>
@@ -116,33 +114,34 @@ function AddArmModal({
 }
 
 // ─── Assign Teacher Modal ──────────────────────────────────────────────────────
+// Generic: drives both the class's own teacher and a specific arm's teacher.
 
 function AssignTeacherModal({
-  arm,
+  subtitle,
+  currentTeacherId,
+  isSaving,
+  onSave,
   onClose,
-  onAssigned,
 }: {
-  arm: ClassArm;
+  subtitle: string;
+  currentTeacherId: string | null;
+  isSaving: boolean;
+  onSave: (teacherId: string | null) => Promise<void>;
   onClose: () => void;
-  onAssigned: (arm: ClassArm) => void;
 }) {
-  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
-  const [selected, setSelected] = useState(arm.classTeacher?.id ?? "");
-  const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    getSchoolTeachers().then((t) => {
-      setTeachers(t);
-      setLoaded(true);
-    });
-  }, []);
+  const { data: teachers = [], isPending: loadingTeachers } =
+    useSchoolTeachers();
+  const [selected, setSelected] = useState(currentTeacherId ?? "");
 
   const handleSave = async () => {
-    setSaving(true);
-    const updated = await assignClassTeacher(arm.id, selected || null);
-    onAssigned(updated);
-    setSaving(false);
+    try {
+      await onSave(selected || null);
+      onClose();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not assign teacher."
+      );
+    }
   };
 
   return (
@@ -153,7 +152,7 @@ function AssignTeacherModal({
             <h2 className="text-[16px] font-semibold text-text-heading">
               Assign class teacher
             </h2>
-            <p className="mt-0.5 text-[12px] text-text-body">{arm.fullName}</p>
+            <p className="mt-0.5 text-[12px] text-text-body">{subtitle}</p>
           </div>
           <button
             onClick={onClose}
@@ -163,7 +162,7 @@ function AssignTeacherModal({
           </button>
         </div>
 
-        {!loaded ? (
+        {loadingTeachers ? (
           <div className="flex justify-center py-8">
             <div className="h-[28px] w-[28px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
           </div>
@@ -204,10 +203,10 @@ function AssignTeacherModal({
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={isSaving}
                 className="flex-1 rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-60"
               >
-                {saving ? "Saving…" : "Confirm"}
+                {isSaving ? "Saving…" : "Confirm"}
               </button>
             </div>
           </div>
@@ -217,26 +216,61 @@ function AssignTeacherModal({
   );
 }
 
+// ─── Class teacher row (shared chrome) ─────────────────────────────────────────
+
+function TeacherRow({
+  teacherName,
+  onAssign,
+}: {
+  teacherName: string | null;
+  onAssign: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-[8px] bg-[#f9fafb] px-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <UserCheck className="h-[14px] w-[14px] shrink-0 text-text-body" />
+        {teacherName ? (
+          <p className="truncate text-[13px] text-text-heading">
+            <span className="text-text-body">Class teacher: </span>
+            {teacherName}
+          </p>
+        ) : (
+          <p className="text-[13px] text-text-body">
+            No class teacher assigned
+          </p>
+        )}
+      </div>
+      <button
+        onClick={onAssign}
+        className="flex shrink-0 items-center gap-1 rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1 text-[11px] font-medium text-text-body transition-colors hover:border-brand-green hover:text-brand-green"
+      >
+        <Pencil className="h-[10px] w-[10px]" />
+        {teacherName ? "Change" : "Assign"}
+      </button>
+    </div>
+  );
+}
+
 // ─── Arm Card ──────────────────────────────────────────────────────────────────
 
-const QUICK_LINKS = (classId: string, armId: string) => [
+const QUICK_LINKS = (classId: string, armId: string, wsHref: (p: string) => string) => [
   {
     label: "Attendance",
-    href: `/school/dashboard/attendance?class=${classId}&arm=${armId}`,
+    href: wsHref(`/school/dashboard/attendance?class=${classId}&arm=${armId}`),
     icon: CheckSquare,
     color: "text-[#4a6cf7]",
     bg: "bg-[#e8f0ff]",
   },
   {
     label: "Grades",
-    href: `/school/dashboard/grades/ca?class=${classId}&arm=${armId}`,
+    href: wsHref(`/school/dashboard/grades/ca?class=${classId}&arm=${armId}`),
     icon: BarChart2,
     color: "text-[#f47e14]",
     bg: "bg-[#fff3e8]",
   },
   {
     label: "Exam Questions",
-    href: `/school/dashboard/exams?arm=${armId}`,
+    href: wsHref(`/school/dashboard/exams?arm=${armId}`),
     icon: BookOpen,
     color: "text-brand-green",
     bg: "bg-[#e8f5ee]",
@@ -252,7 +286,8 @@ function ArmCard({
   classId: string;
   onAssign: (arm: ClassArm) => void;
 }) {
-  const links = QUICK_LINKS(classId, arm.id);
+  const wsHref = useWorkspaceHref();
+  const links = QUICK_LINKS(classId, arm.id, wsHref);
 
   return (
     <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-5">
@@ -273,27 +308,11 @@ function ArmCard({
       </div>
 
       {/* Class teacher row */}
-      <div className="mb-4 flex items-center justify-between gap-2 rounded-[8px] bg-[#f9fafb] px-3 py-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <UserCheck className="h-[14px] w-[14px] shrink-0 text-text-body" />
-          {arm.classTeacher ? (
-            <p className="truncate text-[13px] text-text-heading">
-              <span className="text-text-body">Class teacher: </span>
-              {arm.classTeacher.name}
-            </p>
-          ) : (
-            <p className="text-[13px] text-text-body">
-              No class teacher assigned
-            </p>
-          )}
-        </div>
-        <button
-          onClick={() => onAssign(arm)}
-          className="flex shrink-0 items-center gap-1 rounded-[6px] border border-[#e5e7eb] bg-white px-2.5 py-1 text-[11px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
-        >
-          <Pencil className="h-[10px] w-[10px]" />
-          {arm.classTeacher ? "Change" : "Assign"}
-        </button>
+      <div className="mb-4">
+        <TeacherRow
+          teacherName={arm.classTeacher?.name ?? null}
+          onAssign={() => onAssign(arm)}
+        />
       </div>
 
       {/* Quick links */}
@@ -322,6 +341,9 @@ function ArmCard({
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 
+// Which teacher picker is open: the class's own teacher, or a specific arm's.
+type AssignTarget = { type: "class" } | { type: "arm"; arm: ClassArm } | null;
+
 export default function ClassDetail({
   classId,
   className,
@@ -329,31 +351,17 @@ export default function ClassDetail({
   classId: string;
   className?: string;
 }) {
-  const [arms, setArms] = useState<ClassArm[]>([]);
-  const [loading, setLoading] = useState(true);
+  const wsHref = useWorkspaceHref();
+  const { data: cls } = useClass(classId);
+  const { data: arms = [], isPending } = useClassArms(classId);
+  const setClassTeacher = useSetClassLevelTeacher(classId);
+  const setArmTeacher = useSetClassTeacher(classId);
   const [showAddArm, setShowAddArm] = useState(false);
-  const [assigningArm, setAssigningArm] = useState<ClassArm | null>(null);
+  const [assigning, setAssigning] = useState<AssignTarget>(null);
 
-  useEffect(() => {
-    getClassArms(classId).then((data) => {
-      setArms(data);
-      setLoading(false);
-    });
-  }, [classId]);
+  const resolvedName = className ?? cls?.name ?? arms[0]?.className ?? "Class";
 
-  const resolvedName = className ?? arms[0]?.className ?? "Class";
-
-  const handleArmCreated = (arm: ClassArm) => {
-    setArms((prev) => [...prev, { ...arm, classId }]);
-    setShowAddArm(false);
-  };
-
-  const handleAssigned = (updated: ClassArm) => {
-    setArms((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-    setAssigningArm(null);
-  };
-
-  if (loading) {
+  if (isPending) {
     return (
       <div className="flex items-center justify-center py-[80px]">
         <div className="h-[32px] w-[32px] animate-spin rounded-full border-[3px] border-brand-green border-t-transparent" />
@@ -366,7 +374,7 @@ export default function ClassDetail({
       <div className="px-[32px] py-[28px] pb-[60px]">
         <div className="mb-6">
           <Link
-            href="/school/dashboard/classes"
+            href={wsHref("/school/dashboard/classes")}
             className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-text-body hover:text-text-heading"
           >
             <ArrowLeft className="h-[13px] w-[13px]" />
@@ -380,7 +388,9 @@ export default function ClassDetail({
               </h1>
               <p className="mt-0.5 text-[13px] text-text-body">
                 {arms.length} {arms.length === 1 ? "arm" : "arms"} ·{" "}
-                {arms.reduce((s, a) => s + a.studentsCount, 0)} students total
+                {cls?.studentsCount ??
+                  arms.reduce((s, a) => s + a.studentsCount, 0)}{" "}
+                students total
               </p>
             </div>
             <button
@@ -393,26 +403,38 @@ export default function ClassDetail({
           </div>
         </div>
 
+        {/* Class-level teacher — a class can have students without any arm, so the
+            class itself carries a class teacher. */}
+        <div className="mb-6 rounded-[12px] border border-[#e5e7eb] bg-white p-5">
+          <h2 className="mb-3 text-[14px] font-semibold text-text-heading">
+            Class teacher
+          </h2>
+          <TeacherRow
+            teacherName={cls?.classTeacher?.name ?? null}
+            onAssign={() => setAssigning({ type: "class" })}
+          />
+        </div>
+
         {arms.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-[16px] border-2 border-dashed border-[#e5e7eb] bg-white py-[80px] text-center">
+          <div className="flex flex-col items-center gap-4 rounded-[16px] border-2 border-dashed border-[#e5e7eb] bg-white py-[60px] text-center">
             <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#e8f5ee]">
               <Users className="h-[22px] w-[22px] text-brand-green" />
             </div>
             <div>
               <p className="text-[15px] font-semibold text-text-heading">
-                No arms yet
+                No arms — students belong directly to {resolvedName}
               </p>
-              <p className="mt-1 max-w-[300px] text-[13px] text-text-body">
-                Add arms to {resolvedName} to start assigning class teachers and
-                students.
+              <p className="mt-1 max-w-[340px] text-[13px] text-text-body">
+                Add arms only if you split {resolvedName} into streams (A, B,
+                C…). Each arm then gets its own class teacher.
               </p>
             </div>
             <button
               onClick={() => setShowAddArm(true)}
-              className="mt-1 flex items-center gap-2 rounded-[8px] bg-brand-green px-5 py-2.5 text-[13px] font-medium text-white hover:opacity-90"
+              className="mt-1 flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-white px-5 py-2.5 text-[13px] font-medium text-text-body hover:border-brand-green hover:text-brand-green"
             >
               <Plus className="h-[14px] w-[14px]" />
-              Add first arm
+              Add an arm
             </button>
           </div>
         ) : (
@@ -422,7 +444,7 @@ export default function ClassDetail({
                 key={arm.id}
                 arm={arm}
                 classId={classId}
-                onAssign={setAssigningArm}
+                onAssign={(a) => setAssigning({ type: "arm", arm: a })}
               />
             ))}
           </div>
@@ -431,17 +453,34 @@ export default function ClassDetail({
 
       {showAddArm && (
         <AddArmModal
+          classId={classId}
           className={resolvedName}
           onClose={() => setShowAddArm(false)}
-          onCreated={handleArmCreated}
         />
       )}
 
-      {assigningArm && (
+      {assigning?.type === "class" && (
         <AssignTeacherModal
-          arm={assigningArm}
-          onClose={() => setAssigningArm(null)}
-          onAssigned={handleAssigned}
+          subtitle={resolvedName}
+          currentTeacherId={cls?.classTeacher?.id ?? null}
+          isSaving={setClassTeacher.isPending}
+          onSave={(teacherId) => setClassTeacher.mutateAsync(teacherId)}
+          onClose={() => setAssigning(null)}
+        />
+      )}
+
+      {assigning?.type === "arm" && (
+        <AssignTeacherModal
+          subtitle={assigning.arm.fullName}
+          currentTeacherId={assigning.arm.classTeacher?.id ?? null}
+          isSaving={setArmTeacher.isPending}
+          onSave={(teacherId) =>
+            setArmTeacher.mutateAsync({
+              armId: assigning.arm.id,
+              teacherAffiliationId: teacherId,
+            })
+          }
+          onClose={() => setAssigning(null)}
         />
       )}
     </>

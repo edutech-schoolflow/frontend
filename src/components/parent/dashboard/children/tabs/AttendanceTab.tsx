@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getChildAttendance } from "@/src/lib/api/parents";
-import type { AttendanceSummary } from "@/src/types/parent";
+import { useChildAttendance } from "@/src/lib/api/useParentChildren";
 import Spinner from "./Spinner";
 
 const STATS = [
@@ -12,17 +10,26 @@ const STATS = [
   { key: "lateDays" as const, label: "Late", color: "#f59e0b" },
 ];
 
-export default function AttendanceTab({ studentId }: { studentId: string }) {
-  const [records, setRecords] = useState<AttendanceSummary[] | undefined>(
-    undefined
-  );
+export default function AttendanceTab({
+  childProfileId,
+}: {
+  childProfileId: string;
+}) {
+  const {
+    data: records,
+    isPending,
+    isError,
+    error,
+  } = useChildAttendance(childProfileId);
 
-  useEffect(() => {
-    getChildAttendance(studentId).then(setRecords);
-  }, [studentId]);
-
-  if (records === undefined) return <Spinner />;
-  if (records.length === 0)
+  if (isPending) return <Spinner />;
+  if (isError)
+    return (
+      <p className="py-[48px] text-center text-[14px] text-[#e53e3e]">
+        {error instanceof Error ? error.message : "Could not load attendance."}
+      </p>
+    );
+  if (!records || records.length === 0)
     return (
       <p className="py-[48px] text-center text-[14px] text-[#888]">
         No attendance records available.
@@ -32,16 +39,19 @@ export default function AttendanceTab({ studentId }: { studentId: string }) {
   return (
     <div className="flex flex-col gap-[16px]">
       {records.map((r) => {
-        const pct = Math.round((r.presentDays / r.totalDays) * 100);
+        const pct =
+          r.totalDays > 0 ? Math.round((r.presentDays / r.totalDays) * 100) : 0;
         const barColor =
           pct >= 80 ? "#1ca95c" : pct >= 60 ? "#f59e0b" : "#e53e3e";
         return (
           <div
-            key={r.term}
+            key={r.term ?? "term"}
             className="rounded-[10px] border border-[#e0e0e0] bg-white px-[24px] py-[20px]"
           >
             <div className="mb-[16px] flex items-center justify-between">
-              <p className="text-[15px] font-medium text-[#1b1b1b]">{r.term}</p>
+              <p className="text-[15px] font-medium text-[#1b1b1b]">
+                {r.term ?? "This term"}
+              </p>
               <span
                 className="text-[14px] font-semibold"
                 style={{ color: barColor }}

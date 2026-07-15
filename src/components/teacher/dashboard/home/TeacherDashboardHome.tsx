@@ -13,11 +13,12 @@ import {
 } from "lucide-react";
 import { getStaffDashboardStats } from "@/src/lib/api/teachers";
 import { getTeacherArms, getStudentsForArm } from "@/src/lib/api/attendance";
-import { useAuth } from "@/src/context/AuthContext";
 import type { StaffDashboardStats } from "@/src/types/teacher";
 import type { ArmSelectOption } from "@/src/lib/api/attendance";
 import type { AttendanceStudentRow } from "@/src/types/attendance";
 import StaffCheckInWidget from "./StaffCheckInWidget";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 const QUICK_ACTIONS = [
   {
@@ -69,7 +70,8 @@ interface ArmSummary extends ArmSelectOption {
 }
 
 export default function StaffDashboardHome() {
-  const { user } = useAuth();
+  const wsHref = useWorkspaceHref();
+  const { data: user } = useIdentity();
   const [stats, setStats] = useState<StaffDashboardStats | undefined>(
     undefined
   );
@@ -79,8 +81,8 @@ export default function StaffDashboardHome() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      getStaffDashboardStats(user?.id),
-      getTeacherArms(user?.id).then((opts) =>
+      getStaffDashboardStats(undefined),
+      getTeacherArms(undefined).then((opts) =>
         Promise.all(
           opts.map((opt) =>
             getStudentsForArm(opt.armId).then((students) => ({
@@ -99,7 +101,7 @@ export default function StaffDashboardHome() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, []);
 
   if (!loaded) {
     return (
@@ -125,7 +127,7 @@ export default function StaffDashboardHome() {
       {/* Greeting */}
       <div className="mb-7">
         <h1 className="text-[22px] font-semibold text-text-heading">
-          Welcome back, {user?.name?.split(" ")[0] ?? "Staff"}
+          Welcome back, {user?.fullName?.split(" ")[0] ?? "Staff"}
         </h1>
         <p className="mt-0.5 text-[14px] text-text-body">
           Here&apos;s an overview of your classes this term.
@@ -164,7 +166,7 @@ export default function StaffDashboardHome() {
           return (
             <Link
               key={a.href}
-              href={a.href}
+              href={wsHref(a.href)}
               className="flex items-center gap-3 rounded-[12px] border border-[#e5e7eb] bg-white px-5 py-4 transition-shadow hover:shadow-md"
             >
               <div
@@ -186,7 +188,7 @@ export default function StaffDashboardHome() {
           Assigned classes
         </h2>
         <Link
-          href="/staff/dashboard/classes"
+          href={wsHref("/staff/dashboard/classes")}
           className="flex items-center gap-1 text-[13px] font-medium text-brand-green hover:underline"
         >
           View all <ChevronRight className="h-[13px] w-[13px]" />
@@ -222,13 +224,13 @@ export default function StaffDashboardHome() {
               </div>
               <div className="flex gap-2">
                 <Link
-                  href={`/staff/dashboard/attendance?arm=${arm.armId}`}
+                  href={wsHref(`/staff/dashboard/attendance?arm=${arm.armId}`)}
                   className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                 >
                   Attendance
                 </Link>
                 <Link
-                  href={`/staff/dashboard/grades?arm=${arm.armId}`}
+                  href={wsHref(`/staff/dashboard/grades?arm=${arm.armId}`)}
                   className="rounded-[8px] border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-medium text-text-body hover:border-brand-green hover:text-brand-green transition-colors"
                 >
                   Grades

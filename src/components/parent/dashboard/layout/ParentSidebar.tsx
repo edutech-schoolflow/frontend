@@ -4,9 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
-import { useAuth } from "@/src/context/AuthContext";
+import { useIdentity } from "@/src/lib/api/useIdentity";
+import {
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeftRight,
+} from "lucide-react";
 import Logo from "@/src/components/ui/Logo";
+import WorkspaceSwitcherModal from "@/src/components/shared/WorkspaceSwitcherModal";
 import type { ReactNode } from "react";
 
 const LogoBadge = () => (
@@ -49,31 +55,8 @@ const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
     href: "/parent/dashboard/track",
     icon: <Image src="/icons/check-circle.svg" alt="" width={18} height={18} />,
   },
-  {
-    label: "School Store",
-    href: "/parent/dashboard/store",
-    icon: <ShoppingBag size={18} />,
-  },
-  {
-    label: "Fees",
-    href: "/parent/dashboard/fees",
-    icon: <Image src="/icons/finance.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "CA scores",
-    href: "/parent/dashboard/ca-scores",
-    icon: <Image src="/icons/pen-paper.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "Report card",
-    href: "/parent/dashboard/report-card",
-    icon: <Image src="/icons/drafts.svg" alt="" width={18} height={18} />,
-  },
-  {
-    label: "Performance trend",
-    href: "/parent/dashboard/performance",
-    icon: <Image src="/icons/barchart.svg" alt="" width={18} height={18} />,
-  },
+  // Per-school items (Store, Fees, CA scores, Report card, Performance) live in the /o/{slug} parent
+  // workspace — they need a school context. The home keeps only identity-level, cross-school views.
   {
     label: "Payment history",
     href: "/parent/dashboard/payment-history",
@@ -84,7 +67,9 @@ const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
 export default function ParentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
+
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -100,7 +85,7 @@ export default function ParentSidebar() {
     });
   };
 
-  const fullName = user?.name ?? "John Okafor";
+  const fullName = user?.fullName ?? "";
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -165,6 +150,16 @@ export default function ParentSidebar() {
       <div className="border-t border-white/10 px-[12px] py-[16px]">
         {collapsed ? (
           <div className="flex flex-col items-center gap-[8px]">
+            <button
+              type="button"
+              onClick={() => setSwitcherOpen(true)}
+              className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
+              title="Switch workspace"
+            >
+              <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-white/15">
+                <ArrowLeftRight size={16} className="text-white" />
+              </span>
+            </button>
             <Link
               href="/parent/dashboard/settings"
               className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
@@ -184,6 +179,17 @@ export default function ParentSidebar() {
           </div>
         ) : (
           <>
+            <button
+              type="button"
+              onClick={() => setSwitcherOpen(true)}
+              className={itemCls("/__switch__")}
+            >
+              <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
+                <ArrowLeftRight size={16} className="text-white" />
+              </span>
+              Switch workspace
+            </button>
+
             <Link
               href="/parent/dashboard/settings"
               className={itemCls("/parent/dashboard/settings")}
@@ -215,6 +221,11 @@ export default function ParentSidebar() {
           </>
         )}
       </div>
+
+      <WorkspaceSwitcherModal
+        open={switcherOpen}
+        onClose={() => setSwitcherOpen(false)}
+      />
     </aside>
   );
 }

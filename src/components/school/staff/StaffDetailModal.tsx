@@ -10,12 +10,13 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
-  deactivateStaff,
-  reactivateStaff,
-  resendInvite,
-  updateStaffRole,
-} from "@/src/lib/api/staff";
+  useDeactivateStaff,
+  useReactivateStaff,
+  useResendStaffInvite,
+  useUpdateStaffRole,
+} from "@/src/lib/api/useSchoolStaffDirectory";
 import type { Staff, StaffRole } from "@/src/types/staff";
 import { ROLE_LABELS, INVITABLE_ROLES } from "@/src/types/staff";
 
@@ -67,14 +68,15 @@ export default function StaffDetailModal({
   onUpdate,
   onClose,
 }: Props) {
-  const [acting, setActing] = useState<
-    "deactivate" | "reactivate" | "resend" | null
-  >(null);
   const [resent, setResent] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
   const [draftRole, setDraftRole] = useState<StaffRole>(staff.role);
   const [draftPosition, setDraftPosition] = useState(staff.position);
-  const [savingRole, setSavingRole] = useState(false);
+
+  const deactivate = useDeactivateStaff();
+  const reactivate = useReactivateStaff();
+  const resend = useResendStaffInvite();
+  const updateRole = useUpdateStaffRole();
 
   const initials = `${staff.firstName[0]}${staff.lastName[0]}`.toUpperCase();
   const { text: roleText, bg: roleBg } = ROLE_COLORS[staff.role];
@@ -86,35 +88,43 @@ export default function StaffDetailModal({
   });
 
   async function handleDeactivate() {
-    setActing("deactivate");
-    const updated = await deactivateStaff(staff.id);
-    setActing(null);
-    onUpdate(updated);
+    try {
+      onUpdate(await deactivate.mutateAsync(staff.id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not deactivate.");
+    }
   }
 
   async function handleReactivate() {
-    setActing("reactivate");
-    const updated = await reactivateStaff(staff.id);
-    setActing(null);
-    onUpdate(updated);
+    try {
+      onUpdate(await reactivate.mutateAsync(staff.id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not reactivate.");
+    }
   }
 
   async function handleResend() {
-    setActing("resend");
-    await resendInvite(staff.id);
-    setActing(null);
-    setResent(true);
+    try {
+      await resend.mutateAsync(staff.id);
+      setResent(true);
+      toast.success("Invitation resent.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not resend.");
+    }
   }
 
   async function handleSaveRole() {
-    setSavingRole(true);
-    const updated = await updateStaffRole(staff.id, {
-      role: draftRole,
-      position: draftPosition,
-    });
-    setSavingRole(false);
-    setEditingRole(false);
-    onUpdate(updated);
+    try {
+      const updated = await updateRole.mutateAsync({
+        affiliationId: staff.id,
+        role: draftRole,
+        position: draftPosition,
+      });
+      setEditingRole(false);
+      onUpdate(updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update.");
+    }
   }
 
   return (
@@ -266,11 +276,11 @@ export default function StaffDetailModal({
                 <div className="flex gap-2">
                   <button
                     onClick={handleSaveRole}
-                    disabled={savingRole || !draftPosition.trim()}
+                    disabled={updateRole.isPending || !draftPosition.trim()}
                     className="flex items-center gap-1.5 rounded-[7px] bg-brand-green px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90 disabled:opacity-50"
                   >
                     <Check className="h-[12px] w-[12px]" />
-                    {savingRole ? "Saving…" : "Save"}
+                    {updateRole.isPending ? "Saving…" : "Save"}
                   </button>
                   <button
                     onClick={() => setEditingRole(false)}
@@ -298,10 +308,10 @@ export default function StaffDetailModal({
           {staff.status === "active" && (
             <button
               onClick={handleDeactivate}
-              disabled={acting === "deactivate"}
+              disabled={deactivate.isPending}
               className="w-full rounded-[8px] border border-red-200 bg-red-50 py-2.5 text-[13px] font-medium text-[#dc2626] hover:bg-red-100 disabled:opacity-50"
             >
-              {acting === "deactivate"
+              {deactivate.isPending
                 ? "Deactivating…"
                 : "Deactivate staff member"}
             </button>
@@ -310,10 +320,10 @@ export default function StaffDetailModal({
           {staff.status === "inactive" && (
             <button
               onClick={handleReactivate}
-              disabled={acting === "reactivate"}
+              disabled={reactivate.isPending}
               className="w-full rounded-[8px] bg-brand-green py-2.5 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
-              {acting === "reactivate"
+              {reactivate.isPending
                 ? "Reactivating…"
                 : "Reactivate staff member"}
             </button>
@@ -322,12 +332,12 @@ export default function StaffDetailModal({
           {staff.status === "pending" && (
             <button
               onClick={handleResend}
-              disabled={acting === "resend" || resent}
+              disabled={resend.isPending || resent}
               className="w-full rounded-[8px] border border-blue-200 bg-blue-50 py-2.5 text-[13px] font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
             >
               {resent
                 ? "Invitation resent ✓"
-                : acting === "resend"
+                : resend.isPending
                   ? "Resending…"
                   : "Resend invitation"}
             </button>

@@ -10,6 +10,7 @@ import {
 } from "@/src/lib/api/examPaper";
 import type { ExamPaper, ExamType } from "@/src/types/examPaper";
 import type { GradeTerm } from "@/src/types/scoreEntry";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 export type StatusFilter = "all" | "pending" | "ready";
 
@@ -46,6 +47,7 @@ function groupSubmissions(papers: ExamPaper[]): SubmissionGroup[] {
 }
 
 export function useSchoolExams() {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
 
   const [term, setTerm] = useState<GradeTerm>("second_term");
@@ -164,7 +166,7 @@ export function useSchoolExams() {
       questions: mergedQuestions,
       sourceArmIds: approved.map((p) => p.armId),
     });
-    router.push(`/school/dashboard/exams/unified/${paper.id}`);
+    router.push(wsHref(`/school/dashboard/exams/unified/${paper.id}`));
   }
 
   return {

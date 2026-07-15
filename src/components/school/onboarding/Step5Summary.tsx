@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
+import { useWorkspaceHref } from "@/src/hooks/useWorkspaceHref";
 
 type Props = {
   logoUploaded: boolean;
@@ -14,6 +15,7 @@ const STEPS = [
 ];
 
 export default function Step5Summary(props: Props) {
+  const wsHref = useWorkspaceHref();
   const router = useRouter();
   const doneCount = STEPS.filter((s) => props[s.key]).length;
 
@@ -76,7 +78,7 @@ export default function Step5Summary(props: Props) {
 
       <button
         type="button"
-        onClick={() => router.push("/school/dashboard")}
+        onClick={() => router.push(wsHref("/school/dashboard"))}
         className="w-full rounded-lg bg-brand-green py-3 text-sm font-medium text-white hover:opacity-90"
       >
         Go to Dashboard →

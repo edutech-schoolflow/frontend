@@ -1,4 +1,5 @@
 import { mockResponse } from "./mockClient";
+import { apiGet } from "./client";
 import {
   MOCK_SCHOOL,
   MOCK_CLASSES,
@@ -100,7 +101,8 @@ export const saveOnboardingClasses = async (_levels: string[]) =>
   mockResponse({ message: "Classes saved." });
 
 export const saveAcademicCalendar = async (_payload: {
-  academicYear: string;
+  startYear: number;
+  endYear: number;
   term: "first" | "second" | "third";
   startDate: string;
   endDate: string;
@@ -129,16 +131,19 @@ import {
   MOCK_STAFF,
 } from "./mock/schoolData";
 
+// LIVE — GET /api/v1/school/dashboard (read model; the rest of this module is still mock).
 export const getSchoolDashboard = async (): Promise<{
   stats: DashboardStats;
   recentApplications: DashboardApplication[];
   recentActivity: ActivityItem[];
-}> =>
-  mockResponse({
-    stats: MOCK_DASHBOARD_STATS,
-    recentApplications: MOCK_RECENT_APPLICATIONS,
-    recentActivity: MOCK_RECENT_ACTIVITY,
-  });
+}> => {
+  const { data } = await apiGet<{
+    stats: DashboardStats;
+    recentApplications: DashboardApplication[];
+    recentActivity: ActivityItem[];
+  }>("/school/dashboard");
+  return data;
+};
 
 // ─── Classes & Arms ────────────────────────────────────────────────────────────
 
@@ -169,6 +174,7 @@ export const createSchoolClass = async (
     armsCount: _payload.arms.length,
     studentsCount: 0,
     teacherNames,
+    classTeacher: null,
   });
 };
 

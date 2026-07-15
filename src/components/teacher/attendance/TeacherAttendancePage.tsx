@@ -10,13 +10,13 @@ import {
   submitAttendance,
   type ArmSelectOption,
 } from "@/src/lib/api/attendance";
-import { useAuth } from "@/src/context/AuthContext";
 import type {
   AttendanceStudentRow,
   AttendanceRecord,
   AttendanceStatus,
 } from "@/src/types/attendance";
 import type { ClassLevel } from "@/src/types/school";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -160,7 +160,7 @@ function SummaryBar({
 
 export default function StaffAttendancePage() {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
 
   // Selection
   const [arms, setArms] = useState<ArmSelectOption[]>([]);
@@ -193,7 +193,7 @@ export default function StaffAttendancePage() {
   // Load only arms assigned to this teacher — all setState in .then()
   useEffect(() => {
     let cancelled = false;
-    getTeacherArms(user?.id).then((data) => {
+    getTeacherArms(undefined).then((data) => {
       if (cancelled) return;
       const sorted = [...data].sort(
         (a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]
@@ -208,7 +208,7 @@ export default function StaffAttendancePage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, searchParams]);
+  }, [searchParams]);
 
   // Load students + existing record — all setState in .then()
   useEffect(() => {

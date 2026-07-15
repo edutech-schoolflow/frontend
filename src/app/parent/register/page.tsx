@@ -1,5 +1,6 @@
-import ParentAuthCard from "@/src/components/parent/auth/ParentAuthCard";
+import { redirect } from "next/navigation";
 
-export default function ParentRegisterPage() {
-  return <ParentAuthCard />;
+// One registration for everyone — roles come from relationships, not from the sign-up page.
+export default function LegacyRegisterRedirect() {
+  redirect("/register");
 }

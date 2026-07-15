@@ -1,18 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, Settings, LogOut, HelpCircle } from "lucide-react";
-import { useAuth } from "@/src/context/AuthContext";
+import { useRouter } from "next/navigation";
+import {
+  ChevronDown,
+  Settings,
+  LogOut,
+  HelpCircle,
+  ArrowLeftRight,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useLogout } from "@/src/lib/api/useSchoolAuth";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
-export default function SchoolTopbar() {
+// basePath mirrors SchoolSidebar so the topbar's links resolve within whichever tree it renders in.
+export default function SchoolTopbar({
+  basePath = "/school/dashboard",
+}: {
+  basePath?: string;
+}) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
+  const logout = useLogout();
 
-  const fullName = user?.name ?? "School Admin";
+
+  const fullName = user?.fullName ?? "";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")
@@ -59,7 +74,7 @@ export default function SchoolTopbar() {
 
         {/* Notifications */}
         <Link
-          href="/school/dashboard/notifications"
+          href={`${basePath}/notifications`}
           className="relative text-[#555] hover:text-[#1b1b1b]"
           aria-label="Notifications"
         >
@@ -100,7 +115,15 @@ export default function SchoolTopbar() {
               </p>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
               <Link
-                href="/school/dashboard/settings/onboarding"
+                href="/select-context"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
+                Switch workspace
+              </Link>
+              <Link
+                href={`${basePath}/settings/onboarding`}
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >
@@ -119,12 +142,18 @@ export default function SchoolTopbar() {
               <button
                 onClick={() => {
                   setOpen(false);
-                  router.push("/school/login");
+                  // Clears the server cookies + Redux, then redirects to login.
+                  logout.mutate(undefined, {
+                    onSettled: () => {
+                      window.location.href = "/school/login";
+                    },
+                  });
                 }}
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#e84040] hover:bg-[#fff5f5]"
+                disabled={logout.isPending}
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#e84040] hover:bg-[#fff5f5] disabled:opacity-50"
               >
                 <LogOut className="h-[15px] w-[15px]" />
-                Log out
+                {logout.isPending ? "Logging out…" : "Log out"}
               </button>
             </div>
           )}

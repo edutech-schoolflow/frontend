@@ -31,7 +31,7 @@ export default function Hero() {
           </p>
 
           <Link
-            href="/school/register"
+            href="/register"
             className="flex h-[59px] w-[400px] items-center justify-center rounded-[5px] bg-brand-green
                        text-[20px] font-normal text-white transition-opacity hover:opacity-90"
           >

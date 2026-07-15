@@ -10,25 +10,34 @@ import {
   LogOut,
   HelpCircle,
   Bell,
+  ArrowLeftRight,
 } from "lucide-react";
-import { useAuth } from "@/src/context/AuthContext";
+import { toast } from "sonner";
 import { useStaffFeatures } from "@/src/context/StaffFeaturesContext";
+import { useIdentity } from "@/src/lib/api/useIdentity";
 
-export default function StaffTopbar() {
+// basePath mirrors StaffSidebar so the topbar's links resolve within whichever tree it renders in.
+export default function StaffTopbar({
+  basePath = "/staff/dashboard",
+}: {
+  basePath?: string;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [schoolOpen, setSchoolOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const schoolRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: user } = useIdentity();
   const { mySchools, activeSchoolId, isPartTime, switchSchool } =
     useStaffFeatures();
+
+  // "Become a Parent" — explicit relationship creation (idempotent), then the global hub (EDD-002).
 
   const activeSchool =
     mySchools.find((e) => e.school.id === activeSchoolId)?.school ??
     mySchools[0]?.school;
 
-  const fullName = user?.name ?? "Staff";
+  const fullName = user?.fullName ?? "";
   const firstName = fullName.split(" ")[0];
   const initials = fullName
     .split(" ")
@@ -142,7 +151,15 @@ export default function StaffTopbar() {
               </p>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
               <Link
-                href="/staff/dashboard/settings"
+                href="/select-context"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
+              >
+                <ArrowLeftRight className="h-[15px] w-[15px] text-[#888]" />
+                Switch workspace
+              </Link>
+              <Link
+                href={`${basePath}/settings`}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >
@@ -150,7 +167,7 @@ export default function StaffTopbar() {
                 Settings
               </Link>
               <Link
-                href="/staff/dashboard/profile"
+                href={`${basePath}/profile`}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >

@@ -1,15 +1,15 @@
-import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import UnifiedLogin from "@/src/components/auth/UnifiedLogin";
 
 export const metadata: Metadata = {
-  title: "Admin Login",
-  description: "Welcome to My Kedco Admin",
+  title: "Log in — SchoolFlow",
 };
 
-const Login = dynamic(() => import("@/src/components/auth"));
-
-const LoginPage = () => {
-  return <Login />;
-};
-
-export default LoginPage;
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <UnifiedLogin />
+    </Suspense>
+  );
+}

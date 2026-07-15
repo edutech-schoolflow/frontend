@@ -74,7 +74,7 @@ export default function StaffTestLoginPage() {
   function loginAs(userId: string) {
     localStorage.setItem(STAFF_TEST_USER_KEY, userId);
     setCurrentId(userId);
-    router.push("/staff/dashboard");
+    router.push("/select-context");
   }
 
   function clearSession() {
@@ -203,7 +203,7 @@ export default function StaffTestLoginPage() {
         <p className="mt-6 text-[12px] text-text-body">
           To change what each person can access, go to{" "}
           <a
-            href="/school/dashboard/settings/permissions"
+            href="/select-context"
             className="text-brand-green hover:underline"
           >
             School Settings → Staff Permissions
