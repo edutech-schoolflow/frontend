@@ -90,7 +90,7 @@ function ApplicationCard({ app }: { app: Application }) {
       )}
 
       <Link
-        href={`/parent/dashboard/track/${app.id}`}
+        href={`/family/track/${app.id}`}
         className="mt-auto text-left text-[14px] text-[#ff8d28] hover:underline"
       >
         View details →

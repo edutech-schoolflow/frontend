@@ -1,3 +1,4 @@
+import { apiGet } from "./client";
 import { mockResponse } from "./mockClient";
 import {
   MOCK_STAFF,
@@ -24,14 +25,46 @@ function getArmsByStaff(): Record<string, string[]> {
   return map;
 }
 
+// LIVE — GET /api/v1/school/staff (Workforce directory). Item ids are AFFILIATION ids — the same
+// key the staff-attendance board uses. armsByStaff (class-teacher arms) has no endpoint yet.
+interface StaffDirectoryItemDto {
+  id: string;
+  staffUserId: string;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  phone: string;
+  email?: string | null;
+  role: Staff["role"];
+  position?: string | null;
+  employmentType: "full_time" | "part_time";
+  status: "invited" | "active" | "inactive";
+  createdAt: string;
+}
+
 export const getSchoolStaff = async (): Promise<{
   staff: Staff[];
   armsByStaff: Record<string, string[]>;
-}> =>
-  mockResponse({
-    staff: [...MOCK_STAFF],
-    armsByStaff: getArmsByStaff(),
-  });
+}> => {
+  const { data } = await apiGet<StaffDirectoryItemDto[]>("/school/staff");
+  return {
+    staff: data.map((d) => ({
+      id: d.id,
+      schoolId: "",
+      userId: d.staffUserId,
+      firstName: d.firstName,
+      lastName: d.lastName,
+      email: d.email ?? "",
+      phone: d.phone,
+      role: d.role,
+      position: d.position ?? "",
+      status: d.status === "invited" ? "pending" : d.status,
+      employmentType: d.employmentType,
+      createdAt: d.createdAt,
+    })),
+    armsByStaff: {},
+  };
+};
 
 export const getStaffMember = async (id: string): Promise<Staff | null> =>
   mockResponse(MOCK_STAFF.find((s) => s.id === id) ?? null);

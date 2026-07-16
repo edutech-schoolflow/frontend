@@ -27,7 +27,7 @@ function Inner() {
   useEffect(() => {
     getIdentityMe()
       .then((m) => {
-        if (m.contexts.length === 0) router.replace("/welcome");
+        if (m.contexts.length === 0) router.replace("/dashboard");
         else setMe(m);
       })
       .catch(() => router.replace("/login?next=/select-context"));
@@ -73,14 +73,14 @@ function Inner() {
 
             <p className="mt-[6px] text-center text-[14px] text-[#666]">
               <Link
-                href="/parent/dashboard"
+                href="/family"
                 className="font-medium text-brand-green underline hover:opacity-80"
               >
                 Family home
               </Link>{" "}
               ·{" "}
               <Link
-                href="/welcome"
+                href="/dashboard"
                 className="font-medium text-brand-green underline hover:opacity-80"
               >
                 Create a school

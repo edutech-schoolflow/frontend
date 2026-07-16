@@ -101,12 +101,12 @@ async function ownerJourney(browser, shared) {
 
   await step("owner: register + verify OTP", async () => {
     await registerAndVerify(page, { first: "Qa", last: "Owner", phone });
-    await page.waitForURL(/login|welcome/, { timeout: 15000 });
+    await page.waitForURL(/login|dashboard/, { timeout: 15000 });
   });
 
-  await step("owner: login lands on /welcome (no contexts)", async () => {
-    if (!page.url().includes("/welcome")) await loginAs(page, phone);
-    await page.waitForURL(/welcome/, { timeout: 15000 });
+  await step("owner: login lands on the Platform Home (no contexts)", async () => {
+    if (!page.url().includes("/dashboard")) await loginAs(page, phone);
+    await page.waitForURL(/dashboard/, { timeout: 15000 });
     await page.getByText("Create a school").waitFor({ timeout: 10000 });
   });
 
@@ -157,6 +157,14 @@ async function ownerJourney(browser, shared) {
     if (!page.url().includes(`/o/${shared.slug}`)) {
       throw new Error(`left the workspace: ${page.url()}`);
     }
+  });
+
+  await step("owner: attendance overview is LIVE (fresh school shows no mock arms)", async () => {
+    await page.goto(`${FRONTEND}/o/${shared.slug}/attendance`);
+    await page.getByText("Overall attendance").waitFor({ timeout: 15000 });
+    // The old mock injected fabricated arms (JSS 1A…) into every school; a fresh school has none.
+    const mockArm = await page.getByText(/JSS \d/).first().isVisible().catch(() => false);
+    if (mockArm) throw new Error("attendance page shows arms a fresh school cannot have (mock data?)");
   });
 
   await step("owner: invite a staff member", async () => {
@@ -236,28 +244,29 @@ async function familyJourney(browser, shared) {
   page = await ctx.newPage();
   const phone = freshPhone();
 
-  await step("family: register + verify + login → /welcome", async () => {
+  await step("family: register + verify + login → Platform Home", async () => {
     await registerAndVerify(page, { first: "Qa", last: "Parent", phone });
-    await page.waitForURL(/login|welcome/, { timeout: 15000 });
-    if (!page.url().includes("/welcome")) await loginAs(page, phone);
-    await page.waitForURL(/welcome/, { timeout: 15000 });
+    await page.waitForURL(/login|dashboard/, { timeout: 15000 });
+    if (!page.url().includes("/dashboard")) await loginAs(page, phone);
+    await page.waitForURL(/dashboard/, { timeout: 15000 });
   });
 
-  await step("family: welcome offers the capability cards", async () => {
+  await step("family: Platform Home offers the capability cards", async () => {
     await page.getByText("Create a school").waitFor({ timeout: 10000 });
     await page.getByText("Use SchoolFlow as a parent").waitFor({ timeout: 5000 });
+    await page.getByText("Find a school").waitFor({ timeout: 5000 });
   });
 
   await step("family: become a parent → family home renders on the identity session", async () => {
     await page.getByText("Use SchoolFlow as a parent").click();
-    await page.waitForURL(/parent\/dashboard/, { timeout: 20000 });
+    await page.waitForURL(/family/, { timeout: 20000 });
     await page.getByText(/Welcome, Qa/i).waitFor({ timeout: 15000 });
   });
 
   await step("family: add a child with photo + birth certificate", async () => {
     // KNOWN GAP: the My Children empty state has no "Add child" CTA — deep-link to the
     // save-mode form (EnrolStep2 without schoolId).
-    await page.goto(`${FRONTEND}/parent/dashboard/enrol/child-info`);
+    await page.goto(`${FRONTEND}/family/enrol/child-info`);
     await page.getByText("Add a child").waitFor({ timeout: 15000 });
 
     const text = page.getByPlaceholder("Type it here");
@@ -286,7 +295,7 @@ async function familyJourney(browser, shared) {
   });
 
   await step("family: set a payment PIN", async () => {
-    await page.goto(`${FRONTEND}/parent/dashboard/settings`);
+    await page.goto(`${FRONTEND}/family/settings`);
     const pins = page.locator('input[inputmode="numeric"][maxlength="6"]');
     await pins.nth(0).fill("246810");
     await pins.nth(1).fill("246810");
@@ -301,7 +310,7 @@ async function familyJourney(browser, shared) {
   });
 
   await step("family: directory lists verified schools, hides the pending-KYC one", async () => {
-    await page.goto(`${FRONTEND}/parent/dashboard/search`);
+    await page.goto(`${FRONTEND}/family/schools`);
     // A verified school is discoverable…
     await page.getByText(/school(s)? found/i).first().waitFor({ timeout: 15000 });
     // …while the freshly created QA school (pending KYC) must NOT be listed.

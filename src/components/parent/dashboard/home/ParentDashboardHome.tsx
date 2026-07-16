@@ -86,21 +86,21 @@ function ChildCard({ child }: { child: ParentChild }) {
       {/* Quick links */}
       <div className="flex border-t border-[#f0f0f0]">
         <Link
-          href={`/parent/dashboard/children/${child.childProfileId}`}
+          href={`/family/children/${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           View details
         </Link>
         <div className="w-px bg-[#f0f0f0]" />
         <Link
-          href={`/parent/dashboard/report-card?childId=${child.childProfileId}`}
+          href={`/family/report-card?childId=${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           Report card
         </Link>
         <div className="w-px bg-[#f0f0f0]" />
         <Link
-          href={`/parent/dashboard/ca-scores?childId=${child.childProfileId}`}
+          href={`/family/ca-scores?childId=${child.childProfileId}`}
           className="flex flex-1 items-center justify-center py-[12px] text-[13px] text-[#555] transition-colors hover:bg-[#fafafa] hover:text-[#1ca95c]"
         >
           CA scores
@@ -158,14 +158,14 @@ function GetStarted() {
       </div>
       <div className="flex items-center gap-[10px]">
         <Link
-          href="/parent/dashboard/search"
+          href="/family/schools"
           className="flex h-[44px] items-center gap-[8px] rounded-[8px] bg-brand-green px-[22px] text-[14px] font-medium text-white transition-opacity hover:opacity-90"
         >
           <Search className="h-[16px] w-[16px]" />
           Find a school
         </Link>
         <Link
-          href="/parent/dashboard/enrol/child-info"
+          href="/family/enrol/child-info"
           className="flex h-[44px] items-center gap-[8px] rounded-[8px] border border-[#d1d5db] px-[22px] text-[14px] font-medium text-[#1b1b1b] transition-colors hover:border-brand-green"
         >
           <Plus className="h-[16px] w-[16px]" />
@@ -255,7 +255,7 @@ export default function ParentDashboardHome() {
         <h2 className="text-[18px] font-medium text-[#1b1b1b]">My children</h2>
         {children.length > 0 && (
           <Link
-            href="/parent/dashboard/enrol/child-info"
+            href="/family/enrol/child-info"
             className="flex h-[38px] items-center gap-[7px] rounded-[8px] bg-brand-green px-[16px] text-[13px] text-white transition-opacity hover:opacity-90"
           >
             <Plus className="h-[14px] w-[14px]" />

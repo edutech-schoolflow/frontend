@@ -10,7 +10,7 @@ import type { ParentChild } from "@/src/lib/api/parentChildren";
 function ChildCard({ child }: { child: ParentChild }) {
   return (
     <Link
-      href={`/parent/dashboard/children/${child.childProfileId}`}
+      href={`/family/children/${child.childProfileId}`}
       className="flex flex-col gap-[12px] rounded-[10px] border border-[#ccc] p-[20px] transition-shadow hover:shadow-[0_2px_10px_rgba(0,0,0,0.08)]"
     >
       <div className="flex items-start justify-between">
@@ -83,7 +83,7 @@ function EmptyState() {
         </p>
       </div>
       <Link
-        href="/parent/dashboard/enrol/child-info"
+        href="/family/enrol/child-info"
         className="flex h-[44px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[24px] text-[14px] font-medium text-white hover:opacity-90"
       >
         Add a child
@@ -110,7 +110,7 @@ export default function ParentMyChildren() {
       <div className="flex items-center justify-between">
         <h1 className="text-[24px] font-medium text-[#1b1b1b]">My children</h1>
         <Link
-          href="/parent/dashboard/enrol/child-info"
+          href="/family/enrol/child-info"
           className="flex h-[40px] items-center justify-center rounded-[8px] bg-[#1ca95c] px-[20px] text-[14px] font-medium text-white hover:opacity-90"
         >
           Add a child
