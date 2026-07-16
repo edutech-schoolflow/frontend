@@ -68,7 +68,7 @@ export default function ParentWorkspaceHome() {
             workspace.
           </p>
           <Link
-            href="/parent/dashboard/search"
+            href="/family/schools"
             className="mt-[18px] inline-flex items-center gap-[8px] rounded-[8px] bg-brand-green px-[18px] py-[10px] text-[14px] font-medium text-white transition-opacity hover:opacity-90"
           >
             Explore schools
@@ -107,14 +107,14 @@ export default function ParentWorkspaceHome() {
 
               <div className="mt-[16px] flex gap-[8px]">
                 <Link
-                  href="/parent/dashboard/report-card"
+                  href="/family/report-card"
                   className="inline-flex items-center gap-[6px] rounded-[8px] border border-[#e0e0e0] px-[12px] py-[8px] text-[13px] font-medium text-[#1b1b1b] transition-colors hover:bg-[#f7fdf9]"
                 >
                   <FileText size={15} />
                   Report card
                 </Link>
                 <Link
-                  href="/parent/dashboard/fees"
+                  href="/family/fees"
                   className="inline-flex items-center gap-[6px] rounded-[8px] border border-[#e0e0e0] px-[12px] py-[8px] text-[13px] font-medium text-[#1b1b1b] transition-colors hover:bg-[#f7fdf9]"
                 >
                   <Receipt size={15} />

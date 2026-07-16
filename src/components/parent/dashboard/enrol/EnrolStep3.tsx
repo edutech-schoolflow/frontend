@@ -44,7 +44,7 @@ export default function EnrolStep3() {
       });
       toast.success(message);
       router.push(
-        `/parent/dashboard/enrol/payment?applicationId=${application.id}`
+        `/family/enrol/payment?applicationId=${application.id}`
       );
     } catch (err) {
       toast.error(
@@ -88,7 +88,7 @@ export default function EnrolStep3() {
             Start again from the school you want to apply to.
           </p>
           <Link
-            href="/parent/dashboard/search"
+            href="/family/schools"
             className="mt-[16px] inline-block text-[14px] font-medium text-[#1ca95c] hover:underline"
           >
             Find a school

@@ -66,7 +66,7 @@ export default function ParentTopbar() {
               </p>
               <div className="my-[4px] h-px bg-[#f0f0f0]" />
               <Link
-                href="/parent/dashboard/settings"
+                href="/family/settings"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-[10px] px-[16px] py-[10px] text-[14px] text-[#1b1b1b] hover:bg-[#f5f5f5]"
               >

@@ -37,29 +37,29 @@ const LogoBadge = () => (
 const MAIN_NAV: Array<{ label: string; href: string; icon: ReactNode }> = [
   {
     label: "Compliance",
-    href: "/parent/dashboard/compliance",
+    href: "/family/compliance",
     icon: <Image src="/icons/secure.svg" alt="" width={18} height={18} />,
   },
   {
     label: "My Children",
-    href: "/parent/dashboard/children",
+    href: "/family/children",
     icon: <Image src="/icons/user-group.svg" alt="" width={18} height={18} />,
   },
   {
     label: "Find a school",
-    href: "/parent/dashboard/search",
+    href: "/family/schools",
     icon: <Image src="/icons/folder.svg" alt="" width={18} height={18} />,
   },
   {
     label: "Track application",
-    href: "/parent/dashboard/track",
+    href: "/family/track",
     icon: <Image src="/icons/check-circle.svg" alt="" width={18} height={18} />,
   },
   // Per-school items (Store, Fees, CA scores, Report card, Performance) live in the /o/{slug} parent
   // workspace — they need a school context. The home keeps only identity-level, cross-school views.
   {
     label: "Payment history",
-    href: "/parent/dashboard/payment-history",
+    href: "/family/payment-history",
     icon: <Image src="/icons/receipt.svg" alt="" width={18} height={18} />,
   },
 ];
@@ -114,7 +114,7 @@ export default function ParentSidebar() {
             : "justify-between px-[20px] pt-[28px] pb-[24px]"
         }`}
       >
-        <Link href="/parent/dashboard">
+        <Link href="/family">
           {collapsed ? <LogoBadge /> : <Logo size={28} textColor="white" />}
         </Link>
         <button
@@ -161,7 +161,7 @@ export default function ParentSidebar() {
               </span>
             </button>
             <Link
-              href="/parent/dashboard/settings"
+              href="/family/settings"
               className="flex h-[42px] w-[42px] items-center justify-center rounded-[6px] transition-colors hover:bg-white/10"
               title="Settings"
             >
@@ -191,8 +191,8 @@ export default function ParentSidebar() {
             </button>
 
             <Link
-              href="/parent/dashboard/settings"
-              className={itemCls("/parent/dashboard/settings")}
+              href="/family/settings"
+              className={itemCls("/family/settings")}
             >
               <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[6px] bg-white/15">
                 <Image src="/icons/chip.svg" alt="" width={18} height={18} />

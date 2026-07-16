@@ -66,13 +66,13 @@ export default function SuccessScreen() {
         </div>
         <div className="flex gap-[16px]">
           <Link
-            href="/parent/dashboard/track"
+            href="/family/track"
             className="flex h-[50px] w-[220px] items-center justify-center rounded-[5px] bg-[#1ca95c] text-[15px] text-white transition-opacity hover:opacity-90"
           >
             Track application
           </Link>
           <Link
-            href="/parent/dashboard"
+            href="/family"
             className="flex h-[50px] w-[220px] items-center justify-center rounded-[5px] border border-[#1ca95c] text-[15px] text-[#1ca95c] transition-opacity hover:opacity-80"
           >
             Back to dashboard

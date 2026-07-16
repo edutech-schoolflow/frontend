@@ -23,7 +23,8 @@ export function middleware(request: NextRequest) {
   }
 
   if (subdomain === "parent") {
-    url.pathname = `/parent${pathname}`;
+    // The parent portal is gone (FE-001 Phase 2.5) — the family shell serves this subdomain.
+    url.pathname = `/family${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
   }
 

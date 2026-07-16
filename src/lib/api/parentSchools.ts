@@ -41,11 +41,28 @@ function toListing(s: SchoolDirectoryItem): SchoolListing {
   };
 }
 
+/** The full PUBLIC profile of a school — identity, contact details, class ladder. */
+export interface SchoolPublicProfile {
+  id: string;
+  name: string;
+  type?: string | null;
+  location?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logoUrl?: string | null;
+  verified: boolean;
+  applicationFee: number;
+  classes: SchoolClass[];
+}
+
 /** A single public school's profile, or null if it isn't listed. */
-export async function getSchoolById(id: string): Promise<SchoolListing | null> {
+export async function getSchoolById(
+  id: string
+): Promise<SchoolPublicProfile | null> {
   try {
-    const { data } = await apiGet<SchoolDirectoryItem>(`/family/schools/${id}`);
-    return toListing(data);
+    const { data } = await apiGet<SchoolPublicProfile>(`/family/schools/${id}`);
+    return data;
   } catch {
     return null;
   }

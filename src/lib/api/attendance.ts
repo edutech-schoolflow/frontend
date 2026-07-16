@@ -1,8 +1,5 @@
+import { apiGet, apiPost } from "./client";
 import { mockResponse } from "./mockClient";
-import {
-  MOCK_ARM_STUDENTS,
-  MOCK_ATTENDANCE_RECORDS,
-} from "./mock/attendanceData";
 import {
   MOCK_SCHOOL_CLASSES,
   MOCK_CLASS_ARMS,
@@ -14,6 +11,7 @@ import type {
   AttendanceMark,
   AttendanceOverview,
   ArmAttendanceStat,
+  AttendanceStatus,
 } from "@/src/types/attendance";
 import type { ClassLevel } from "@/src/types/school";
 
@@ -25,33 +23,35 @@ export interface ArmSelectOption {
   level: ClassLevel;
 }
 
-// Returns only the arms where the logged-in teacher is the class teacher.
-// Falls back to the first teacher's arms when userId is undefined (mock/dev only).
+// LIVE — GET /api/v1/attendance/arms: the arms this session may mark (class-teacher arms; every
+// arm for the owner). The backend's unit can be arm-less (a whole class), so the frontend armId is
+// a composite "classId|armId" key: call sites keep passing a single opaque string around.
+const armKey = (classId: string, armId: string | null | undefined) =>
+  `${classId}|${armId ?? ""}`;
+const parseArmKey = (key: string): { classId: string; armId: string | null } => {
+  const [classId, armId] = key.split("|");
+  return { classId, armId: armId || null };
+};
+
+interface MarkableArmDto {
+  armId?: string | null;
+  armName: string;
+  classId: string;
+  className: string;
+  level: ClassLevel;
+}
+
 export const getTeacherArms = async (
-  userId: string | undefined
+  _userId?: string | undefined
 ): Promise<ArmSelectOption[]> => {
-  const classMap = Object.fromEntries(
-    MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])
-  );
-
-  const staff = userId
-    ? MOCK_STAFF.find((s) => s.userId === userId)
-    : MOCK_STAFF.find((s) => s.role === "teacher"); // dev fallback
-
-  if (!staff) return mockResponse([]);
-
-  const options: ArmSelectOption[] = Object.values(MOCK_CLASS_ARMS)
-    .flat()
-    .filter((arm) => arm.classTeacher?.id === staff.id)
-    .map((arm) => ({
-      armId: arm.id,
-      armName: arm.fullName,
-      classId: arm.classId,
-      className: arm.className,
-      level: classMap[arm.classId]?.level ?? "primary",
-    }));
-
-  return mockResponse(options);
+  const { data } = await apiGet<MarkableArmDto[]>("/attendance/arms");
+  return data.map((a) => ({
+    armId: armKey(a.classId, a.armId),
+    armName: a.armName,
+    classId: a.classId,
+    className: a.className,
+    level: a.level,
+  }));
 };
 
 // Returns the arms where this teacher is a subject teacher, grouped with
@@ -115,142 +115,134 @@ export const getTeacherAllArms = async (
   return mockResponse(options);
 };
 
-export const getAllArms = async (): Promise<ArmSelectOption[]> => {
-  const classMap = Object.fromEntries(
-    MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])
-  );
-  const options: ArmSelectOption[] = Object.values(MOCK_CLASS_ARMS)
-    .flat()
-    .map((arm) => ({
-      armId: arm.id,
-      armName: arm.fullName,
-      classId: arm.classId,
-      className: arm.className,
-      level: classMap[arm.classId]?.level ?? "primary",
-    }));
-  return mockResponse(options);
+// LIVE — same endpoint: for an owner session the backend returns every arm.
+export const getAllArms = async (): Promise<ArmSelectOption[]> => getTeacherArms(undefined);
+
+// LIVE — GET /api/v1/attendance/roster: the unit's active students (any date's marks ride along;
+// this helper only needs the names).
+interface RosterDto {
+  classId: string;
+  armId?: string | null;
+  armName: string;
+  date: string;
+  submitted: boolean;
+  students: {
+    studentId: string;
+    studentName: string;
+    admissionNumber?: string | null;
+    status?: AttendanceStatus | null;
+  }[];
+}
+
+const fetchRoster = async (key: string, date?: string): Promise<RosterDto> => {
+  const { classId, armId } = parseArmKey(key);
+  const qs = new URLSearchParams({ classId });
+  if (armId) qs.set("armId", armId);
+  if (date) qs.set("date", date);
+  const { data } = await apiGet<RosterDto>(`/attendance/roster?${qs}`);
+  return data;
 };
 
 export const getStudentsForArm = async (
   armId: string
-): Promise<AttendanceStudentRow[]> =>
-  mockResponse(MOCK_ARM_STUDENTS[armId] ?? []);
+): Promise<AttendanceStudentRow[]> => {
+  const roster = await fetchRoster(armId);
+  return roster.students.map((st) => ({
+    studentId: st.studentId,
+    studentName: st.studentName,
+    admissionNumber: st.admissionNumber ?? "",
+  }));
+};
 
 export const getAttendanceRecord = async (
   armId: string,
   date: string
 ): Promise<AttendanceRecord | null> => {
-  const record = MOCK_ATTENDANCE_RECORDS.find(
-    (r) => r.armId === armId && r.date === date
-  );
-  return mockResponse(record ?? null);
+  const roster = await fetchRoster(armId, date);
+  if (!roster.submitted) return null;
+
+  const marks = roster.students
+    .filter((st) => st.status != null)
+    .map((st) => ({
+      studentId: st.studentId,
+      studentName: st.studentName,
+      status: st.status as AttendanceStatus,
+    }));
+  const count = (status: AttendanceStatus) =>
+    marks.filter((m) => m.status === status).length;
+
+  return {
+    id: `${armId}:${roster.date}`,
+    armId,
+    armName: roster.armName,
+    date: roster.date,
+    marks,
+    submittedBy: "",
+    submittedAt: "",
+    presentCount: count("present"),
+    absentCount: count("absent"),
+    lateCount: count("late"),
+    totalCount: marks.length,
+  };
 };
 
+// LIVE — GET /api/v1/attendance/overview: school-wide board for a date.
 export const getAttendanceOverview = async (
   date: string
 ): Promise<AttendanceOverview> => {
-  const allArms = Object.values(MOCK_CLASS_ARMS).flat();
-  const classMap = Object.fromEntries(
-    MOCK_SCHOOL_CLASSES.map((c) => [c.id, c])
-  );
-
-  const armStats: ArmAttendanceStat[] = allArms.map((arm) => {
-    const record = MOCK_ATTENDANCE_RECORDS.find(
-      (r) => r.armId === arm.id && r.date === date
-    );
-    const totalCount = (MOCK_ARM_STUDENTS[arm.id] ?? []).length;
-
-    if (!record) {
-      return {
-        armId: arm.id,
-        armName: arm.fullName,
-        submitted: false,
-        presentCount: 0,
-        absentCount: 0,
-        lateCount: 0,
-        totalCount,
-        presentPct: 0,
-      };
-    }
-    return {
-      armId: arm.id,
-      armName: arm.fullName,
-      submitted: true,
-      presentCount: record.presentCount,
-      absentCount: record.absentCount,
-      lateCount: record.lateCount,
-      totalCount: record.totalCount,
-      presentPct:
-        record.totalCount > 0
-          ? Math.round((record.presentCount / record.totalCount) * 100)
-          : 0,
-    };
-  });
-
-  const submitted = armStats.filter((a) => a.submitted);
-  const totalPresent = submitted.reduce((s, a) => s + a.presentCount, 0);
-  const totalAbsent = submitted.reduce((s, a) => s + a.absentCount, 0);
-  const totalLate = submitted.reduce((s, a) => s + a.lateCount, 0);
-  const totalStudents = submitted.reduce((s, a) => s + a.totalCount, 0);
-
-  const absentStudents = MOCK_ATTENDANCE_RECORDS.filter(
-    (r) => r.date === date
-  ).flatMap((r) =>
-    r.marks
-      .filter((m) => m.status === "absent")
-      .map((m) => ({ studentName: m.studentName, armName: r.armName }))
-  );
-
-  // suppress unused-import warning
-  void classMap;
-
-  return mockResponse({
-    date,
-    totalPresent,
-    totalAbsent,
-    totalLate,
-    totalStudents,
-    overallPresentPct:
-      totalStudents > 0 ? Math.round((totalPresent / totalStudents) * 100) : 0,
-    arms: armStats,
-    absentStudents,
-  });
+  const { data } = await apiGet<{
+    date: string;
+    totalPresent: number;
+    totalAbsent: number;
+    totalLate: number;
+    totalStudents: number;
+    overallPresentPct: number;
+    arms: (ArmAttendanceStat & { classId: string; armId?: string | null })[];
+    absentStudents: { studentName: string; armName: string }[];
+  }>(`/attendance/overview?date=${encodeURIComponent(date)}`);
+  return {
+    ...data,
+    arms: data.arms.map((a) => ({ ...a, armId: armKey(a.classId, a.armId) })),
+  };
 };
 
+// LIVE — POST /api/v1/attendance: submit (or replace) the day's register for the unit.
 export const submitAttendance = async (payload: {
   armId: string;
   armName: string;
   date: string;
   marks: (AttendanceMark & { studentName: string })[];
 }): Promise<AttendanceRecord> => {
-  const presentCount = payload.marks.filter(
-    (m) => m.status === "present"
-  ).length;
-  const absentCount = payload.marks.filter((m) => m.status === "absent").length;
-  const lateCount = payload.marks.filter((m) => m.status === "late").length;
-
-  const record: AttendanceRecord = {
-    id: `att-${Date.now()}`,
-    armId: payload.armId,
-    armName: payload.armName,
+  const { classId, armId } = parseArmKey(payload.armId);
+  const { data } = await apiPost<{
+    id: string;
+    classId: string;
+    armId?: string | null;
+    armName: string;
+    date: string;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+    totalCount: number;
+    submittedAt: string;
+  }>("/attendance", {
+    classId,
+    armId,
     date: payload.date,
+    marks: payload.marks.map((m) => ({ studentId: m.studentId, status: m.status })),
+  });
+
+  return {
+    id: data.id,
+    armId: payload.armId,
+    armName: data.armName,
+    date: data.date,
     marks: payload.marks,
-    submittedBy: "School Admin",
-    submittedAt: new Date().toISOString(),
-    presentCount,
-    absentCount,
-    lateCount,
-    totalCount: payload.marks.length,
+    submittedBy: "",
+    submittedAt: data.submittedAt,
+    presentCount: data.presentCount,
+    absentCount: data.absentCount,
+    lateCount: data.lateCount,
+    totalCount: data.totalCount,
   };
-
-  const idx = MOCK_ATTENDANCE_RECORDS.findIndex(
-    (r) => r.armId === payload.armId && r.date === payload.date
-  );
-  if (idx >= 0) {
-    MOCK_ATTENDANCE_RECORDS[idx] = record;
-  } else {
-    MOCK_ATTENDANCE_RECORDS.push(record);
-  }
-
-  return mockResponse(record);
 };

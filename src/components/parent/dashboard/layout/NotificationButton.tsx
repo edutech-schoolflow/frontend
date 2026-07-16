@@ -13,7 +13,7 @@ export default function NotificationButton() {
 
   return (
     <Link
-      href="/parent/dashboard/notifications"
+      href="/family/notifications"
       className="relative"
       aria-label="Notifications"
     >

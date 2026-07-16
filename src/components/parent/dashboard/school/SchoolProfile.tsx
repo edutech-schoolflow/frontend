@@ -2,17 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { getSchoolById } from "@/src/lib/api/parentSchools";
+import { ArrowLeft, MapPin, Phone, Mail } from "lucide-react";
+import {
+  getSchoolById,
+  type SchoolPublicProfile,
+} from "@/src/lib/api/parentSchools";
 import type { SchoolListing } from "@/src/types/school";
 import WhoToEnrolModal from "@/src/components/parent/dashboard/enrol/WhoToEnrolModal";
 
+/** The school's PUBLIC profile — everything real, nothing invented (no fake ratings). */
 export default function SchoolProfile() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const [school, setSchool] = useState<SchoolListing | null | undefined>(
+  const [school, setSchool] = useState<SchoolPublicProfile | null | undefined>(
     undefined
   );
   const [showEnrol, setShowEnrol] = useState(false);
@@ -44,19 +48,30 @@ export default function SchoolProfile() {
     );
   }
 
-  const types = school.type.split(",").map((t) => t.trim());
-  const ratingNum = parseFloat(school.rating);
-  const reviewMatch = school.rating.match(/\((\d+) reviews\)/);
-  const reviewCount = reviewMatch ? reviewMatch[1] : null;
+  const types = (school.type ?? "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  // What the enrol modal needs (id + name); the listing shape is its contract.
+  const asListing: SchoolListing = {
+    id: school.id,
+    name: school.name,
+    location: school.location ?? "",
+    type: school.type ?? "",
+    applicationFee: school.applicationFee,
+    rating: "—",
+    verified: school.verified,
+    isRecommended: false,
+  };
 
   return (
     <>
       {showEnrol && (
-        <WhoToEnrolModal school={school} onClose={() => setShowEnrol(false)} />
+        <WhoToEnrolModal school={asListing} onClose={() => setShowEnrol(false)} />
       )}
 
       <div className="px-[88px] py-[31px] pb-[60px]">
-        {/* Back */}
         <button
           type="button"
           onClick={() => router.back()}
@@ -66,13 +81,21 @@ export default function SchoolProfile() {
           Back to search
         </button>
 
-        {/* Main card */}
         <div className="rounded-[10px] border border-[#e0e0e0] bg-white p-[32px]">
           {/* School header */}
           <div className="flex items-start gap-[20px]">
-            <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#e8f8ef] text-[36px]">
-              🏫
-            </div>
+            {school.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={school.logoUrl}
+                alt={school.name}
+                className="h-[72px] w-[72px] shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#e8f8ef] text-[36px]">
+                🏫
+              </div>
+            )}
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-[10px]">
                 <h1 className="text-[24px] font-medium text-[#1b1b1b]">
@@ -84,9 +107,11 @@ export default function SchoolProfile() {
                   </span>
                 )}
               </div>
-              <p className="mt-[4px] text-[14px] text-[#888]">
-                {school.location}
-              </p>
+              {school.location && (
+                <p className="mt-[4px] text-[14px] text-[#888]">
+                  {school.location}
+                </p>
+              )}
               <div className="mt-[10px] flex flex-wrap gap-[8px]">
                 {types.map((t) => (
                   <span
@@ -100,33 +125,69 @@ export default function SchoolProfile() {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="my-[28px] h-px bg-[#f0f0f0]" />
 
-          {/* Stats row */}
+          {/* Stats row — real numbers only */}
           <div className="grid grid-cols-3 gap-[20px]">
-            <StatBox
-              label="Rating"
-              value={
-                <span>
-                  <span className="text-yellow-500">★</span>{" "}
-                  {isNaN(ratingNum) ? school.rating : ratingNum.toFixed(1)}
-                  {reviewCount && (
-                    <span className="ml-[4px] text-[12px] text-[#aaa]">
-                      ({reviewCount} reviews)
-                    </span>
-                  )}
-                </span>
-              }
-            />
             <StatBox
               label="Application Fee"
               value={`₦${school.applicationFee.toLocaleString()}`}
             />
-            <StatBox label="Levels Offered" value={school.type} />
+            <StatBox label="Classes Offered" value={String(school.classes.length)} />
+            <StatBox
+              label="Verification"
+              value={school.verified ? "✓ Verified" : "Pending"}
+            />
           </div>
 
-          {/* Enrol button */}
+          {/* Classes offered */}
+          {school.classes.length > 0 && (
+            <div className="mt-[24px]">
+              <p className="text-[13px] font-medium uppercase tracking-[0.04em] text-[#888]">
+                Classes offered
+              </p>
+              <div className="mt-[10px] flex flex-wrap gap-[8px]">
+                {school.classes.map((c) => (
+                  <span
+                    key={c.name}
+                    className="rounded-full border border-[#e0e0e0] px-[12px] py-[4px] text-[12px] text-[#555]"
+                  >
+                    {c.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Contact */}
+          {(school.address || school.phone || school.email) && (
+            <div className="mt-[24px]">
+              <p className="text-[13px] font-medium uppercase tracking-[0.04em] text-[#888]">
+                Contact
+              </p>
+              <div className="mt-[10px] flex flex-col gap-[8px] text-[14px] text-[#555]">
+                {school.address && (
+                  <p className="flex items-center gap-[8px]">
+                    <MapPin className="h-[15px] w-[15px] text-[#1ca95c]" />
+                    {school.address}
+                  </p>
+                )}
+                {school.phone && (
+                  <p className="flex items-center gap-[8px]">
+                    <Phone className="h-[15px] w-[15px] text-[#1ca95c]" />
+                    {school.phone}
+                  </p>
+                )}
+                {school.email && (
+                  <p className="flex items-center gap-[8px]">
+                    <Mail className="h-[15px] w-[15px] text-[#1ca95c]" />
+                    {school.email}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setShowEnrol(true)}

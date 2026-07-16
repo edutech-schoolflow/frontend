@@ -7,6 +7,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import WorkspaceSwitcher from "@/src/components/shared/WorkspaceSwitcher";
 import { schoolRoutes } from "@/src/layout/school/sidebar/routes";
 import { useIdentity } from "@/src/lib/api/useIdentity";
+import { useWorkspace } from "@/src/context/WorkspaceContext";
 
 const SettingsIcon = () => (
   <svg
@@ -78,6 +79,14 @@ export default function SchoolSidebar({
     });
 
   const fullName = user?.fullName ?? "";
+  // Owner or the staff member's actual role — the workspace context knows; never hardcoded.
+  const ws = useWorkspace();
+  const roleLabel =
+    ws.myContext.type === "owner"
+      ? "Owner"
+      : (ws.myContext.role ?? "Staff")
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c: string) => c.toUpperCase());
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -273,10 +282,10 @@ export default function SchoolSidebar({
                 <p className="truncate text-[13px] font-medium text-white">
                   {fullName}
                 </p>
-                <p className="text-[11px] text-white/50">School Admin</p>
+                <p className="text-[11px] text-white/50">{roleLabel}</p>
               </div>
               <button
-                onClick={() => router.push("/school/login")}
+                onClick={() => router.push("/login")}
                 className="shrink-0 text-white/50 transition-colors hover:text-white"
                 aria-label="Log out"
               >

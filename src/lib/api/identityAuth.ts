@@ -81,20 +81,20 @@ export function dashboardFor(type: AuthContextType): string {
     case "staff":
       return "/select-context";
     case "parent":
-      return "/parent/dashboard";
+      return "/family";
   }
 }
 
 /**
  * Where entering a context lands (FE-001 Phase 2). Every context is org-scoped now — owner, staff and
  * parent all live under the /o/{slug} workspace (shared URLs, view by context type). A parent's
- * school-agnostic FAMILY home is a different thing (/parent/dashboard) and is reached on its own, not
+ * school-agnostic FAMILY home is a different thing (/family) and is reached on its own, not
  * by entering a context. The dashboardFor fallback only fires for a context that has no slug yet.
  */
 export function landingFor(
   context?: Pick<AuthContext, "type" | "organizationSlug">
 ): string {
-  if (!context) return "/welcome";
+  if (!context) return "/dashboard";
   if (context.organizationSlug) {
     return `/o/${context.organizationSlug}`;
   }
@@ -185,9 +185,9 @@ export async function resetIdentityPassword(input: {
   return message;
 }
 
-/** The signed-in person (any portal cookie) + every context they hold. */
+/** The signed-in person (any session kind) + every context they hold — GET /identity/me. */
 export async function getIdentityMe(): Promise<IdentityMe> {
-  const { data } = await apiGet<IdentityMe>("/auth/me");
+  const { data } = await apiGet<IdentityMe>("/identity/me");
   return data;
 }
 
@@ -207,13 +207,44 @@ export interface DraftOrganization {
   slug: string;
 }
 
-export interface Welcome {
-  pendingInvites: PendingInvite[];
-  draftOrganizations: DraftOrganization[];
+/**
+ * EDD-005 — the ONE rich identity projection (GET /identity/home): who I am, what I can do, where
+ * I belong, and what's waiting. The platform landing renders entirely from this.
+ */
+export interface WorkspaceRef {
+  contextId: string;
+  type: AuthContextType;
+  role?: string | null;
+  organizationId?: string | null;
+  organizationName?: string | null;
+  organizationSlug?: string | null;
+  lastActiveAt?: string | null;
 }
 
-export async function getWelcome(): Promise<Welcome> {
-  const { data } = await apiGet<Welcome>("/auth/welcome");
+export interface PlatformHome {
+  identity: {
+    fullName: string;
+    phone: string;
+    email?: string | null;
+    phoneVerified: boolean;
+  };
+  profiles: string[];
+  capabilities: string[];
+  organizations: AuthContext[];
+  currentContextId?: string | null;
+  pendingInvitations: PendingInvite[];
+  draftOrganizations: DraftOrganization[];
+  family: { children: number; openApplications: number };
+  /** Slack-style switcher: current = the SESSION's workspace (page decides exclusion);
+   *  recent = every workspace ordered by last entry. */
+  switcher: {
+    currentWorkspace?: WorkspaceRef | null;
+    recentWorkspaces: WorkspaceRef[];
+  };
+}
+
+export async function getPlatformHome(): Promise<PlatformHome> {
+  const { data } = await apiGet<PlatformHome>("/identity/home");
   return data;
 }
 
