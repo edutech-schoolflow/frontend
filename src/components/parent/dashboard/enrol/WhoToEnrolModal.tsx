@@ -17,12 +17,12 @@ export default function WhoToEnrolModal({
 
   const handleSelect = (childProfileId: string) => {
     router.push(
-      `/parent/dashboard/enrol/child-info?childId=${childProfileId}&schoolId=${school.id}`
+      `/family/enrol/child-info?childId=${childProfileId}&schoolId=${school.id}`
     );
   };
 
   const handleNew = () => {
-    router.push(`/parent/dashboard/enrol/child-info?schoolId=${school.id}`);
+    router.push(`/family/enrol/child-info?schoolId=${school.id}`);
   };
 
   return (

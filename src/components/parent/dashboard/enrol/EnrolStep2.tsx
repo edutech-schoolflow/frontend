@@ -55,7 +55,7 @@ export default function EnrolStep2() {
         // the list — no school picked, no application.
         await saveMyChild(withFiles(childFields(values)));
         toast.success("Child saved to your account.");
-        router.push("/parent/dashboard/children");
+        router.push("/family/children");
         return;
       }
 
@@ -66,7 +66,7 @@ export default function EnrolStep2() {
         schoolId,
         desiredClass: values.desiredClass,
       });
-      router.push(`/parent/dashboard/enrol/review?${qs.toString()}`);
+      router.push(`/family/enrol/review?${qs.toString()}`);
     } catch (err) {
       toast.error(
         err instanceof Error

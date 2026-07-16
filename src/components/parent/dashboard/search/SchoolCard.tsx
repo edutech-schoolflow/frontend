@@ -54,7 +54,7 @@ export default function SchoolCard({ school, onEnrol }: Props) {
 
       <div className="mt-[16px] flex gap-[8px]">
         <Link
-          href={`/parent/dashboard/school/${school.id}`}
+          href={`/family/school/${school.id}`}
           className="flex h-[38px] flex-1 items-center justify-center rounded-[6px] border border-[#1ca95c] text-[13px] font-medium text-[#1ca95c] transition-colors hover:bg-[#f7fdf9]"
         >
           View profile

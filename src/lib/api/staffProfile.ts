@@ -1,13 +1,10 @@
-import { mockResponse } from "./mockClient";
-import {
-  MOCK_STAFF,
-  MOCK_PERMISSION_TEMPLATES,
-  MOCK_SCHOOLS,
-} from "./mock/schoolData";
-import { ROLE_FEATURES, DEFAULT_FEATURES } from "@/src/types/staffFeatures";
+import { apiGet } from "./client";
 import type { Staff } from "@/src/types/staff";
 import type { School } from "@/src/types/school";
 import type { StaffFeatures } from "@/src/types/staffFeatures";
+
+// LIVE — the staff member's own profile ("me, in this school") with EFFECTIVE features resolved
+// server-side exactly like login (role → template → overrides). Owners hold every feature.
 
 export interface MyStaffProfile {
   staff: Staff;
@@ -25,69 +22,93 @@ export interface StaffSchoolEntry {
   school: School;
 }
 
-function computeFeatures(staff: Staff): StaffFeatures {
-  const template = MOCK_PERMISSION_TEMPLATES.find(
-    (t) => t.id === staff.permissionTemplateId
-  );
-  const base: StaffFeatures =
-    template?.features ?? ROLE_FEATURES[staff.role] ?? DEFAULT_FEATURES;
-  return { ...base, ...(staff.featureOverrides ?? {}) };
+interface DirectoryItemDto {
+  id: string;
+  staffUserId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string | null;
+  role: Staff["role"];
+  position?: string | null;
+  employmentType: "full_time" | "part_time";
+  status: "invited" | "active" | "inactive";
+  createdAt: string;
 }
 
-// Returns the staff profile for a given user, scoped to a specific school.
-// For part-time staff with records at multiple schools, activeSchoolId picks
-// which record to load. Falls back to the first record if not specified.
+const toStaff = (d: DirectoryItemDto, schoolId = ""): Staff => ({
+  id: d.id,
+  schoolId,
+  userId: d.staffUserId,
+  firstName: d.firstName,
+  lastName: d.lastName,
+  email: d.email ?? "",
+  phone: d.phone,
+  role: d.role,
+  position: d.position ?? "",
+  status: d.status === "invited" ? "pending" : d.status,
+  employmentType: d.employmentType,
+  createdAt: d.createdAt,
+});
+
 export const getMyStaffProfile = async (
-  userId: string | undefined,
-  activeSchoolId?: string | null
+  _userId?: string | undefined,
+  _activeSchoolId?: string | null
 ): Promise<MyStaffProfile | null> => {
-  if (!userId) return mockResponse(null);
-
-  const records = MOCK_STAFF.filter(
-    (s) => s.userId === userId && s.status === "active"
-  );
-  if (!records.length) return mockResponse(null);
-
-  const staff =
-    (activeSchoolId && records.find((s) => s.schoolId === activeSchoolId)) ||
-    records[0];
-
-  return mockResponse({
-    staff,
-    features: computeFeatures(staff),
-    // Only the school portal account holder (isOwner) gets redirected to
-    // the school portal. Staff with school_admin role are not the same thing.
-    isSchoolAdmin: staff.isOwner === true,
-  });
+  const { data } = await apiGet<{
+    staff: DirectoryItemDto | null;
+    features: StaffFeatures;
+    isSchoolAdmin: boolean;
+  }>("/staff/profile/me");
+  if (!data.staff && !data.isSchoolAdmin) return null;
+  return {
+    // An owner session has no directory entry — callers only read features/isSchoolAdmin then.
+    staff: data.staff ? toStaff(data.staff) : ({} as Staff),
+    features: data.features,
+    isSchoolAdmin: data.isSchoolAdmin,
+  };
 };
 
-// Returns every school a staff member belongs to, with their staff record for
-// each school. Used by the My Schools page and the school switcher.
+// LIVE — GET /api/v1/staff/schools: every school this staff member belongs to.
 export const getMySchools = async (
-  userId: string | undefined
+  _userId?: string | undefined
 ): Promise<StaffSchoolEntry[]> => {
-  if (!userId) return mockResponse([]);
-
-  const records = MOCK_STAFF.filter(
-    (s) => s.userId === userId && s.status === "active"
-  );
-
-  const entries: StaffSchoolEntry[] = records
-    .map((staff) => {
-      const school = MOCK_SCHOOLS.find((sc) => sc.id === staff.schoolId);
-      return school ? { staff, school } : null;
-    })
-    .filter((e): e is StaffSchoolEntry => e !== null);
-
-  return mockResponse(entries);
+  const { data } = await apiGet<
+    {
+      schoolId: string;
+      schoolName?: string | null;
+      role: Staff["role"];
+      position?: string | null;
+      employmentType: "full_time" | "part_time";
+    }[]
+  >("/staff/schools");
+  return data.map((d) => ({
+    staff: {
+      id: d.schoolId, // per-school entry key; the page only keys on ids
+      schoolId: d.schoolId,
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: d.role,
+      position: d.position ?? "",
+      status: "active",
+      employmentType: d.employmentType,
+      createdAt: "",
+    },
+    school: {
+      id: d.schoolId,
+      name: d.schoolName ?? "School",
+    } as School,
+  }));
 };
 
-// Returns every active staff member with their computed effective permissions.
+// LIVE — GET /api/v1/school/staff/permissions: the permissions matrix.
 export const getStaffWithPermissions = async (): Promise<
   StaffWithPermissions[]
 > => {
-  const list = MOCK_STAFF.filter(
-    (s) => s.status === "active" && !!s.userId && s.schoolId === "sch-001"
-  ).map((s) => ({ staff: s, features: computeFeatures(s) }));
-  return mockResponse(list);
+  const { data } = await apiGet<
+    { staff: DirectoryItemDto; features: StaffFeatures }[]
+  >("/school/staff/permissions");
+  return data.map((d) => ({ staff: toStaff(d.staff), features: d.features }));
 };

@@ -31,7 +31,7 @@ export default function UnifiedLogin() {
     const selected = outcome.contexts.find((c) => c.id === outcome.selected);
     // A pending destination wins; else org contexts land in their /o/{slug} workspace, and a person
     // with no relationship yet picks their path on the onboarding hub.
-    router.push(next ?? (selected ? landingFor(selected) : "/welcome"));
+    router.push(next ?? (selected ? landingFor(selected) : "/dashboard"));
   }
 
   async function handleLogin() {
@@ -54,18 +54,19 @@ export default function UnifiedLogin() {
         try {
           const me = await getIdentityMe();
           router.push(
-            me.profiles.includes("parent") ? "/parent/dashboard" : "/welcome"
+            me.profiles.includes("parent") ? "/family" : "/dashboard"
           );
         } catch {
-          router.push("/welcome");
+          router.push("/dashboard");
         }
         return;
       }
-      // Several — the identity session is set; the standalone chooser takes over (FE-001).
+      // Several — the identity session is set; the Platform Home shows every organization
+      // (recency-ordered) plus everything waiting. A pending destination still uses the chooser.
       router.push(
         next
           ? `/select-context?next=${encodeURIComponent(next)}`
-          : "/select-context"
+          : "/dashboard"
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not log in.");

@@ -33,7 +33,7 @@ export default function IdentitySettingsPage() {
     const outcome = await selectContext(contextId).catch(() => null);
     if (outcome) {
       const selected = outcome.contexts.find((c) => c.id === outcome.selected);
-      router.push(selected ? dashboardFor(selected.type) : "/welcome");
+      router.push(selected ? dashboardFor(selected.type) : "/dashboard");
     } else {
       setEnteringId(null);
     }

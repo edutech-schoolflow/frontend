@@ -96,7 +96,7 @@ export default function WorkspaceSwitcher({
     try {
       await createParentProfile();
       setOpen(false);
-      router.push("/parent/dashboard");
+      router.push("/family");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Couldn't set up parent access."
@@ -205,7 +205,7 @@ export default function WorkspaceSwitcher({
             type="button"
             onClick={() => {
               setOpen(false);
-              router.push("/welcome");
+              router.push("/dashboard");
             }}
             className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-left text-[13.5px] text-[#1b1b1b] transition-colors hover:bg-[#f5f5f5]"
           >

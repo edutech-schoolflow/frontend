@@ -5,11 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { X, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  getIdentityMe,
+  getPlatformHome,
   selectContext,
   landingFor,
-  type AuthContext,
   type AuthContextType,
+  type WorkspaceRef,
 } from "@/src/lib/api/identityAuth";
 
 /**
@@ -43,23 +43,22 @@ export default function WorkspaceSwitcherModal({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [contexts, setContexts] = useState<AuthContext[] | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceRef[] | null>(null);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    // No synchronous reset here — on reopen we keep the last list and refresh it in place (the fetch
-    // updates it from its own callback). First open shows the loader from the initial null state.
-    getIdentityMe()
-      .then((me) => {
+    // The platform-home projection carries the switcher: every workspace, recency-ordered.
+    getPlatformHome()
+      .then((home) => {
         if (cancelled) return;
-        setContexts(me.contexts);
-        setCurrentId(me.currentContextId ?? null);
+        setWorkspaces(home.switcher.recentWorkspaces);
+        setCurrentId(home.switcher.currentWorkspace?.contextId ?? null);
       })
       .catch(() => {
-        if (!cancelled) setContexts([]);
+        if (!cancelled) setWorkspaces([]);
       });
     return () => {
       cancelled = true;
@@ -81,11 +80,13 @@ export default function WorkspaceSwitcherModal({
   // On the family home no workspace is current (the session may still carry a school token from
   // login auto-enter), so every workspace stays reachable.
   const inWorkspace = pathname.startsWith("/o/");
-  const others = (contexts ?? []).filter((c) => !inWorkspace || c.id !== currentId);
-  async function switchTo(ctx: AuthContext) {
-    setBusy(ctx.id);
+  const others = (workspaces ?? []).filter(
+    (w) => !inWorkspace || w.contextId !== currentId
+  );
+  async function switchTo(ctx: WorkspaceRef) {
+    setBusy(ctx.contextId);
     try {
-      const outcome = await selectContext(ctx.id);
+      const outcome = await selectContext(ctx.contextId);
       const selected =
         outcome.contexts.find((c) => c.id === outcome.selected) ?? ctx;
       onClose();
@@ -123,7 +124,7 @@ export default function WorkspaceSwitcherModal({
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto py-[6px]">
-          {contexts === null ? (
+          {workspaces === null ? (
             <div className="flex items-center justify-center py-[36px]">
               <Loader2 className="h-6 w-6 animate-spin text-brand-green" />
             </div>
@@ -136,7 +137,7 @@ export default function WorkspaceSwitcherModal({
                   </p>
                   {others.map((ctx) => (
                     <button
-                      key={ctx.id}
+                      key={ctx.contextId}
                       type="button"
                       onClick={() => void switchTo(ctx)}
                       disabled={busy !== null}
@@ -153,7 +154,7 @@ export default function WorkspaceSwitcherModal({
                           {ROLE_LABEL[ctx.type]}
                         </span>
                       </span>
-                      {busy === ctx.id && (
+                      {busy === ctx.contextId && (
                         <Loader2 className="h-[16px] w-[16px] shrink-0 animate-spin text-brand-green" />
                       )}
                     </button>
@@ -176,7 +177,7 @@ export default function WorkspaceSwitcherModal({
                 type="button"
                 onClick={() => {
                   onClose();
-                  router.push("/welcome");
+                  router.push("/dashboard");
                 }}
                 className="flex w-full items-center gap-[12px] px-[20px] py-[11px] text-left text-[14px] text-[#1b1b1b] transition-colors hover:bg-[#f5f5f5]"
               >

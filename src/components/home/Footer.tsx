@@ -6,7 +6,7 @@ const NAV = [
     heading: "Product",
     links: [
       { label: "For Schools", href: "/school/register" },
-      { label: "For Parents", href: "/parent/login" },
+      { label: "For Parents", href: "/login" },
       { label: "Pricing", href: "#" },
       { label: "Features", href: "#" },
     ],

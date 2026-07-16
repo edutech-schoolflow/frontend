@@ -42,7 +42,7 @@ export default function ParentLoginForm() {
   const onSubmit = async (values: ParentLoginInput) => {
     try {
       await login.mutateAsync(values);
-      router.push("/parent/dashboard");
+      router.push("/family");
     } catch (err) {
       // Not verified yet → send a fresh code and drop into the OTP step inline.
       if (err instanceof ApiError && err.errorCode === ERR_PHONE_NOT_VERIFIED) {

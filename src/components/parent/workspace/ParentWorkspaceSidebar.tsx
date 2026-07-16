@@ -116,7 +116,7 @@ export default function ParentWorkspaceSidebar({
       {/* Bottom: back to family home + user */}
       <div className="border-t border-white/10 px-[12px] py-[16px]">
         <Link
-          href="/parent/dashboard"
+          href="/family"
           className={itemCls(false)}
           title={collapsed ? "My family home" : undefined}
         >
